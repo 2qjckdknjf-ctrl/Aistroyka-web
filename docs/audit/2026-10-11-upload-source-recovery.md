@@ -21,3 +21,5 @@ Every completed review outcome seals its current media: approved, rejected and c
 Concurrent identical finalize repair: after a zero-row CAS, re-read the exact own session and accept only an actual finalized matching object_path. Different/disappearing sources remain failure. Three added regressions PASS (25 repo/service/HTTP checks).
 
 Attachment/review race repair: a scoped private BEFORE attachment trigger locks its owned report and rechecks editable state after waiting. New attachment created_at comes from clock_timestamp after the lock. Two native orderings PASS: an inserted attachment commits before blocked rejection and receives its seal; rejection first denies a stale insert. Fixture seed links use the trusted service context, matching the real lifecycle.62 SQL contracts and5 native concurrent tests PASS.
+
+Missing-original/exact-finalize repair: client deletion is blocked for submitted report originals, and approval rejects dangling media references. Initial and losing-CAS finalized retries compare MIME and size as well as path/uploader/status.64 SQL checks and5 native races,27 repo/service/HTTP checks PASS; typecheck PASS. No live apply yet.

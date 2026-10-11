@@ -38,6 +38,11 @@ create or replace function app_private.seal_reviewed_report_media()
 returns trigger language plpgsql security definer set search_path=pg_catalog as $$
 begin
   if new.status not in ('approved','rejected','changes_requested') then return new; end if;
+  if new.status='approved' and exists(select 1 from public.worker_report_media rm
+      left join public.media m on m.id=rm.media_id and m.tenant_id=new.tenant_id
+      where rm.report_id=new.id and rm.media_id is not null and m.id is null) then
+    raise exception 'Report original media is missing' using errcode='23514';
+  end if;
   if new.status <> 'approved' and (new.reviewed_at is null
       or (tg_op='UPDATE' and new.status is not distinct from old.status
         and new.reviewed_at is not distinct from old.reviewed_at)) then return new; end if;
@@ -144,7 +149,7 @@ begin
     where rm.media_id = old.id and wr.tenant_id = old.tenant_id
     for share of wr
   loop
-    if source_report.status = 'approved' then
+    if source_report.status = 'approved' or (tg_op='DELETE' and source_report.status='submitted') then
       raise exception 'Reviewed media source is immutable; create a new media record' using errcode = '23514';
     end if;
   end loop;

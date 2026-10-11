@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { finalize } from "./upload-session.repository";
 
-let current: { id: string; user_id: string; status: string; expires_at: string; object_path: string | null } | null;
+let current: { id: string; user_id: string; status: string; expires_at: string; object_path: string | null; mime_type: string | null; size_bytes: number | null } | null;
 let writeResult: { data: { id: string } | null; error: unknown };
 let writes: number;
 let filters: Array<[string, unknown]>;
@@ -22,7 +22,7 @@ const client = {
     },
   }),
 } as unknown as SupabaseClient;
-beforeEach(() => { vi.clearAllMocks(); current = { id: "s1", user_id: "u1", status: "created", expires_at: new Date(Date.now() + 3600000).toISOString(), object_path: null }; writeResult = { data: { id: "s1" }, error: null }; writes = 0; filters = []; reads = 0; committed = undefined; });
+beforeEach(() => { vi.clearAllMocks(); current = { id: "s1", user_id: "u1", status: "created", expires_at: new Date(Date.now() + 3600000).toISOString(), object_path: null, mime_type: null, size_bytes: null }; writeResult = { data: { id: "s1" }, error: null }; writes = 0; filters = []; reads = 0; committed = undefined; });
 describe("upload finalization CAS result", () => {
   it("does not report success after a zero-row write", async () => {
     writeResult.data = null;
@@ -35,7 +35,7 @@ describe("upload finalization CAS result", () => {
     expect(filters.some(([key]) => key === "expires_at")).toBe(true);
   });
   it("accepts the exact source after an identical concurrent request wins", async () => {
-    writeResult.data = null; committed = { ...current!, status: "finalized", object_path: payload.object_path };
+    writeResult.data = null; committed = { ...current!, status: "finalized", ...payload };
     expect(await finalize(client, "s1", "t1", "u1", payload)).toBe(true); expect(reads).toBe(2);
   });
   it("rejects a different source after losing the CAS", async () => {
@@ -47,7 +47,7 @@ describe("upload finalization CAS result", () => {
     expect(await finalize(client, "s1", "t1", "u1", payload)).toBe(false);
   });
   it("keeps same-source finalized retries idempotent without writing", async () => {
-    current!.status = "finalized"; current!.object_path = payload.object_path;
+    current!.status = "finalized"; Object.assign(current!, payload);
     expect(await finalize(client, "s1", "t1", "u1", payload)).toBe(true); expect(writes).toBe(0);
   });
   it("rejects a different original after finalization", async () => {
@@ -58,4 +58,10 @@ describe("upload finalization CAS result", () => {
     current!.user_id = "other";
     expect(await finalize(client, "s1", "t1", "u1", payload)).toBe(false); expect(writes).toBe(0);
   });
+  for (const patch of [{ mime_type: "image/jpeg" }, { size_bytes: 99 }]) {
+    it("does not accept a losing finalize with different immutable metadata " + JSON.stringify(patch), async () => {
+      writeResult.data = null; committed = { ...current!, status: "finalized", ...payload, ...patch };
+      expect(await finalize(client, "s1", "t1", "u1", payload)).toBe(false);
+    });
+  }
 });
