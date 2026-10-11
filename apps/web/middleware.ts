@@ -32,8 +32,8 @@ function applyHostProfileHeader(res: NextResponse, request: NextRequest): NextRe
   return res;
 }
 
-function applyApiSecurityHeaders(res: NextResponse): NextResponse {
-  applyApiSecurityHeadersToHeaders(res.headers);
+function applyApiSecurityHeaders(res: NextResponse, pathname = ""): NextResponse {
+  applyApiSecurityHeadersToHeaders(res.headers, pathname);
   return res;
 }
 
@@ -111,7 +111,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/api/v1")) {
-    const res = applyApiSecurityHeaders(NextResponse.next());
+    const res = applyApiSecurityHeaders(NextResponse.next(), pathname);
     return applyHostProfileHeader(res, request);
   }
 

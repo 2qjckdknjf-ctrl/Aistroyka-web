@@ -14,21 +14,25 @@ function isBucketNotFoundError(message: string): boolean {
   return false;
 }
 
-const BUCKET_MANUAL_HINT =
-  "Создайте бакет вручную: Supabase Dashboard → Storage → New bucket → имя: media, Public: включить. Либо добавьте в .env.local переменную SUPABASE_SERVICE_ROLE_KEY (Project Settings → API → service_role) — тогда бакет создастся при загрузке.";
+const STORAGE_ADMIN_REQUIRED_HINT =
+  "File storage is unavailable. Contact the project administrator.";
 
 async function ensureMediaBucket(): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = getAdminClient();
-  if (!admin) {
-    return { ok: false, error: BUCKET_MANUAL_HINT };
+  if (!admin) return { ok: false, error: STORAGE_ADMIN_REQUIRED_HINT };
+  let existing = await admin.storage.getBucket(MEDIA_BUCKET);
+  if (existing.error) {
+    if (!isBucketNotFoundError(existing.error.message)) return { ok: false, error: "Storage visibility verification failed" };
+    const created = await admin.storage.createBucket(MEDIA_BUCKET, { public: false });
+    if (created.error && !/already exists|duplicate/i.test(created.error.message)) return { ok: false, error: "Private storage setup failed" };
+    existing = await admin.storage.getBucket(MEDIA_BUCKET);
   }
-  const { error } = await admin.storage.createBucket(MEDIA_BUCKET, {
-    public: true,
-  });
-  if (error) {
-    const msg = error.message?.toLowerCase() ?? "";
-    if (msg.includes("already exists") || msg.includes("duplicate")) return { ok: true };
-    return { ok: false, error: error.message ?? "Failed to create bucket" };
+  if (existing.error || !existing.data) return { ok: false, error: "Storage visibility verification failed" };
+  if (existing.data.public !== false) {
+    const updated = await admin.storage.updateBucket(MEDIA_BUCKET, { public: false });
+    if (updated.error) return { ok: false, error: "Private storage setup failed" };
+    const verified = await admin.storage.getBucket(MEDIA_BUCKET);
+    if (verified.error || verified.data?.public !== false) return { ok: false, error: "Storage is not private" };
   }
   return { ok: true };
 }
@@ -90,7 +94,8 @@ export async function POST(
   const path = `${projectId}/${crypto.randomUUID()}.${ext}`;
 
   // Если задан SUPABASE_SERVICE_ROLE_KEY — создаём бакет при отсутствии
-  await ensureMediaBucket();
+  const initialStorage = await ensureMediaBucket();
+  if (!initialStorage.ok) return NextResponse.json({ success: false, error: initialStorage.error }, { status: 503 });
 
   let { error: uploadError } = await supabase.storage
     .from(MEDIA_BUCKET)
@@ -112,23 +117,19 @@ export async function POST(
 
   if (uploadError) {
     const msg = uploadError.message ?? "Upload failed";
-    const hint = isBucketNotFoundError(msg) ? ` ${BUCKET_MANUAL_HINT}` : "";
+    const hint = isBucketNotFoundError(msg) ? ` ${STORAGE_ADMIN_REQUIRED_HINT}` : "";
     return NextResponse.json(
       { success: false, error: msg + hint },
       { status: 500 }
     );
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
-
   const { data: media, error: mediaError } = await supabase
     .from("media")
     .insert({
       project_id: projectId,
       type: "image",
-      file_url: publicUrl,
+      file_url: path,
     })
     .select("id, tenant_id")
     .single();

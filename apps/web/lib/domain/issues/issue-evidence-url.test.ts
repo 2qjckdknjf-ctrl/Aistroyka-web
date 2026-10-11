@@ -3,8 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { attachEvidenceUrls } from "./issue.repository";
 import type { ProjectIssue } from "./issue.types";
 
-vi.mock("@/lib/config", () => ({
-  getPublicConfig: () => ({ NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co" }),
+vi.mock("@/lib/domain/media/private-media-display", () => ({
+  privateMediaDisplayUrl: vi.fn().mockResolvedValue("https://example.supabase.co/storage/v1/object/sign/media/t1/sess-1/photo.jpg?token=synthetic"),
 }));
 
 function issue(partial: Partial<ProjectIssue>): ProjectIssue {
@@ -42,7 +42,7 @@ describe("attachEvidenceUrls", () => {
     expect(data[0]?.evidence_url).toBeNull();
   });
 
-  it("maps a finalized session path to a public media URL", async () => {
+  it("maps a finalized session path to a private signed preview", async () => {
     const data = await attachEvidenceUrls(
       supabaseWithSessions([
         { id: "sess-1", object_path: "media/t1/sess-1/photo.jpg", status: "finalized" },
@@ -50,7 +50,7 @@ describe("attachEvidenceUrls", () => {
       [issue({ evidence_upload_session_id: "sess-1" })]
     );
     expect(data[0]?.evidence_url).toBe(
-      "https://example.supabase.co/storage/v1/object/public/media/t1/sess-1/photo.jpg"
+      "https://example.supabase.co/storage/v1/object/sign/media/t1/sess-1/photo.jpg?token=synthetic"
     );
   });
 

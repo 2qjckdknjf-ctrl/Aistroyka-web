@@ -1,3 +1,5 @@
+import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
+vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: vi.fn(async (_client: unknown, input: { projectIdClaim: string }) => ({ ok: true, imageUrl: "https://storage.test/private-signed?token=synthetic", objectPath: "private/source.png", trustedProjectId: input.projectIdClaim, source: "media" })) }));
 import { describe, expect, it, vi } from "vitest";
 import { processOneJob } from "./runOneJob";
 
@@ -243,4 +245,19 @@ describe("processOneJob", () => {
       })
     );
   });
+  it("resolves bucket-relative uploads before AI and preserves trusted parent IDs", async () => {
+    const supabase = createMockSupabase({ dequeue: { data: [{ id: "job", media_id: "media" }], error: null }, media: { data: { file_url: "proj-1/private.png", project_id: "proj-1", type: "image" }, error: null } });
+    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, headers: new Headers(), json: async () => ({ stage: "structure", completion_percent: 10, risk_level: "low", detected_issues: [], recommendations: [] }) }); vi.stubGlobal("fetch", fetch);
+    await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
+    expect(resolveAIMediaImage).toHaveBeenCalledWith(supabase, { tenantId: "tenant-a", mediaId: "media", projectIdClaim: "proj-1" });
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({ media_id: "media", project_id: "proj-1", image_url: "https://storage.test/private-signed?token=synthetic" });
+  });
+  it.each([false, true])("does not send denied or unavailable sources to AI; retryable=%s", async retryable => {
+    const supabase = createMockSupabase({ dequeue: { data: [{ id: "job", media_id: "media" }], error: null }, media: { data: { file_url: "proj-1/private.png", project_id: "proj-1", type: "image" }, error: null } });
+    vi.mocked(resolveAIMediaImage).mockResolvedValueOnce({ ok: false, retryable, code: "AI_MEDIA_ACCESS_DENIED", message: "synthetic" });
+    const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
+    expect(await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase })).toMatchObject({ status: "failed" });
+    expect(fetch).not.toHaveBeenCalled(); expect(supabase.rpc).toHaveBeenCalledWith("fail_session_analysis_job", expect.objectContaining({ p_error_type: retryable ? "provider_unavailable" : "validation_error" }));
+  });
+
 });

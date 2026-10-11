@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getPublicConfig } from "@/lib/config";
-import { publicMediaObjectUrl } from "@/lib/platform/ai/media-path";
+import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
 import type { ProjectIssue, CreateIssueInput, UpdateIssueInput } from "./issue.types";
 
 const ISSUE_SELECT =
@@ -117,7 +116,7 @@ export async function countOpenByProject(
   return count ?? 0;
 }
 
-/** Display URL from a finalized `issue_evidence` upload session. Same public-media helper reports use. */
+/** Display URL from a finalized `issue_evidence` upload session. Private caller-RLS signing. */
 export async function attachEvidenceUrls(
   supabase: SupabaseClient,
   issues: ProjectIssue[]
@@ -146,19 +145,10 @@ export async function attachEvidenceUrls(
     }
   }
 
-  let baseUrl = "";
-  try {
-    baseUrl = getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "";
-  } catch {
-    baseUrl = "";
-  }
-
-  return issues.map((issue) => {
+  return Promise.all(issues.map(async issue => {
     const sessionId = issue.evidence_upload_session_id;
     const objectPath = sessionId ? pathBySessionId.get(sessionId) : undefined;
-    return {
-      ...issue,
-      evidence_url: objectPath && baseUrl ? publicMediaObjectUrl(baseUrl, objectPath) : null,
-    };
-  });
+    return { ...issue, evidence_url: objectPath && sessionId
+      ? await privateMediaDisplayUrl(supabase, { tenantId: issue.tenant_id, uploadSessionId: sessionId }) : null };
+  }));
 }

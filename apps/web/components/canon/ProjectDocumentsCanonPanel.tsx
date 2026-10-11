@@ -67,7 +67,7 @@ function DocumentPreviewPane({
   const tDetail = useTranslations("dashboardDetail");
   const tPortal = useTranslations("portalStatus");
   const [shareHint, setShareHint] = useState<string | null>(null);
-  const url = projectDocumentFileUrl(doc.object_path);
+  const url = projectDocumentFileUrl(doc.object_path, projectId, doc.id);
   const fileName = fileNameFromObjectPath(doc.object_path);
 
   const intelligenceQuery = useQuery({
@@ -103,7 +103,7 @@ function DocumentPreviewPane({
   async function handleShare() {
     if (!url) return;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(new URL(url, window.location.origin).href);
       setShareHint(t("docShareCopied"));
       window.setTimeout(() => setShareHint(null), 2500);
     } catch {
@@ -299,10 +299,10 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
               className="canon-ghost-btn !text-xs"
               disabled={!selected?.object_path}
               onClick={async () => {
-                const shareUrl = selected ? projectDocumentFileUrl(selected.object_path) : null;
+                const shareUrl = selected ? projectDocumentFileUrl(selected.object_path, projectId, selected.id) : null;
                 if (!shareUrl) return;
                 try {
-                  await navigator.clipboard.writeText(shareUrl);
+                  await navigator.clipboard.writeText(new URL(shareUrl, window.location.origin).href);
                   setShareHint(t("docShareCopied"));
                   window.setTimeout(() => setShareHint(null), 2500);
                 } catch {
