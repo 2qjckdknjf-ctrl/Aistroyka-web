@@ -3905,7 +3905,21 @@
     "managerActionSource_recommendation": "recomendación",
     "managerActionSource_health": "salud",
     "managerActionSource_executive": "resumen ejecutivo",
-    "fromExecutiveSummary": "Del resumen ejecutivo"
+    "fromExecutiveSummary": "Del resumen ejecutivo",
+    "reportPublicationTitle": "Publicar fotos del informe",
+    "reportPublicationHint": "Selecciona las fotos expresamente. Aprobar un informe no comparte sus fotos con el cliente.",
+    "reportPublicationStale": "La publicación ha cambiado. Actualiza la lista antes de intentarlo de nuevo.",
+    "reportPublicationError": "La publicación no está disponible. Actualiza la lista y vuelve a intentarlo.",
+    "reportPublicationRefresh": "Actualizar",
+    "reportPublicationPrerequisite": "Aprueba el informe y activa el portal del cliente para publicar fotos.",
+    "reportPublicationEmpty": "Este informe no tiene fotos adjuntas.",
+    "reportPublicationPhoto": "Foto {number}",
+    "reportPublicationVisible": "Visible para el cliente",
+    "reportPublicationPrivate": "Solo uso interno",
+    "reportPublicationWithdrawPhoto": "Retirar foto {number}",
+    "reportPublicationPublishPhoto": "Publicar foto {number}",
+    "reportPublicationWithdraw": "Retirar",
+    "reportPublicationPublish": "Publicar"
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",
