@@ -11,5 +11,7 @@
   "verified_remote_receipts": 9,
   "migration_apply": "NOT_YET_APPLIED",
   "migration_source": "apps/web/supabase/migrations/20261011230105_unique_published_evidence_sources.sql",
-  "migration_sha256": "19c8c5a94a805dab89ce96c505e28990f52669f7ad75234ccba13a71690240bf"
+  "migration_sha256": "19c8c5a94a805dab89ce96c505e28990f52669f7ad75234ccba13a71690240bf",
+  "stacked_main_sha": "d77dd28a6ae8c22ad1cef3657be934ae8d4521e9",
+  "combined_publication_gallery_tests_passed": 54
 }
