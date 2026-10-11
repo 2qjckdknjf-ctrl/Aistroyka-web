@@ -18,7 +18,7 @@ create table accounts(id uuid primary key,status text);
 create table tenants(id uuid primary key,user_id uuid,account_id uuid);
 create table tenant_members(tenant_id uuid,user_id uuid,role text);
 create table media(id uuid primary key,tenant_id uuid,project_id uuid,type text,file_url text,uploaded_at timestamptz);
-create table worker_reports(id uuid primary key,tenant_id uuid,status text,reviewed_at timestamptz);
+create table worker_reports(id uuid primary key,tenant_id uuid,status text,reviewed_at timestamptz,user_id uuid default '00000000-0000-4000-8000-000000000005');
 create table worker_report_media(report_id uuid,media_id uuid,created_at timestamptz default now());
 create table visual_evidence_records(id uuid primary key,tenant_id uuid,project_id uuid,media_id uuid,owner_visible boolean,manager_verified boolean);
 create table upload_sessions(id uuid primary key,tenant_id uuid not null,user_id uuid not null,purpose text not null,status text not null default 'created' check(status in ('created','uploaded','finalized','expired')),object_path text,mime_type text,size_bytes bigint,created_at timestamptz not null default now(),expires_at timestamptz not null,archived_at timestamptz,checksum text,chunks_expected integer,chunks_received integer,background_hint boolean,last_client_ts timestamptz);
@@ -32,6 +32,7 @@ await q("insert into accounts values($1,'active'),($2,'active')",[id(101),id(102
 await q('insert into tenants values($1,$2,$3),($4,$5,$6)',[id(201),id(1),id(101),id(202),id(2),id(102)]);
 for(const [u,role] of [[3,'stakeholder'],[4,'viewer'],[5,'member'],[6,'admin'],[7,'member']])await q('insert into tenant_members values($1,$2,$3)',[id(201),id(u),role]);
 const source=readFileSync(root+'20261011163944_harden_upload_session_source.sql','utf8');await db.exec(source);await db.exec(source);
+const seedLink=(r,m)=>as(null,()=>q('insert into worker_report_media values($1,$2)',[id(r),id(m)]),'service_role');
 const path=(n,name='original.png')=>id(201)+'/'+id(n)+'/'+name;
 const create=(n,u=5)=>q("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(n),id(201),id(u)]);
 await test('member creates own empty session',()=>as(5,()=>create(801)));
@@ -61,7 +62,7 @@ await test('viewer may read but cannot mutate',()=>as(4,async()=>{assert((await 
 await test('suspended account hides and denies own session insert',async()=>{await q("update accounts set status='suspended' where id=$1",[id(101)]);await as(5,async()=>{assert.equal((await q('select id from upload_sessions')).rows.length,0);await denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(807),id(201),id(5)],'42501')});await q("update accounts set status='active' where id=$1",[id(101)])});
 await test('service may clean an exact finalized source',()=>as(null,()=>q('delete from upload_sessions where id=$1',[id(805)]),'service_role'));
 await q("insert into media values($1,$2,$3,'image','original.png',now()),($4,$2,$3,'image','manual.png',now())",[id(901),id(201),id(301),id(902)]);
-await q("insert into worker_reports values($1,$2,'submitted',null)",[id(1001),id(201)]);await q('insert into worker_report_media values($1,$2)',[id(1001),id(901)]);
+await q("insert into worker_reports values($1,$2,'submitted',null)",[id(1001),id(201)]);await seedLink(1001,901);
 await test('unreviewed media path may be corrected',()=>as(5,()=>q("update media set file_url='corrected.png' where id=$1",[id(901)])));
 await test('media primary identity is stable even before review',()=>as(null,()=>denied('update media set id=$1 where id=$2',[id(909),id(901)],'23514'),'service_role'));
 await q("update worker_reports set status='approved',reviewed_at=now() where id=$1",[id(1001)]);
@@ -71,8 +72,8 @@ await test('manual verified publication freezes its media pointer',async()=>{awa
 await test('withdrawal cannot unseal a previously published original',async()=>{await as(1,()=>q('update visual_evidence_records set owner_visible=false,manager_verified=false where id=$1',[id(1101)]));await as(5,()=>denied("update media set file_url='withdrawn-substitute.png' where id=$1",[id(902)],'23514'))});
 await test('attachment removal cannot unseal reviewed report media',async()=>{await q('delete from worker_report_media where report_id=$1',[id(1001)]);await as(5,()=>denied("update media set file_url='detached-substitute.png' where id=$1",[id(901)],'23514'))});
 await test('reviewed source snapshots are private',()=>as(5,()=>denied('select file_url from app_private.reviewed_media_sources',[],'42501')));
-for(const [n,status] of [[906,'rejected'],[907,'changes_requested']])await test(status+' review seals media even after detachment',async()=>{await q("insert into media values($1,$2,$3,'image','review-outcome.png',now())",[id(n),id(201),id(301)]);await q("insert into worker_reports values($1,$2,'submitted',null)",[id(n+100),id(201)]);await q('insert into worker_report_media values($1,$2)',[id(n+100),id(n)]);await q('update worker_reports set status=$1,reviewed_at=now() where id=$2',[status,id(n+100)]);await q('delete from worker_report_media where report_id=$1',[id(n+100)]);await as(5,()=>denied("update media set file_url='outcome-substitute.png' where id=$1",[id(n)],'23514'))});
-await test('new replacement stays editable until its own review',async()=>{await q("insert into media values($1,$2,$3,'image','replacement.png',now())",[id(908),id(201),id(301)]);await q('insert into worker_report_media values($1,$2)',[id(1006),id(908)]);await q("update worker_reports set status='submitted' where id=$1",[id(1006)]);await as(5,()=>q("update media set file_url='replacement-corrected.png' where id=$1",[id(908)]));await q("update worker_reports set status='approved',reviewed_at=now() where id=$1",[id(1006)]);await as(5,()=>denied("update media set file_url='replacement-after-review.png' where id=$1",[id(908)],'23514'))});
+for(const [n,status] of [[906,'rejected'],[907,'changes_requested']])await test(status+' review seals media even after detachment',async()=>{await q("insert into media values($1,$2,$3,'image','review-outcome.png',now())",[id(n),id(201),id(301)]);await q("insert into worker_reports values($1,$2,'submitted',null)",[id(n+100),id(201)]);await seedLink(n+100,n);await q('update worker_reports set status=$1,reviewed_at=now() where id=$2',[status,id(n+100)]);await q('delete from worker_report_media where report_id=$1',[id(n+100)]);await as(5,()=>denied("update media set file_url='outcome-substitute.png' where id=$1",[id(n)],'23514'))});
+await test('new replacement stays editable until its own review',async()=>{await q("insert into media values($1,$2,$3,'image','replacement.png',now())",[id(908),id(201),id(301)]);await seedLink(1006,908);await q("update worker_reports set status='submitted' where id=$1",[id(1006)]);await as(5,()=>q("update media set file_url='replacement-corrected.png' where id=$1",[id(908)]));await q("update worker_reports set status='approved',reviewed_at=now() where id=$1",[id(1006)]);await as(5,()=>denied("update media set file_url='replacement-after-review.png' where id=$1",[id(908)],'23514'))});
 await test('publication cannot lock a foreign project media',()=>as(1,()=>denied('insert into visual_evidence_records values($1,$2,$3,$4,true,true)',[id(1102),id(201),id(302),id(902)],'23514')));
 await test('client cannot delete a reviewed media source',()=>as(5,()=>denied('delete from media where id=$1',[id(901)],'23514')));
 await test('client cannot delete manually verified media',()=>as(5,()=>denied('delete from media where id=$1',[id(902)],'23514')));
@@ -90,7 +91,7 @@ if(native){
     await first.query('commit');assert.equal((await late)?.code,'23514');await second.query('rollback');
     assert.equal((await q('select object_path from upload_sessions where id=$1',[id(808)])).rows[0].object_path,path(808));console.log('PASS native competing finalization keeps the first immutable source');
     await q("insert into media values($1,$2,$3,'image','race-original.png',now())",[id(903),id(201),id(301)]);
-    await q("insert into worker_reports values($1,$2,'submitted',null)",[id(1002),id(201)]);await q('insert into worker_report_media values($1,$2)',[id(1002),id(903)]);
+    await q("insert into worker_reports values($1,$2,'submitted',null)",[id(1002),id(201)]);await seedLink(1002,903);
     await second.query('begin');await second.query("update worker_reports set status='approved',reviewed_at=now() where id=$1",[id(1002)]);
     await first.query('begin');await first.query('set local role authenticated');await first.query("select set_config('request.jwt.claim.sub',$1,true)",[id(5)]);
     const firstPid=(await first.query('select pg_backend_pid() as pid')).rows[0].pid;
@@ -106,6 +107,18 @@ if(native){
     blocked=false;for(let i=0;i<250;i++){if((await native.query('select wait_event_type from pg_stat_activity where pid=$1',[pid])).rows[0]?.wait_event_type==='Lock'){blocked=true;break}await new Promise(r=>setTimeout(r,20))}assert(blocked);
     await first.query('commit');assert.equal((await lateManual)?.code,'23514');await second.query('rollback');
     assert.equal((await q('select file_url from media where id=$1',[id(905)])).rows[0].file_url,'manual-race-original.png');console.log('PASS native new manual publication blocks media substitution');
+    for(const n of [910,911]){await q("insert into media values($1,$2,$3,'image','attachment-race.png',now())",[id(n),id(201),id(301)]);await q("insert into worker_reports(id,tenant_id,status,reviewed_at) values($1,$2,'changes_requested',now()-interval '1 minute')",[id(n+100),id(201)])}
+    await second.query('begin');await second.query('set local role authenticated');await second.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','authenticated',true)",[id(5)]);
+    await second.query('insert into worker_report_media(report_id,media_id) values($1,$2)',[id(1010),id(910)]);
+    await first.query('begin');const reviewAfterAttachment=first.query("update worker_reports set status='rejected',reviewed_at=now() where id=$1",[id(1010)]);
+    blocked=false;for(let i=0;i<250;i++){if((await native.query('select wait_event_type from pg_stat_activity where pid=$1',[firstPid])).rows[0]?.wait_event_type==='Lock'){blocked=true;break}await new Promise(r=>setTimeout(r,20))}assert(blocked);
+    await second.query('commit');await reviewAfterAttachment;await first.query('commit');
+    assert.equal((await q('select count(*)::int as n from app_private.reviewed_media_sources where media_id=$1',[id(910)])).rows[0].n,1);console.log('PASS native attachment commits before blocked rejection; source sealed');
+    await first.query('begin');await first.query("update worker_reports set status='rejected',reviewed_at=now() where id=$1",[id(1011)]);
+    await second.query('begin');await second.query('set local role authenticated');await second.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','authenticated',true)",[id(5)]);
+    const lateAttachment=second.query('insert into worker_report_media(report_id,media_id) values($1,$2)',[id(1011),id(911)]).then(()=>null,e=>e);
+    blocked=false;for(let i=0;i<250;i++){if((await native.query('select wait_event_type from pg_stat_activity where pid=$1',[pid])).rows[0]?.wait_event_type==='Lock'){blocked=true;break}await new Promise(r=>setTimeout(r,20))}assert(blocked);
+    await first.query('commit');assert.equal((await lateAttachment)?.code,'23514');await second.query('rollback');console.log('PASS native rejection commits before blocked attachment; stale insert denied');
   }finally{await first.query('rollback');await second.query('rollback');await first.end();await second.end()}
 }
 await test('service cleanup can remove reviewed media',()=>as(null,async()=>assert.equal((await q('delete from media where id=$1 returning id',[id(901)])).rows.length,1),'service_role'));

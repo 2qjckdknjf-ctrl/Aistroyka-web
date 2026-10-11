@@ -1,6 +1,28 @@
 -- Finalized upload paths are reviewed source identities, not editable pointers.
 begin;
 
+create or replace function app_private.lock_report_attachment_review()
+returns trigger language plpgsql security definer set search_path=pg_catalog as $$
+declare parent_status text;
+begin
+  select wr.status into parent_status from public.worker_reports wr
+  where wr.id=new.report_id and (auth.role()='service_role' or (
+    wr.user_id=auth.uid() and public.is_internal_tenant_writer_for_tenant(wr.tenant_id)
+    and app_private.customer_intake_tenant_account_active(wr.tenant_id))) for share of wr;
+  if not found then raise exception 'Report attachment unavailable' using errcode='42501'; end if;
+  if auth.role() is distinct from 'service_role' and parent_status not in ('draft','changes_requested') then
+    raise exception 'Report attachment is no longer editable' using errcode='23514';
+  end if;
+  if tg_op='INSERT' then new.created_at:=clock_timestamp(); end if;
+  return new;
+end;
+$$;
+revoke all on function app_private.lock_report_attachment_review() from public, anon, authenticated;
+grant execute on function app_private.lock_report_attachment_review() to service_role;
+drop trigger if exists trg_report_attachment_review_lock on public.worker_report_media;
+create trigger trg_report_attachment_review_lock before insert or update on public.worker_report_media
+for each row execute function app_private.lock_report_attachment_review();
+
 -- Keep review history independent from reversible visibility flags/attachments.
 create table if not exists app_private.reviewed_media_sources (
   media_id uuid primary key references public.media(id) on delete cascade,
