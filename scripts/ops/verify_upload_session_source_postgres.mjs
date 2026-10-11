@@ -7,11 +7,12 @@ let db,native,Client;
 if(nativeUrl){const url=new URL(nativeUrl);assert(['localhost','127.0.0.1'].includes(url.hostname));({Client}=await import('pg'));native=new Client({connectionString:nativeUrl});assert(['localhost','127.0.0.1','/var/run/postgresql'].includes(native.connectionParameters.host));await native.connect();assert.equal((await native.query("select count(*)::int as n from pg_tables where schemaname in ('public','auth','app_private')")).rows[0].n,0,'Use an empty isolated local database');db={exec:s=>native.query(s),query:(s,p)=>native.query(s,p),close:()=>native.end()}}else db=new PGlite();
 const q=(s,p=[])=>db.query(s,p),id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const passes=[];const test=async(name,fn)=>{await fn();passes.push(name);console.log('PASS',name)};
-const as=async(user,fn,role='authenticated')=>{await db.exec('set role '+role);await q("select set_config('request.jwt.claim.sub',$1,false)",[user?id(user):'']);try{return await fn()}finally{await db.exec('reset role')}};
+const as=async(user,fn,role='authenticated')=>{await db.exec('set role '+role);await q("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claim.role',$2,false)",[user?id(user):'',role]);try{return await fn()}finally{await db.exec('reset role')}};
 const denied=async(sql,args,code)=>{let error;try{await q(sql,args)}catch(e){error=e}assert(error,'Expected denial');assert.equal(error.code,code)};
 await db.exec(`do $$begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon; end if; if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if; if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role bypassrls; end if; end$$;
 create schema auth;create schema app_private;grant usage on schema public,auth,app_private to anon,authenticated,service_role;
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+create function auth.role() returns text language sql stable as $$select current_setting('request.jwt.claim.role',true)$$;
 alter default privileges in schema public grant all on tables to anon,authenticated,service_role;
 create table accounts(id uuid primary key,status text);
 create table tenants(id uuid primary key,user_id uuid,account_id uuid);
@@ -34,6 +35,9 @@ const source=readFileSync(root+'20261011163944_harden_upload_session_source.sql'
 const path=(n,name='original.png')=>id(201)+'/'+id(n)+'/'+name;
 const create=(n,u=5)=>q("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(n),id(201),id(u)]);
 await test('member creates own empty session',()=>as(5,()=>create(801)));
+await test('client cannot extend its server expiry',()=>as(5,()=>denied("update upload_sessions set expires_at=now()+interval '10 years' where id=$1",[id(801)],'23514')));
+await test('client cannot create unlimited expiry',()=>as(5,()=>denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '10 years')",[id(803),id(201),id(5)],'23514')));
+await test('client cannot create an already elapsed session',()=>as(5,()=>denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()-interval '1 minute')",[id(803),id(201),id(5)],'23514')));
 await test('implicit tenant owner creates own session',()=>as(1,()=>create(802,1)));
 for(const user of [3,4])await test('stakeholder/viewer cannot create '+user,()=>as(user,()=>denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(803),id(201),id(user)],'42501')));
 await test('cannot impersonate another uploader',()=>as(5,()=>denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(803),id(201),id(7)],'42501')));
@@ -62,12 +66,15 @@ await q("update worker_reports set status='approved',reviewed_at=now() where id=
 for(const [key,value] of [['file_url','substituted.png'],['id',id(909)],['tenant_id',id(202)],['project_id',id(302)],['type','video']])await test('reviewed media '+key+' immutable',()=>as(null,()=>denied('update media set '+key+'=$1 where id=$2',[value,id(901)],'23514'),'service_role'));
 await test('review history keeps media frozen after changes requested',async()=>{await q("update worker_reports set status='changes_requested' where id=$1",[id(1001)]);await as(5,()=>denied("update media set file_url='new-unreviewed.png' where id=$1",[id(901)],'23514'))});
 await test('manual verified publication freezes its media pointer',async()=>{await q('insert into visual_evidence_records values($1,$2,$3,true,true)',[id(1101),id(201),id(902)]);await as(5,()=>denied("update media set file_url='manual-substitute.png' where id=$1",[id(902)],'23514'))});
+await test('client cannot delete a reviewed media source',()=>as(5,()=>denied('delete from media where id=$1',[id(901)],'23514')));
+await test('client cannot delete manually verified media',()=>as(5,()=>denied('delete from media where id=$1',[id(902)],'23514')));
+await test('unreviewed media deletion remains compatible',async()=>{await q("insert into media values($1,$2,$3,'image','draft.png',now())",[id(904),id(201),id(301)]);await as(5,async()=>assert.equal((await q('delete from media where id=$1 returning id',[id(904)])).rows.length,1))});
 await test('unrelated media metadata remains compatible',()=>as(5,()=>q('update media set uploaded_at=now() where id=$1',[id(901)])));
 if(native){
   const first=new Client({connectionString:nativeUrl}),second=new Client({connectionString:nativeUrl});await first.connect();await second.connect();
   try{
     await as(5,()=>create(808));
-    for(const c of [first,second]){await c.query('begin');await c.query('set local role authenticated');await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id(5)])}
+    for(const c of [first,second]){await c.query('begin');await c.query('set local role authenticated');await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','authenticated',true)",[id(5)])}
     await first.query("update upload_sessions set status='finalized',object_path=$1 where id=$2",[path(808),id(808)]);
     const pid=(await second.query('select pg_backend_pid() as pid')).rows[0].pid;
     const late=second.query("update upload_sessions set status='finalized',object_path=$1 where id=$2",[path(808,'substitute.png'),id(808)]).then(()=>null,e=>e);
@@ -85,4 +92,5 @@ if(native){
     assert.equal((await q('select file_url from media where id=$1',[id(903)])).rows[0].file_url,'race-original.png');console.log('PASS native report approval blocks stale media substitution');
   }finally{await first.query('rollback');await second.query('rollback');await first.end();await second.end()}
 }
+await test('service cleanup can remove reviewed media',()=>as(null,async()=>assert.equal((await q('delete from media where id=$1 returning id',[id(901)])).rows.length,1),'service_role'));
 await db.close();console.log(passes.length+' upload source SQL contracts PASS');

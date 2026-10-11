@@ -8,6 +8,9 @@ declare
   session_prefix text;
 begin
   if tg_op = 'UPDATE' then
+    if current_user = 'authenticated' and new.expires_at is distinct from old.expires_at then
+      raise exception 'Upload session expiry is server controlled' using errcode = '23514';
+    end if;
     if new.id is distinct from old.id or new.tenant_id is distinct from old.tenant_id
         or new.user_id is distinct from old.user_id or new.purpose is distinct from old.purpose
         or new.created_at is distinct from old.created_at then
@@ -33,6 +36,12 @@ begin
   end if;
   if tg_op = 'INSERT' and (new.status <> 'created' or new.object_path is not null) then
     raise exception 'Upload sessions start as empty created sources' using errcode = '23514';
+  end if;
+  if tg_op = 'INSERT' then
+    new.created_at := now();
+    if new.expires_at <= now() or new.expires_at > now() + interval '61 minutes' then
+      raise exception 'Upload session expiry must be within the server TTL' using errcode = '23514';
+    end if;
   end if;
   if new.object_path is not null then
     relative_path := case when left(new.object_path, 6) = 'media/' then substring(new.object_path from 7) else new.object_path end;
@@ -64,7 +73,8 @@ create or replace function app_private.guard_reviewed_media_source()
 returns trigger language plpgsql security definer set search_path = pg_catalog as $$
 declare source_report record; source_evidence record;
 begin
-  if new.id is not distinct from old.id and new.tenant_id is not distinct from old.tenant_id
+  if tg_op = 'DELETE' and auth.role() = 'service_role' then return old; end if;
+  if tg_op = 'UPDATE' and new.id is not distinct from old.id and new.tenant_id is not distinct from old.tenant_id
       and new.project_id is not distinct from old.project_id and new.type is not distinct from old.type
       and new.file_url is not distinct from old.file_url then return new; end if;
   for source_report in
@@ -85,13 +95,14 @@ begin
       raise exception 'Published media source is immutable; create a new media record' using errcode = '23514';
     end if;
   end loop;
+  if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
 $$;
 revoke all on function app_private.guard_reviewed_media_source() from public, anon, authenticated;
 grant execute on function app_private.guard_reviewed_media_source() to service_role;
 drop trigger if exists trg_reviewed_media_source on public.media;
-create trigger trg_reviewed_media_source before update on public.media
+create trigger trg_reviewed_media_source before update or delete on public.media
 for each row execute function app_private.guard_reviewed_media_source();
 
 drop policy if exists upload_sessions_internal on public.upload_sessions;
