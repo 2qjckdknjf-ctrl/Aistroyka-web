@@ -480,3 +480,16 @@
 "mgr_graph_ai_edges" = "Aristas";
 
 "mgr_graph_ai_truncated" = "Vista del grafo truncada por tamaño.";
+
+// Explicit selected report photo publication
+"mgr_photo_publication_title" = "Publicación de fotos";
+"mgr_photo_publication_hint" = "La acción afecta a la foto seleccionada. Aprobar el informe no la publica.";
+"mgr_photo_publication_refresh" = "Actualizar";
+"mgr_photo_publication_enabled" = "Publicación activada";
+"mgr_photo_publication_paused" = "Publicación pausada";
+"mgr_photo_publication_private" = "Solo uso interno";
+"mgr_photo_publication_prerequisite" = "Aprueba el informe y activa el portal del cliente antes de publicar.";
+"mgr_photo_publication_withdraw" = "Retirar foto seleccionada";
+"mgr_photo_publication_publish" = "Publicar foto seleccionada";
+"mgr_photo_publication_error" = "Publicación no disponible. Actualiza y vuelve a intentarlo.";
+"mgr_photo_publication_stale" = "La publicación ha cambiado. Actualiza antes de intentarlo de nuevo.";

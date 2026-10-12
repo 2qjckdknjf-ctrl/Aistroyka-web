@@ -10,6 +10,19 @@ import Foundation
 import Shared
 
 enum ManagerUITestLaunchHooks {
+    static var publicationFixture: (reportId: String, projectId: String, tag: String)? {
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        guard isE2EEnabled, env["AISTROYKA_E2E_BASE_URL"] == "https://staging.aistroyka.ai",
+              let report = env["AISTROYKA_E2E_PUBLICATION_REPORT_ID"], UUID(uuidString: report) != nil,
+              let project = env["AISTROYKA_E2E_PROJECT_ID"], UUID(uuidString: project) != nil,
+              let tag = env["AISTROYKA_E2E_PUBLICATION_TAG"], tag.hasPrefix("qa-published-evidence-"),
+              UUID(uuidString: String(tag.dropFirst("qa-published-evidence-".count))) != nil else { return nil }
+        return (report, project, tag)
+        #else
+        return nil
+        #endif
+    }
     static var isEnabled: Bool {
         ProcessInfo.processInfo.environment["AISTROYKA_UI_TEST"] == "1"
     }

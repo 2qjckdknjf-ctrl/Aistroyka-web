@@ -1,10 +1,10 @@
 # AISTROYKA Current Project Truth Index
 
-Сверено2026-10-12: main #432 fef353f8; staging38184829698/production38185083582 SUCCESS, actual staging/apex/www fef353f. [STATUS](../STATUS.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md).
+Наблюдение 2026-10-12: main #438 `be28832c`; свежий origin/main остаётся источником текущего кода. #437 на staging `fac7a17` прошёл 13 реальных проверок PNG/Proof Pack/PDF/revocation, тестовый набор полностью очищен. Production run 38190089187 SUCCESS; apex/www обслуживают `fac7a17`. #433/#434 не являются успешным доказательством оригиналов: их регрессия исправлена #437. [Runtime proof](reports/private-original-runtime-2026-10-12/RESULT.md).
 
-[Manager publication live closure](reports/manager-publication-live-2026-10-12/RESULT.md):10 actual lifecycle/source-unique checks +13 gateway/share/document checks PASS with exact cleanup. Unique-source migration applied after before-apply503/no-write proof;11-source/10-ID receipts verified. Customer #431 web/iOS source is deployed;13 Shared checks and live simulator image decode1/1 PASS, physical gallery/store separate. Active #433 repairs per-read streaming byte limits;76 scoped checks/typecheck/lint PASS, runtime proof pending.
+#435 реализует явную публикацию/отзыв выбранного фото в Manager: 7 Shared checks, Debug build, live simulator 1/1 и server readback PASS; previous-head three-app smoke PASS. После включения main через #438 требуется свежий CI/review. #438 исправляет транспорт существующего async executor; 38 тестов PASS, свежий живой job/result ещё нужен. [Native proof](reports/manager-native-publication-2026-10-12/RESULT.md).
 
-Next:complete full Worker/report/publication and native Manager flow, source-linked Vision/Graph/video, then reviewed preproject extraction.74 retained mixed PRs need semantic review; saved dirty/ahead/release/cursor sources remain. Contractor-ops-only controlled pilot; full-project/store/legal/billing closure remains open. Older snapshots below are historical.
+Далее: полный Worker/report/publication сценарий, source-linked Vision/Graph/video, затем reviewed preproject extraction. 11-source/10-ID receipts сохраняются; DDL в этом срезе не применялся. Physical iPhone Offline; store/legal/billing/time gates и 74 смешанных PR остаются открытыми. Сохранённые папки не переписываются. [STATUS](../STATUS.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md). Старые снимки ниже являются историей.
 
 ---
 

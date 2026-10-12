@@ -1,0 +1,10 @@
+{
+  "sha": "fac7a170bdb0d9d700c3fc657300bb481880cd15",
+  "production_run": 38190089187,
+  "production_run_conclusion": "SUCCESS",
+  "hosts": [
+    "aistroyka.ai",
+    "www.aistroyka.ai"
+  ],
+  "served_sha7": "fac7a17"
+}
