@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
+vi.mock("@/lib/platform/jobs/job.recovery",()=>({recoverExpiredMaintenanceClaims:vi.fn().mockResolvedValue({requeued:0,dead:0})}));
+vi.mock("@/lib/api/require-platform-admin-legacy-route",()=>({blockAuthenticatedNonPlatformCronCaller:vi.fn().mockResolvedValue(null)}));
 vi.mock("@/lib/platform/jobs/job.service", () => ({ enqueueJob: vi.fn() }));
 vi.mock("@/lib/api/cron-auth", () => ({ requireCronSecretIfEnabled: vi.fn().mockReturnValue(null) }));
 
@@ -15,6 +17,8 @@ describe("POST /api/v1/admin/jobs/schedule-reconcile", () => {
     };
     const { getAdminClient } = await import("@/lib/supabase/admin");
     const { enqueueJob } = await import("@/lib/platform/jobs/job.service");
+    const { recoverExpiredMaintenanceClaims } = await import("@/lib/platform/jobs/job.recovery");
+    vi.mocked(recoverExpiredMaintenanceClaims).mockResolvedValueOnce({requeued:1,dead:0}).mockResolvedValueOnce({requeued:1,dead:0});
     vi.mocked(getAdminClient).mockReturnValue(admin as any);
     vi.mocked(enqueueJob).mockImplementation(async (_a, p) => ({ id: `job-${p.tenant_id}`, ...p } as any));
 
@@ -23,8 +27,11 @@ describe("POST /api/v1/admin/jobs/schedule-reconcile", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({ ok: true, enqueued: 2, tenants: 2 });
+    expect(body).toEqual({ ok: true, enqueued: 2, recovered: 2, exhausted: 0, tenants: 2 });
     expect(enqueueJob).toHaveBeenCalledTimes(2);
+    expect(recoverExpiredMaintenanceClaims).toHaveBeenCalledWith(admin,"t1");
+    expect(recoverExpiredMaintenanceClaims).toHaveBeenCalledWith(admin,"t2");
+    expect(vi.mocked(recoverExpiredMaintenanceClaims).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(enqueueJob).mock.invocationCallOrder[0]);
     expect(enqueueJob).toHaveBeenNthCalledWith(1, admin, expect.objectContaining({
       tenant_id: "t1",
       type: "upload_reconcile",
@@ -45,4 +52,15 @@ describe("POST /api/v1/admin/jobs/schedule-reconcile", () => {
     expect(res.status).toBe(403);
     vi.mocked(requireCronSecretIfEnabled).mockReturnValue(null);
   });
+  it("denies a tenant admin before recovery or scheduling",async()=>{
+    vi.clearAllMocks();const { blockAuthenticatedNonPlatformCronCaller } = await import("@/lib/api/require-platform-admin-legacy-route");const { recoverExpiredMaintenanceClaims }=await import("@/lib/platform/jobs/job.recovery");const {enqueueJob}=await import("@/lib/platform/jobs/job.service");
+    vi.mocked(blockAuthenticatedNonPlatformCronCaller).mockResolvedValueOnce(new Response(JSON.stringify({error:"Platform owner required"}),{status:403}) as any);
+    expect((await POST(new Request("https://x/api/v1/admin/jobs/schedule-reconcile",{method:"POST"}))).status).toBe(403);expect(recoverExpiredMaintenanceClaims).not.toHaveBeenCalled();expect(enqueueJob).not.toHaveBeenCalled();
+  });
+  it("returns a sanitized retryable response on recovery lookup failure",async()=>{
+    vi.clearAllMocks();const {getAdminClient}=await import("@/lib/supabase/admin");const {recoverExpiredMaintenanceClaims}=await import("@/lib/platform/jobs/job.recovery");const {enqueueJob}=await import("@/lib/platform/jobs/job.service");
+    vi.mocked(getAdminClient).mockReturnValue({from:()=>({select:async()=>({data:[{id:"t1"}],error:null})})} as any);vi.mocked(recoverExpiredMaintenanceClaims).mockRejectedValueOnce(new Error("private database details"));
+    const response=await POST(new Request("https://x/api/v1/admin/jobs/schedule-reconcile",{method:"POST"}));expect(response.status).toBe(503);expect(JSON.stringify(await response.json())).not.toContain("private");expect(enqueueJob).not.toHaveBeenCalled();
+  });
+
 });

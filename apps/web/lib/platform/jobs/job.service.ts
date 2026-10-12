@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logStructured } from "@/lib/observability";
 import { nextRunAfter } from "./job.config";
-import { JobError, JobPayloadError } from "./job.errors";
+import { JobError, JobPayloadError, JobHandlerError } from "./job.errors";
 import * as repo from "./job.repository";
 import type { Job, JobType } from "./job.types";
 import { getQueueAdapter } from "./queue/queue.service";
@@ -114,7 +114,16 @@ export async function processJobs(
     if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     await repo.emitEvent(admin, job, "locked", { worker_id: workerId });
 
-    const acquired = await queue.tryAcquireSlot(admin, job.tenant_id);
+    let acquired: boolean;
+    try {
+      acquired = await queue.tryAcquireSlot(admin, job);
+    } catch {
+      await repo.requeueUnstarted(admin, job, "Execution slots temporarily unavailable", "JOB_SLOT_UNAVAILABLE", nextRunAfter(1));
+      // An RPC response can be lost after committing its slot. Release only this
+      // exact claim, then surface availability without invoking a handler.
+      await queue.releaseSlot(admin, job);
+      throw new JobHandlerError("Execution slots temporarily unavailable", true, "JOB_SLOT_UNAVAILABLE");
+    }
     if (!acquired) {
       await repo.requeueUnstarted(admin, job, "Tenant concurrency cap", "CONCURRENCY_CAP", nextRunAfter(1));
       continue;
@@ -124,18 +133,17 @@ export async function processJobs(
     // claim_jobs already increments attempts before returning this row.
     const attempts = Math.max(1, job.attempts);
 
-
     const handler = HANDLERS[job.type as JobType];
     try {
       if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
-    logStructured({
-      event: "job_started",
-      job_id: job.id,
-      job_type: job.type,
-      tenant_id: job.tenant_id,
-      attempts,
-      request_id: job.trace_id ?? undefined,
-    });
+      logStructured({
+        event: "job_started",
+        job_id: job.id,
+        job_type: job.type,
+        tenant_id: job.tenant_id,
+        attempts,
+        request_id: job.trace_id ?? undefined,
+      });
       if (!handler) {
         if (!await queue.markDead(admin, job, "Unknown job type", "UNKNOWN_TYPE")) continue;
         await repo.emitEvent(admin, job, "failed", { error_type: "unknown_job_type" });
@@ -204,7 +212,7 @@ export async function processJobs(
         failed++;
       }
     } finally {
-      await queue.releaseSlot(admin, job.tenant_id);
+      await queue.releaseSlot(admin, job);
     }
     processed++;
   }

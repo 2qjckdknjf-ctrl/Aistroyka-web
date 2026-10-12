@@ -74,7 +74,7 @@ export async function claim(
 }
 
 function validClaim(claim: JobClaim): boolean {
-  return Boolean(claim.id && claim.tenant_id && claim.locked_by && claim.locked_at
+  return Boolean(claim.id && claim.tenant_id && claim.type && claim.locked_by && claim.locked_at
     && Number.isInteger(claim.attempts) && claim.attempts >= 0);
 }
 
@@ -82,7 +82,7 @@ function validClaim(claim: JobClaim): boolean {
 function withClaim(query: { eq(column: string, value: unknown): unknown }, claim: JobClaim): void {
   // PostgREST filters mutate the same builder. Keep the SDK's result type outside
   // this small predicate helper rather than recursively inferring its generics.
-  for (const [column, value] of Object.entries({ id: claim.id, tenant_id: claim.tenant_id,
+  for (const [column, value] of Object.entries({ id: claim.id, tenant_id: claim.tenant_id, type: claim.type,
     status: "running", locked_by: claim.locked_by, locked_at: claim.locked_at, attempts: claim.attempts })) query.eq(column, value);
 }
 
@@ -94,23 +94,27 @@ export async function ownsClaim(supabase: SupabaseClient, claim: JobClaim): Prom
   return data?.id === claim.id;
 }
 
-async function updateClaim(supabase: SupabaseClient, claim: JobClaim, patch: Record<string, unknown>): Promise<boolean> {
+async function updateClaim(supabase: SupabaseClient, claim: JobClaim, patch: Record<string, unknown>, expectedType?: JobType, requiresSlot = false): Promise<boolean> {
   if (!validClaim(claim)) return false;
   const query = supabase.from("jobs").update({ ...patch,
     updated_at: new Date().toISOString(), locked_by: null, locked_at: null }); withClaim(query, claim);
+  if (expectedType) query.eq("type", expectedType);
+  if (requiresSlot) {
+    query.eq("slot_locked_by", claim.locked_by).eq("slot_locked_at", claim.locked_at).eq("slot_attempts", claim.attempts);
+  }
   const { data, error } = await query.select("id").maybeSingle();
   return !error && data?.id === claim.id;
 }
 
 /** A stale completion never clears another worker's lease. */
-export async function markSuccess(supabase: SupabaseClient, claim: JobClaim): Promise<boolean> {
-  return updateClaim(supabase, claim, { status: "success" });
+export async function markSuccess(supabase: SupabaseClient, claim: JobClaim, requiresSlot = false): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "success" }, undefined, requiresSlot);
 }
 
 export async function markFailedForRetry(supabase: SupabaseClient, claim: JobClaim,
-  lastError: string, lastErrorType: string, runAfter: Date): Promise<boolean> {
+  lastError: string, lastErrorType: string, runAfter: Date, expectedType?: JobType, requiresSlot = false): Promise<boolean> {
   return updateClaim(supabase, claim, { status: "queued", run_after: runAfter.toISOString(),
-    last_error: lastError, last_error_type: lastErrorType });
+    last_error: lastError, last_error_type: lastErrorType }, expectedType, requiresSlot);
 }
 
 /** Refund a claim that never reached a handler, without touching a replacement. */
@@ -121,8 +125,8 @@ export async function requeueUnstarted(supabase: SupabaseClient, claim: JobClaim
 }
 
 export async function markDead(supabase: SupabaseClient, claim: JobClaim,
-  lastError: string, lastErrorType: string): Promise<boolean> {
-  return updateClaim(supabase, claim, { status: "dead", last_error: lastError, last_error_type: lastErrorType });
+  lastError: string, lastErrorType: string, requiresSlot = false): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "dead", last_error: lastError, last_error_type: lastErrorType }, undefined, requiresSlot);
 }
 
 /** Platform events use the existing tenant audit store. Live job_events belongs

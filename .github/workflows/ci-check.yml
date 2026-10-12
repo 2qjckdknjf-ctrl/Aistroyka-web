@@ -69,11 +69,13 @@ jobs:
           cp scripts/ops/verify_published_evidence_guard_postgres.mjs "$sql_test_dir/evidence.mjs"
           cp scripts/ops/verify_upload_session_source_postgres.mjs "$sql_test_dir/upload-source.mjs"
           cp scripts/ops/verify_published_source_uniqueness_postgres.mjs "$sql_test_dir/published-unique.mjs"
+          cp scripts/ops/verify_platform_job_slots_postgres.mjs "$sql_test_dir/job-slots.mjs"
           node "$sql_test_dir/session.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/media.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/evidence.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/upload-source.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/published-unique.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/job-slots.mjs" "$GITHUB_WORKSPACE"
 
       - name: Native evidence approval race contracts
         run: |
@@ -92,6 +94,9 @@ jobs:
           sudo -u postgres createdb --owner="$race_user" aistroyka_published_unique_ci
           EVIDENCE_UNIQUE_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_published_unique_ci?host=/var/run/postgresql" \
             node "$sql_test_dir/published-unique.mjs" "$GITHUB_WORKSPACE"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_platform_slots_ci
+          PLATFORM_SLOTS_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_platform_slots_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/job-slots.mjs" "$GITHUB_WORKSPACE"
 
       - name: i18n messages (dashboard + activation)
         run: bun run i18n:check

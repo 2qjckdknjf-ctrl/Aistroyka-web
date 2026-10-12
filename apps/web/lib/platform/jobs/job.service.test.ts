@@ -60,13 +60,13 @@ describe("job.service", () => {
     });
     it("does not report success after a handler loses its lease",async()=>{
       vi.clearAllMocks();
-      const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:0,max_attempts:3,payload:{report_id:"r1"}};
+      const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:1,max_attempts:3,payload:{report_id:"r1"}};
       vi.mocked(repo.claim).mockResolvedValue([job] as any);vi.mocked(repo.ownsClaim).mockResolvedValue(true);
       vi.mocked(repo.markSuccess).mockResolvedValue(false);vi.mocked(handleAiAnalyzeReport).mockResolvedValue(undefined);
-      const admin={rpc:vi.fn(async()=>({data:true,error:null}))};
+      const admin={rpc:vi.fn(()=>({abortSignal:async()=>({data:true,error:null})}))};
       expect(await processJobs(admin as any,"worker-1",{limit:1,tenantId:"t1"})).toEqual({processed:0,success:0,failed:0,dead:0});
-      expect(repo.markSuccess).toHaveBeenCalledWith(admin,job);expect(repo.emitEvent).not.toHaveBeenCalledWith(admin,job,"success",{});
-      expect(admin.rpc).toHaveBeenCalledWith("release_job_slot",{p_tenant_id:"t1"});
+      expect(repo.markSuccess).toHaveBeenCalledWith(admin,job,true);expect(repo.emitEvent).not.toHaveBeenCalledWith(admin,job,"success",{});
+      expect(admin.rpc).toHaveBeenCalledWith("release_platform_job_slot",expect.objectContaining({p_tenant_id:"t1",p_job_id:"j1",p_locked_at:job.locked_at,p_attempt:job.attempts,p_expected_type:job.type}));
     });
     it("skips a no-longer-owned claim before invoking the handler",async()=>{
       vi.clearAllMocks();
@@ -78,15 +78,15 @@ describe("job.service", () => {
     });
     it("does not mark or count retry when failure belongs to an expired claim",async()=>{
       vi.clearAllMocks();
-      const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:0,max_attempts:3,payload:{report_id:"r1"}};
+      const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:1,max_attempts:3,payload:{report_id:"r1"}};
       vi.mocked(repo.claim).mockResolvedValue([job] as any);vi.mocked(repo.ownsClaim).mockResolvedValue(true);
       vi.mocked(handleAiAnalyzeReport).mockRejectedValueOnce(new JobHandlerError("Temporary",true));
       vi.mocked(repo.markFailedForRetry).mockResolvedValue(false);
-      const admin={rpc:vi.fn(async()=>({data:true,error:null}))};
+      const admin={rpc:vi.fn(()=>({abortSignal:async()=>({data:true,error:null})}))};
       expect(await processJobs(admin as any,"worker-1",{limit:1})).toEqual({processed:0,success:0,failed:0,dead:0});
       expect(repo.markDead).not.toHaveBeenCalled();
       expect(vi.mocked(repo.emitEvent).mock.calls.map(c=>c[2])).toEqual(["locked"]);
-      expect(admin.rpc).toHaveBeenCalledWith("release_job_slot",{p_tenant_id:"t1"});
+      expect(admin.rpc).toHaveBeenCalledWith("release_platform_job_slot",expect.objectContaining({p_tenant_id:"t1",p_job_id:"j1",p_locked_at:job.locked_at,p_attempt:job.attempts,p_expected_type:job.type}));
     });
     it.each([true,false])("requeues only the exact claim after an ownership read error, CAS winner=%s",async winner=>{
       vi.clearAllMocks();
@@ -111,7 +111,7 @@ describe("job.service", () => {
       const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:1,max_attempts:3,payload:{report_id:"r1"}};
       vi.mocked(repo.claim).mockResolvedValue([job] as any);vi.mocked(repo.ownsClaim).mockResolvedValue(true);vi.mocked(repo.markSuccess).mockResolvedValue(true);
       vi.mocked(handleAiAnalyzeReport).mockImplementationOnce(async()=>{now+=10000;});
-      const admin={rpc:vi.fn(async()=>({data:true,error:null}))};
+      const admin={rpc:vi.fn(()=>({abortSignal:async()=>({data:true,error:null})}))};
       try { expect(await processJobs(admin as any,"worker-1",{limit:3,tenantId:"t1",timeBudgetMs:1000})).toEqual({processed:1,success:1,failed:0,dead:0});
         expect(repo.claim).toHaveBeenCalledTimes(1);expect(repo.claim).toHaveBeenCalledWith(admin,"worker-1",1,"t1");
       } finally { clock.mockRestore(); }
@@ -120,14 +120,14 @@ describe("job.service", () => {
       vi.clearAllMocks();const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts,max_attempts:5,payload:{report_id:"r1"}};
       vi.mocked(repo.claim).mockResolvedValue([job] as any);vi.mocked(repo.ownsClaim).mockResolvedValue(true);vi.mocked(repo.markDead).mockResolvedValue(true);vi.mocked(repo.markFailedForRetry).mockResolvedValue(true);
       vi.mocked(handleAiAnalyzeReport).mockRejectedValueOnce(new JobHandlerError("Temporary",true));
-      const admin={rpc:vi.fn(async()=>({data:true,error:null}))};
+      const admin={rpc:vi.fn(()=>({abortSignal:async()=>({data:true,error:null})}))};
       expect(await processJobs(admin as any,"worker-1",{limit:1})).toEqual({processed:1,success:0,failed:attempts===4?1:0,dead:attempts===5?1:0});
       expect(repo.markDead).toHaveBeenCalledTimes(attempts===5?1:0);expect(repo.markFailedForRetry).toHaveBeenCalledTimes(attempts===4?1:0);
     });
     it("refunds an unstarted concurrency-blocked claim without handler execution",async()=>{
       vi.clearAllMocks();const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:1,max_attempts:3,payload:{report_id:"r1"}};
       vi.mocked(repo.claim).mockResolvedValue([job] as any);vi.mocked(repo.ownsClaim).mockResolvedValue(true);vi.mocked(repo.requeueUnstarted).mockResolvedValue(true);
-      const admin={rpc:vi.fn(async()=>({data:false,error:null}))};
+      const admin={rpc:vi.fn(()=>({abortSignal:async()=>({data:false,error:null})}))};
       expect(await processJobs(admin as any,"worker-1",{limit:1})).toEqual({processed:0,success:0,failed:0,dead:0});expect(handleAiAnalyzeReport).not.toHaveBeenCalled();
       expect(repo.requeueUnstarted).toHaveBeenCalledWith(admin,job,"Tenant concurrency cap","CONCURRENCY_CAP",expect.any(Date));expect(repo.markFailedForRetry).not.toHaveBeenCalled();
     });
@@ -137,13 +137,21 @@ describe("job.service", () => {
       vi.mocked(repo.claim).mockImplementationOnce(async()=>{if(phase==="claim")now+=10000;return [job] as any;});
       vi.mocked(repo.ownsClaim).mockImplementationOnce(async()=>{if(phase==="ownership")now+=10000;return true;});
       vi.mocked(repo.requeueUnstarted).mockResolvedValue(winner);
-      const admin={rpc:vi.fn(async(name:string)=>{if(name==="try_acquire_job_slot"&&phase==="slot")now+=10000;return {data:true,error:null};})};
+      const admin={rpc:vi.fn((name:string)=>({abortSignal:async()=>{if(name==="acquire_platform_job_slot"&&phase==="slot")now+=10000;return {data:true,error:null};}}))};
       try { expect(await processJobs(admin as any,"worker-1",{limit:3,tenantId:"t1",timeBudgetMs:1000})).toEqual({processed:0,success:0,failed:0,dead:0});
         expect(repo.claim).toHaveBeenCalledTimes(1);expect(handleAiAnalyzeReport).not.toHaveBeenCalled();expect(repo.markSuccess).not.toHaveBeenCalled();
         expect(repo.requeueUnstarted).toHaveBeenCalledWith(admin,job,"Request time budget exhausted before dispatch","TIME_BUDGET",expect.any(Date));
         if(winner)expect(repo.emitEvent).toHaveBeenCalledWith(admin,job,"retry",expect.objectContaining({error_type:"TIME_BUDGET"}));else expect(vi.mocked(repo.emitEvent).mock.calls.map(c=>c[2])).toEqual(phase==="slot"?["locked"]:[]);
-        if(phase==="slot")expect(admin.rpc).toHaveBeenCalledWith("release_job_slot",{p_tenant_id:"t1"});else expect(admin.rpc).not.toHaveBeenCalled();
+        if(phase==="slot")expect(admin.rpc).toHaveBeenCalledWith("release_platform_job_slot",expect.objectContaining({p_tenant_id:"t1",p_job_id:"j1",p_locked_at:job.locked_at,p_attempt:job.attempts,p_expected_type:job.type}));else expect(admin.rpc).not.toHaveBeenCalled();
       } finally { clock.mockRestore(); }
+    });
+    it("refunds and reports slot RPC unavailability before handler dispatch",async()=>{
+      vi.clearAllMocks();vi.mocked(repo.ownsClaim).mockReset();vi.mocked(repo.claim).mockReset();vi.mocked(handleAiAnalyzeReport).mockReset();
+      const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:1,max_attempts:3,payload:{report_id:"r1"}};
+      vi.mocked(repo.claim).mockResolvedValue([job] as any);vi.mocked(repo.ownsClaim).mockResolvedValue(true);vi.mocked(repo.requeueUnstarted).mockResolvedValue(true);
+      const admin={rpc:vi.fn((name:string)=>({abortSignal:async()=>name==="acquire_platform_job_slot"?{data:null,error:{message:"private database details"}}:{data:false,error:null}}))};
+      await expect(processJobs(admin as any,"worker-1",{limit:1})).rejects.toMatchObject({code:"JOB_SLOT_UNAVAILABLE",retryable:true});expect(handleAiAnalyzeReport).not.toHaveBeenCalled();expect(repo.markSuccess).not.toHaveBeenCalled();
+      expect(repo.requeueUnstarted).toHaveBeenCalledWith(admin,job,"Execution slots temporarily unavailable","JOB_SLOT_UNAVAILABLE",expect.any(Date));expect(admin.rpc).toHaveBeenCalledWith("release_platform_job_slot",expect.objectContaining({p_job_id:"j1",p_locked_at:job.locked_at,p_attempt:1}));
     });
   });
 });
