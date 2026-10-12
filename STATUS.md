@@ -2,9 +2,9 @@
 
 Факты сверены 2026-10-12. Последний наблюдённый main: `0891b08b6a5cb19c90d92769843fa7bffaa2fcc8` (#440). Текущий main при продолжении определяется свежим `origin/main` и GitHub. Проверенный runtime оригиналов: `fac7a17` (#437), staging 38189852934 SUCCESS, 13 живых HTTP-проверок PASS; production 38190089187 SUCCESS, apex/www обслуживают `fac7a17`.
 
-Текущий проверенный runtime: staging/apex/www `0891b08` (#440). Последний наблюдённый main: #442 `16a429f6`; staging 38201387888 ещё выполнялся при фиксации. #442 required CI 38201004961 SUCCESS, точное независимое одобрение, защищённое объединение. Четыре прямых live CAS и пять protected-source processor/SDK проверок PASS с очисткой; это не HTTP runtime proof. Два исторических running задания QA от 3 октября сохранены для отдельного восстановления.
+Текущий проверенный runtime: staging/apex/www `16a429f` (#442), staging 38201387888 / production 38201675386 SUCCESS. Последний наблюдённый main: #443 `e22cb37d`; staging 38202052249 ещё выполнялся при фиксации. #443 required CI 38201677220 SUCCESS, точное независимое одобрение, защищённое объединение; 25 handler тестов PASS.
 
-Активная задача: `fix/platform-handler-tenant-scope-2026-10-12` в архивной рабочей папке runtime verification. 25 локальных handler тестов PASS. До durable report-media result закрыть границы служебных обработчиков, budget/attempt/recovery дефекты очереди; [audit](docs/audit/2026-10-12-platform-handler-scope-hard-audit.md), [lease proof](docs/reports/platform-job-lease-2026-10-12/RESULT.md). Получить свежие main/PR/registry и preflight перед продолжением.
+Активная задача: `fix/platform-job-attempt-budget-2026-10-12` в `/Users/alex/Projects/AISTROYKA-main-clean`. 63 platform job теста и пять native PostgreSQL контрактов PASS; [budget proof](docs/reports/platform-job-budget-2026-10-12/RESULT.md). Два исторических running задания QA от 3 октября сохранены для отдельного восстановления после публикации handler scope. До durable report-media result закрыть recovery/side-effect контракты очереди; [audit](docs/audit/2026-10-12-platform-handler-scope-hard-audit.md). Получить свежие main/PR/registry и preflight перед продолжением.
 
 | Контур | Факт | Следующая работа |
 |---|---|---|
