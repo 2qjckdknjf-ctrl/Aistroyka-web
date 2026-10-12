@@ -18,11 +18,10 @@ export interface MilestonePressureSignal {
   linkedTaskCount: number;
   doneTaskCount: number;
   overdue: boolean;
-  atRisk: boolean; // upcoming + many incomplete
+  atRisk: boolean;
   at: string;
 }
 
-/** Get milestone pressure signals for a project. */
 export async function getMilestonePressureSignals(
   supabase: SupabaseClient,
   projectId: string,
@@ -34,24 +33,26 @@ export async function getMilestonePressureSignals(
   upcomingCutoff.setDate(upcomingCutoff.getDate() + UPCOMING_DAYS);
   const upcomingCutoffStr = upcomingCutoff.toISOString().slice(0, 10);
 
-  const { data: milestones } = await supabase
+  const { data: milestones, error: milestonesError } = await supabase
     .from("project_milestones")
     .select("id, title, target_date, status")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
     .in("status", ["pending", "in_progress"])
     .order("target_date", { ascending: true });
+  if (milestonesError) throw new Error("milestone_pressure_milestones_query_failed");
 
   if (!milestones?.length) return [];
 
   const signals: MilestonePressureSignal[] = [];
 
   for (const m of milestones as { id: string; title: string; target_date: string; status: string }[]) {
-    const { data: tasks } = await supabase
+    const { data: tasks, error: tasksError } = await supabase
       .from("worker_tasks")
       .select("id, status")
       .eq("milestone_id", m.id)
       .eq("tenant_id", tenantId);
+    if (tasksError) throw new Error("milestone_pressure_tasks_query_failed");
 
     const taskList = (tasks ?? []) as { id: string; status: string }[];
     const linkedTaskCount = taskList.length;
@@ -78,7 +79,6 @@ export async function getMilestonePressureSignals(
   return signals;
 }
 
-/** Convert milestone pressure to risk signals for integration. */
 export function milestonePressureToRiskSignals(
   signals: MilestonePressureSignal[]
 ): RiskSignal[] {

@@ -19,13 +19,9 @@ export async function getRiskSignals(
   projectId: string,
   tenantId: string
 ): Promise<RiskSignal[]> {
-  let explicitRisks: RiskSignal[] = [];
-  try {
-    explicitRisks = await getExplicitProjectRisks(supabase, projectId, tenantId);
-  } catch {
-    explicitRisks = [];
-  }
-
+  // Risk output is surfaced as authoritative project intelligence. Do not degrade a
+  // failed source into an empty list: a partial aggregate could hide a critical risk.
+  const explicitRisks = await getExplicitProjectRisks(supabase, projectId, tenantId);
   const taskSignals = await getTaskSignals(supabase, projectId, tenantId);
   const at = new Date().toISOString();
 
