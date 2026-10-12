@@ -1,23 +1,27 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getPublicConfig } from "@/lib/config";
 import { MEDIA_BUCKET } from "@/lib/platform/ai/media-bucket.constants";
-import { FetchBinaryCapError, fetchBinaryWithByteCap } from "@/lib/platform/ai/fetch-binary-capped";
+import { FetchBinaryCapError, readBinaryStreamWithByteCap } from "@/lib/platform/ai/fetch-binary-capped";
 
-/** Caller must authorize/validate the source before this read, and recheck it before returning bytes. */
+/** Source authorization belongs to the caller; SDK transport retains its current RLS credentials. */
 export async function downloadPrivateOriginal(client: SupabaseClient, path: string, maxBytes: number): Promise<{
   data: Blob | null; error: { status: 413 | 503 } | null;
 }> {
   try {
-    const signed = await client.storage.from(MEDIA_BUCKET).createSignedUrl(path, 30);
-    if (signed.error || !signed.data?.signedUrl) return { data: null, error: { status: 503 } };
-    const configured = new URL(getPublicConfig().NEXT_PUBLIC_SUPABASE_URL);
-    const url = new URL(signed.data.signedUrl);
-    if (url.protocol !== "https:" || configured.protocol !== "https:" || url.origin !== configured.origin
-      || url.username || url.password || url.hash || !url.pathname.startsWith(`/storage/v1/object/sign/${MEDIA_BUCKET}/`)
-      || !url.searchParams.has("token")) return { data: null, error: { status: 503 } };
-    const result = await fetchBinaryWithByteCap(url.href, maxBytes,
-      { headTimeoutMs: 5000, fetchTimeoutMs: 20000, redirect: "error", cache: "no-store", requireStream: true });
-    return { data: new Blob([result.data as BlobPart], { type: result.contentType }), error: null };
+    const storage = client.storage.from(MEDIA_BUCKET);
+    const before = await storage.info(path);
+    if (before.error || !before.data) return { data: null, error: { status: 503 } };
+    if (typeof before.data.size === "number" && before.data.size > maxBytes) return { data: null, error: { status: 413 } };
+    const transport = { cache: "no-store" as const, redirect: "error" as const, signal: AbortSignal.timeout(20000) };
+    const stream = await storage.download(path, {}, transport).asStream();
+    if (stream.error || !stream.data) return { data: null, error: { status: 503 } };
+    const data = await readBinaryStreamWithByteCap(stream.data, maxBytes);
+    if (typeof before.data.size === "number" && before.data.size !== data.length) return { data: null, error: { status: 503 } };
+    const after = await storage.info(path);
+    if (after.error || !after.data || after.data.version !== before.data.version || after.data.etag !== before.data.etag
+      || after.data.size !== before.data.size || after.data.contentType !== before.data.contentType)
+      return { data: null, error: { status: 503 } };
+    const mime = (before.data.contentType ?? "application/octet-stream").split(";")[0].trim().toLowerCase();
+    return { data: new Blob([data as BlobPart], { type: mime }), error: null };
   } catch (error) {
     return { data: null, error: { status: error instanceof FetchBinaryCapError && error.code === "too_large" ? 413 : 503 } };
   }

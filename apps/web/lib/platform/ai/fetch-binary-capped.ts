@@ -67,8 +67,17 @@ export async function fetchBinaryWithByteCap(
     return { data: u, contentType };
   }
 
+  reader.releaseLock();
+  const data = await readBinaryStreamWithByteCap(res.body!, maxBytes);
+  return { data, contentType };
+}
+
+/** Shared bounded reader for fetch responses and authenticated SDK streams. */
+export async function readBinaryStreamWithByteCap(stream: ReadableStream<Uint8Array>, maxBytes: number): Promise<Uint8Array> {
+  const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
+  try {
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -81,6 +90,11 @@ export async function fetchBinaryWithByteCap(
     chunks.push(value);
   }
 
+  } catch (error) {
+    await reader.cancel().catch(() => {});
+    throw error;
+  } finally { reader.releaseLock(); }
+
   if (total === 0) throw new FetchBinaryCapError("Empty video body", "empty");
   const data = new Uint8Array(total);
   let off = 0;
@@ -88,5 +102,5 @@ export async function fetchBinaryWithByteCap(
     data.set(c, off);
     off += c.length;
   }
-  return { data, contentType };
+  return data;
 }
