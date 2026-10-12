@@ -46,3 +46,8 @@ it("the real SDK encodes every CAS field and preserves microseconds",async()=>{
   const query=seen[0].searchParams;
   for(const [key,value] of Object.entries({...claim,status:"running"}))expect(query.get(key)).toBe("eq."+value);
 });
+it("distinguishes an SDK read failure from a missing or replaced lease",async()=>{
+  const client=createClient("https://queue-fixture.invalid","synthetic-key",{auth:{persistSession:false,autoRefreshToken:false},
+    global:{fetch:async()=>Response.json({message:"unavailable",code:"08006"},{status:503})}});
+  await expect(ownsClaim(client,claim)).rejects.toMatchObject({code:"LEASE_CHECK_UNAVAILABLE",retryable:true});
+});
