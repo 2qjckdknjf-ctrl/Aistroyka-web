@@ -481,3 +481,16 @@
 "mgr_graph_ai_edges" = "Рёбра";
 
 "mgr_graph_ai_truncated" = "Представление графа усечено по размеру.";
+
+// Explicit selected report photo publication
+"mgr_photo_publication_title" = "Публикация фото";
+"mgr_photo_publication_hint" = "Действие относится к выбранному фото. Одобрение отчёта не публикует его.";
+"mgr_photo_publication_refresh" = "Обновить";
+"mgr_photo_publication_enabled" = "Публикация включена";
+"mgr_photo_publication_paused" = "Публикация приостановлена";
+"mgr_photo_publication_private" = "Только внутри компании";
+"mgr_photo_publication_prerequisite" = "Для публикации одобрите отчёт и включите портал заказчика.";
+"mgr_photo_publication_withdraw" = "Отозвать выбранное фото";
+"mgr_photo_publication_publish" = "Опубликовать выбранное фото";
+"mgr_photo_publication_error" = "Публикация недоступна. Обновите список и повторите попытку.";
+"mgr_photo_publication_stale" = "Публикация изменилась. Обновите список перед повторной попыткой.";

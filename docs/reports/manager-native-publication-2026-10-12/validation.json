@@ -1,0 +1,12 @@
+{
+  "shared_contract_tests_passed": 7,
+  "manager_debug_simulator_build": "PASS",
+  "live_ui": "NOT_YET_VERIFIED",
+  "physical_device": "NOT_VERIFIED",
+  "source_sha256": {
+    "ios/Shared/Sources/Shared/ReportPhotoPublication.swift": "524b720aa9b6c59e6ac953fea9e665494e0b31051e8389b918887a5bd0e59d73",
+    "ios/Shared/Tests/SharedTests/ReportPhotoPublicationTests.swift": "07929ae7aa16cee5f9cca4e6dbe6b4a6a762ba8ade3ff701f3fb4f8b0e891c89",
+    "ios/AiStroykaManager/AiStroykaManager/Services/ManagerAPI.swift": "8e03b1cca3d12bd66fdc8ae3f534aeff4a30ad284c6edc0c8bcc7978534d38c7",
+    "ios/AiStroykaManager/AiStroykaManager/Views/ReportsInboxView.swift": "1ef961864f3f9f0d43ffab2cfdc93b783a4dfe15c7390ce3ee28e80bd4187eb4"
+  }
+}

@@ -464,6 +464,11 @@ struct ReportDetailReviewView: View {
                         gallery(media)
                     }
 
+                    if !ManagerV43Preview.isEnabled {
+                        ManagerPhotoPublicationPanel(reportId: reportId, selection: media[safe: selectedMedia])
+                            .id("\(reportId):\(r.status ?? "")")
+                    }
+
                     if let note = r.workerNote, !note.isEmpty {
                         ManagerV43Card {
                             Label(NSLocalizedString("mgr_v43_foreman_comment", comment: ""), systemImage: "text.bubble")
@@ -740,6 +745,80 @@ struct ReportDetailReviewView: View {
             report = try await ManagerAPI.reportDetail(id: reportId)
             analysis = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId)
             approvalHistory = (try? await ManagerAPI.reportApprovalHistory(reportId: reportId)) ?? []
+        }
+    }
+}
+
+private struct ManagerPhotoPublicationPanel: View {
+    let reportId: String
+    let selection: ReportMediaItem?
+    @State private var state: ReportPhotoPublication.State?
+    @State private var loading = true
+    @State private var busy = false
+    @State private var denied = false
+    @State private var errorKey: String?
+    @State private var generation = 0
+    @State private var mounted = false
+    @State private var actionTask: Task<Void, Never>?
+
+    var body: some View {
+        Group {
+            if !denied {
+                ManagerV43Card {
+                    Text(NSLocalizedString("mgr_photo_publication_title", comment: "")).font(.headline)
+                    Text(NSLocalizedString("mgr_photo_publication_hint", comment: "")).font(.caption)
+                    if loading { ProgressView() }
+                    if let errorKey {
+                        Text(NSLocalizedString(errorKey, comment: "")).foregroundStyle(ManagerV43.danger)
+                        Button(NSLocalizedString("mgr_photo_publication_refresh", comment: "")) { Task { await load() } }.disabled(busy || loading)
+                    }
+                    if !loading, let state, let item = state.selected(mediaId: selection?.mediaId, uploadSessionId: selection?.uploadSessionId) {
+                        Text(NSLocalizedString(item.published ? (item.sharingEnabled ? "mgr_photo_publication_enabled" : "mgr_photo_publication_paused") : "mgr_photo_publication_private", comment: ""))
+                            .accessibilityIdentifier("pilot_manager_publication_status")
+                        if !item.published && (!state.portalEnabled || state.reportStatus != "approved") {
+                            Text(NSLocalizedString("mgr_photo_publication_prerequisite", comment: "")).font(.caption)
+                        }
+                        Button(NSLocalizedString(item.published ? "mgr_photo_publication_withdraw" : "mgr_photo_publication_publish", comment: "")) {
+                            guard !busy else { return }
+                            busy = true
+                            actionTask = Task { await toggle(item) }
+                        }
+                        .disabled(busy || (!item.published && (!item.eligible || !state.portalEnabled || state.reportStatus != "approved")))
+                        .accessibilityIdentifier("pilot_manager_publication_toggle")
+                    }
+                }
+            }
+        }
+        .task { mounted = true; await load() }
+        .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.appBecameActive)) { _ in Task { await load() } }
+        .onDisappear { mounted = false; generation += 1; actionTask?.cancel(); busy = false }
+    }
+
+    @MainActor private func load() async {
+        guard mounted else { return }
+        generation += 1; let current = generation; loading = true
+        do {
+            let loaded = try await ManagerAPI.reportPhotoPublication(reportId: reportId)
+            guard mounted, current == generation, !Task.isCancelled else { return }
+            state = loaded; errorKey = nil; denied = false
+        } catch {
+            guard mounted, current == generation, !Task.isCancelled else { return }
+            state = nil; denied = (error as? APIError)?.statusCode == 403
+            errorKey = "mgr_photo_publication_error"
+        }
+        if mounted && current == generation { loading = false }
+    }
+    @MainActor private func toggle(_ item: ReportPhotoPublication.Item) async {
+        let current = generation
+        defer { if mounted { busy = false } }
+        do {
+            try await ManagerAPI.setReportPhotoPublication(reportId: reportId, item: item)
+            guard mounted, !Task.isCancelled else { return }
+            await load()
+        } catch {
+            guard mounted, !Task.isCancelled else { return }
+            if current != generation { await load(); return }
+            state = nil; errorKey = (error as? APIError)?.statusCode == 409 ? "mgr_photo_publication_stale" : "mgr_photo_publication_error"
         }
     }
 }

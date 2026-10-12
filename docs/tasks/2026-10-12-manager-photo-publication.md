@@ -1,0 +1,7 @@
+# iOS Manager selected photo publication
+
+Baseline:main #433 d8a43780. Reuse the existing ReportsInboxView/ReportDetailReviewView/gallery and #432 publication API; no separate publication workflow or mobile app. The panel acts on the currently selected media/upload tuple. Approval stays independent, publication intent can be withdrawn while sharing is paused, current versions are sent unchanged for CAS, and the first create explicitly encodes expected_version:null.
+
+Shared contract validates report/project/attachment/source identity, bounded list, publication/visibility consistency and exact selection; requests contain only attachment ID, visibility and version. Preview mode omits the live controls. Load failures clear prior state,403 hides unavailable controls,409 requests refresh; successful writes always fetch current state even after a focus read. Disappearance cancels the action and prevents stale state retention; subsequent appearance reloads. Existing report review flows remain.
+
+Seven meaningful Shared decoder/selection/JSON/null-version/injection checks PASS; unsigned Manager Debug simulator build PASS. Four Manager locales include the matching actions and status copy. This does not certify actual Manager UI actions or a physical/store artifact; live UI and protected three-app smoke remain required. No SQL apply or new backend API.
