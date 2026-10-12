@@ -1,3 +1,4 @@
+import type { JobClaim } from "./queue/queue.interface";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Job, JobEventType, JobType } from "./job.types";
 
@@ -71,57 +72,48 @@ export async function claim(
   return data as Job[];
 }
 
-/** Mark job success. */
-export async function markSuccess(supabase: SupabaseClient, jobId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("jobs")
-    .update({ status: "success", updated_at: new Date().toISOString(), locked_by: null, locked_at: null })
-    .eq("id", jobId);
-  return !error;
+function validClaim(claim: JobClaim): boolean {
+  return Boolean(claim.id && claim.tenant_id && claim.locked_by && claim.locked_at
+    && Number.isInteger(claim.attempts) && claim.attempts >= 0);
 }
 
-/** Mark job failed and schedule retry: set status to queued, run_after, clear lock. */
-export async function markFailedForRetry(
-  supabase: SupabaseClient,
-  jobId: string,
-  lastError: string,
-  lastErrorType: string,
-  runAfter: Date
-): Promise<boolean> {
-  const { error } = await supabase
-    .from("jobs")
-    .update({
-      status: "queued",
-      run_after: runAfter.toISOString(),
-      last_error: lastError,
-      last_error_type: lastErrorType,
-      updated_at: new Date().toISOString(),
-      locked_by: null,
-      locked_at: null,
-    })
-    .eq("id", jobId);
-  return !error;
+/** Exact claim predicate also distinguishes a reused worker ID's later lease. */
+function withClaim(query: { eq(column: string, value: unknown): unknown }, claim: JobClaim): void {
+  // PostgREST filters mutate the same builder. Keep the SDK's result type outside
+  // this small predicate helper rather than recursively inferring its generics.
+  for (const [column, value] of Object.entries({ id: claim.id, tenant_id: claim.tenant_id,
+    status: "running", locked_by: claim.locked_by, locked_at: claim.locked_at, attempts: claim.attempts })) query.eq(column, value);
 }
 
-/** Mark job dead (no more retries). */
-export async function markDead(
-  supabase: SupabaseClient,
-  jobId: string,
-  lastError: string,
-  lastErrorType: string
-): Promise<boolean> {
-  const { error } = await supabase
-    .from("jobs")
-    .update({
-      status: "dead",
-      last_error: lastError,
-      last_error_type: lastErrorType,
-      updated_at: new Date().toISOString(),
-      locked_by: null,
-      locked_at: null,
-    })
-    .eq("id", jobId);
-  return !error;
+export async function ownsClaim(supabase: SupabaseClient, claim: JobClaim): Promise<boolean> {
+  if (!validClaim(claim)) return false;
+  const query = supabase.from("jobs").select("id"); withClaim(query, claim);
+  const { data, error } = await query.maybeSingle();
+  return !error && data?.id === claim.id;
+}
+
+async function updateClaim(supabase: SupabaseClient, claim: JobClaim, patch: Record<string, unknown>): Promise<boolean> {
+  if (!validClaim(claim)) return false;
+  const query = supabase.from("jobs").update({ ...patch,
+    updated_at: new Date().toISOString(), locked_by: null, locked_at: null }); withClaim(query, claim);
+  const { data, error } = await query.select("id").maybeSingle();
+  return !error && data?.id === claim.id;
+}
+
+/** A stale completion never clears another worker's lease. */
+export async function markSuccess(supabase: SupabaseClient, claim: JobClaim): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "success" });
+}
+
+export async function markFailedForRetry(supabase: SupabaseClient, claim: JobClaim,
+  lastError: string, lastErrorType: string, runAfter: Date): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "queued", run_after: runAfter.toISOString(),
+    last_error: lastError, last_error_type: lastErrorType });
+}
+
+export async function markDead(supabase: SupabaseClient, claim: JobClaim,
+  lastError: string, lastErrorType: string): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "dead", last_error: lastError, last_error_type: lastErrorType });
 }
 
 /** Emit job event. */

@@ -78,9 +78,6 @@ export async function processJobs(
   const queue = getQueueAdapter();
 
   const claimed = await repo.claim(admin, workerId, limit, options.tenantId ?? undefined);
-  for (const job of claimed) {
-    await repo.emitEvent(admin, job.id, "locked", { worker_id: workerId });
-  }
 
   let processed = 0;
   let success = 0;
@@ -89,10 +86,14 @@ export async function processJobs(
 
   for (const job of claimed) {
     if (Date.now() - start >= budgetMs) break;
+    if (job.status !== "running" || job.locked_by !== workerId
+      || (options.tenantId && job.tenant_id !== options.tenantId)
+      || !await repo.ownsClaim(admin, job)) continue;
+    await repo.emitEvent(admin, job.id, "locked", { worker_id: workerId });
 
     const acquired = await queue.tryAcquireSlot(admin, job.tenant_id);
     if (!acquired) {
-      await repo.markFailedForRetry(admin, job.id, "Tenant concurrency cap", "CONCURRENCY_CAP", new Date());
+      await repo.markFailedForRetry(admin, job, "Tenant concurrency cap", "CONCURRENCY_CAP", new Date());
       continue;
     }
 
@@ -110,8 +111,8 @@ export async function processJobs(
     const handler = HANDLERS[job.type as JobType];
     try {
       if (!handler) {
+        if (!await queue.markDead(admin, job, "Unknown job type", "UNKNOWN_TYPE")) continue;
         await repo.emitEvent(admin, job.id, "failed", { error_type: "unknown_job_type" });
-        await queue.markDead(admin, job.id, "Unknown job type", "UNKNOWN_TYPE");
         logStructured({
           event: "job_failed",
           job_id: job.id,
@@ -127,7 +128,7 @@ export async function processJobs(
         continue;
       }
       await handler(admin, job);
-      await queue.markSuccess(admin, job.id);
+      if (!await queue.markSuccess(admin, job)) continue;
       await repo.emitEvent(admin, job.id, "success", {});
       logStructured({
         event: "job_succeeded",
@@ -143,9 +144,9 @@ export async function processJobs(
       const code = e instanceof JobError ? e.code : "JOB_ERROR";
       const retryable = e instanceof JobError ? (e as JobError).retryable : true;
       const attemptCount = attempts + 1;
-      await repo.emitEvent(admin, job.id, "failed", { error_type: code, message });
       if (attemptCount >= job.max_attempts || !retryable || e instanceof JobPayloadError) {
-        await queue.markDead(admin, job.id, message, code);
+        if (!await queue.markDead(admin, job, message, code)) continue;
+        await repo.emitEvent(admin, job.id, "failed", { error_type: code, message });
         await repo.emitEvent(admin, job.id, "dead", {});
         logStructured({
           event: "job_failed",
@@ -160,7 +161,8 @@ export async function processJobs(
         dead++;
       } else {
         const runAfter = nextRunAfter(attemptCount);
-        await queue.markFailedForRetry(admin, job.id, message, code, runAfter);
+        if (!await queue.markFailedForRetry(admin, job, message, code, runAfter)) continue;
+        await repo.emitEvent(admin, job.id, "failed", { error_type: code, message });
         await repo.emitEvent(admin, job.id, "retry", { run_after: runAfter.toISOString() });
         logStructured({
           event: "job_failed",
