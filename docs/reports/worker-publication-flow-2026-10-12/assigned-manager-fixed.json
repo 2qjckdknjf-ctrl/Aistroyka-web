@@ -1,0 +1,76 @@
+{
+  "expected_sha7": "0891b08",
+  "checks": [
+    {
+      "check": "worker_cannot_read_assigned_reviewer_membership",
+      "pass": true
+    },
+    {
+      "check": "worker_creates_task_bound_draft",
+      "pass": true
+    },
+    {
+      "check": "create_retry_reuses_report",
+      "pass": true
+    },
+    {
+      "check": "worker_uploads_actual_private_bytes",
+      "pass": true
+    },
+    {
+      "check": "worker_finalizes_owned_upload",
+      "pass": true
+    },
+    {
+      "check": "worker_attaches_finalized_source",
+      "pass": true
+    },
+    {
+      "check": "worker_submits_real_report",
+      "pass": true
+    },
+    {
+      "check": "manager_reads_submitted_report",
+      "pass": true
+    },
+    {
+      "check": "manager_approves_real_worker_report",
+      "pass": true
+    },
+    {
+      "check": "report_submit_reaches_correct_reviewer_only",
+      "pass": true
+    },
+    {
+      "check": "assigned_manager_can_open_exact_report",
+      "pass": true
+    },
+    {
+      "check": "approval_does_not_publish_automatically",
+      "pass": true
+    },
+    {
+      "check": "manager_explicitly_publishes_worker_upload",
+      "pass": true
+    },
+    {
+      "check": "different_customer_reads_exact_selected_bytes",
+      "pass": true
+    },
+    {
+      "check": "withdrawal_blocks_original",
+      "pass": true
+    }
+  ],
+  "backend_actions_real_http": true,
+  "separate_worker_customer_identities": true,
+  "camera_ui": "NOT_TESTED",
+  "cleanup_required": true,
+  "notification_receipts": {
+    "submitted_reviewers": 1,
+    "assigned_manager_notified": true,
+    "worker_review_receipts": 1,
+    "worker_self_submit_notification": false,
+    "unrelated_members_excluded": true
+  }
+}
