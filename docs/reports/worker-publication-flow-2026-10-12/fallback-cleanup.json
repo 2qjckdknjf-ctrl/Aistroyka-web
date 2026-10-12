@@ -1,0 +1,12 @@
+{
+  "cleanup_complete": true,
+  "exact_blob_deleted": true,
+  "auth_identities_removed": 2,
+  "sessions_revoked": true,
+  "retry_keys_removed": true,
+  "exact_jobs_removed": 2,
+  "exact_notifications_removed": 2,
+  "source_and_parents_verified_absent": true,
+  "operational_audit_retained": true,
+  "business_records_untouched": true
+}

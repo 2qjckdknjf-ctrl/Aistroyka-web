@@ -1,0 +1,14 @@
+{
+  "source_sha": "0891b08b6a5cb19c90d92769843fa7bffaa2fcc8",
+  "os": "27.0.1",
+  "transport": "wired",
+  "developer_mode": "enabled",
+  "debug_build_for_testing": "PASS",
+  "ui_attempts": 2,
+  "tests_started": 0,
+  "ui_result": "BLOCKED_AUTOMATION_INITIALIZATION",
+  "diagnostic": "Timed out while enabling automation mode",
+  "runner_credentials_scrubbed": true,
+  "fixture_cleanup_complete": true,
+  "network_path_verified": false
+}
