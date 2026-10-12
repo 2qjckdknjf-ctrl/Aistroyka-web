@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Job } from "../job.types";
+import { JobPayloadError } from "../job.errors";
 import { attemptSend } from "@/lib/platform/push/push.provider.router";
 
 const DRAIN_LIMIT = 20;
@@ -43,10 +44,15 @@ export function buildPushDataMap(
   return out;
 }
 
-export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<void> {
+export async function handlePushSend(admin: SupabaseClient, job: Job): Promise<void> {
+  const payloadScope = job.payload as { tenant_id?: unknown };
+  if (!job.tenant_id || (payloadScope?.tenant_id != null && payloadScope.tenant_id !== job.tenant_id)) {
+    throw new JobPayloadError("Push tenant scope mismatch");
+  }
   const { data: rows } = await admin
     .from("push_outbox")
     .select("id, tenant_id, user_id, platform, device_id, type, payload, attempts")
+    .eq("tenant_id", job.tenant_id)
     .eq("status", "queued")
     .or("next_retry_at.is.null,next_retry_at.lte." + new Date().toISOString())
     .order("created_at", { ascending: true })
@@ -63,6 +69,7 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
     payload: Record<string, unknown> | null;
     attempts: number;
   }>) {
+    if (row.tenant_id !== job.tenant_id) continue;
     let q = admin
       .from("device_tokens")
       .select("device_id, token")
@@ -78,7 +85,7 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
       await admin
         .from("push_outbox")
         .update({ status: "failed", last_error: "no_tokens" })
-        .eq("id", row.id);
+        .eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
       continue;
     }
 
@@ -120,7 +127,7 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
     }
 
     if (anySent) {
-      await admin.from("push_outbox").update({ status: "sent" }).eq("id", row.id);
+      await admin.from("push_outbox").update({ status: "sent" }).eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
     } else if (retryableError) {
       const attempts = row.attempts + 1;
       await admin
@@ -130,12 +137,12 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
           last_error: retryableError,
           next_retry_at: nextRetryAt(attempts).toISOString(),
         })
-        .eq("id", row.id);
+        .eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
     } else {
       await admin
         .from("push_outbox")
         .update({ status: "failed", last_error: "send_failed" })
-        .eq("id", row.id);
+        .eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
     }
   }
 }

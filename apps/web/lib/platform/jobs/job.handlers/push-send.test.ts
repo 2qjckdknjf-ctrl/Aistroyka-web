@@ -14,51 +14,19 @@ function mockAdmin(overrides: {
   const updates: { table: string; id?: string; update: Record<string, unknown> }[] = [];
   const admin = {
     from: (table: string) => {
-      if (table === "push_outbox") {
-        return {
-          select: () => ({
-            eq: () => ({
-              or: () => ({
-                order: () => ({
-                  limit: () => Promise.resolve({ data: outboxRows }),
-                }),
-              }),
-            }),
-          }),
-          update: (update: Record<string, unknown>) => ({
-            eq: (col: string, val: string) => {
-              updates.push({ table, id: val, update });
-              return Promise.resolve({ error: null });
-            },
-          }),
-        };
-      }
-      if (table === "device_tokens") {
-        return {
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                eq: () => ({
-                  is: () => Promise.resolve({ data: deviceTokens }),
-                }),
-              }),
-            }),
-          }),
-          update: (update: Record<string, unknown>) => ({
-            eq: () => ({
-              eq: () => ({
-                eq: () => ({
-                  in: () => {
-                    updates.push({ table, update });
-                    return Promise.resolve({ error: null });
-                  },
-                }),
-              }),
-            }),
-          }),
-        };
-      }
-      return {};
+      let patch: Record<string, unknown> | null = null;
+      const filters: Record<string, unknown> = {};
+      const q = {
+        select: () => q,
+        eq: (column: string, value: unknown) => { filters[column] = value; return q; },
+        is: () => q, in: () => q, or: () => q, order: () => q, limit: () => q,
+        update: (value: Record<string, unknown>) => { patch = value; return q; },
+        then: (resolve: (value: unknown) => unknown) => {
+          if (patch) updates.push({table, id: filters.id as string | undefined, update: patch});
+          return Promise.resolve({data: patch ? null : table === "push_outbox" ? outboxRows : deviceTokens, error: null}).then(resolve);
+        },
+      };
+      return q;
     },
   };
   return { admin: admin as any, updates };
@@ -67,7 +35,7 @@ function mockAdmin(overrides: {
 describe("handlePushSend", () => {
   it("returns without error when outbox has no rows", async () => {
     const { admin } = mockAdmin({ outboxRows: [] });
-    await expect(handlePushSend(admin, {} as any)).resolves.toBeUndefined();
+    await expect(handlePushSend(admin, {tenant_id:"t1",payload:{}} as any)).resolves.toBeUndefined();
   });
 
   it("updates outbox to failed with no_tokens when user has no device tokens", async () => {
@@ -85,7 +53,7 @@ describe("handlePushSend", () => {
       ],
       deviceTokens: [],
     });
-    await handlePushSend(admin, {} as any);
+    await handlePushSend(admin, {tenant_id:"t1",payload:{}} as any);
     const outboxUpdate = updates.find((u) => u.table === "push_outbox" && u.id === "ob1");
     expect(outboxUpdate).toBeDefined();
     expect(outboxUpdate!.update).toMatchObject({ status: "failed", last_error: "no_tokens" });
@@ -107,7 +75,7 @@ describe("handlePushSend", () => {
       ],
       deviceTokens: [{ device_id: "d1", token: "tok1" }],
     });
-    await handlePushSend(admin, {} as any);
+    await handlePushSend(admin, {tenant_id:"t1",payload:{}} as any);
     const dtUpdate = updates.find((u) => u.table === "device_tokens" && (u.update as any).disabled_at);
     expect(dtUpdate).toBeDefined();
     const outboxUpdate = updates.find((u) => u.table === "push_outbox" && u.id === "ob2");
@@ -131,7 +99,7 @@ describe("handlePushSend", () => {
       ],
       deviceTokens: [{ device_id: "d1", token: "tok1" }],
     });
-    await handlePushSend(admin, {} as any);
+    await handlePushSend(admin, {tenant_id:"t1",payload:{}} as any);
     const outboxUpdate = updates.find((u) => u.table === "push_outbox" && u.id === "ob3");
     expect(outboxUpdate).toBeDefined();
     expect(outboxUpdate!.update).toMatchObject({
@@ -157,7 +125,7 @@ describe("handlePushSend", () => {
       ],
       deviceTokens: [{ device_id: "d1", token: "tok1" }],
     });
-    await handlePushSend(admin, {} as any);
+    await handlePushSend(admin, {tenant_id:"t1",payload:{}} as any);
     const outboxUpdate = updates.find((u) => u.table === "push_outbox" && u.id === "ob4");
     expect(outboxUpdate).toBeDefined();
     expect(outboxUpdate!.update).toMatchObject({ status: "sent" });
@@ -203,7 +171,7 @@ describe("handlePushSend", () => {
       ],
       deviceTokens: [{ device_id: "d1", token: "tok1" }],
     });
-    await handlePushSend(admin, {} as any);
+    await handlePushSend(admin, {tenant_id:"t1",payload:{}} as any);
     expect(pushRouter.attemptSend).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
