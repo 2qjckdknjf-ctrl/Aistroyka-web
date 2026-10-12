@@ -94,10 +94,11 @@ export async function ownsClaim(supabase: SupabaseClient, claim: JobClaim): Prom
   return data?.id === claim.id;
 }
 
-async function updateClaim(supabase: SupabaseClient, claim: JobClaim, patch: Record<string, unknown>): Promise<boolean> {
+async function updateClaim(supabase: SupabaseClient, claim: JobClaim, patch: Record<string, unknown>, expectedType?: JobType): Promise<boolean> {
   if (!validClaim(claim)) return false;
   const query = supabase.from("jobs").update({ ...patch,
     updated_at: new Date().toISOString(), locked_by: null, locked_at: null }); withClaim(query, claim);
+  if (expectedType) query.eq("type", expectedType);
   const { data, error } = await query.select("id").maybeSingle();
   return !error && data?.id === claim.id;
 }
@@ -108,9 +109,9 @@ export async function markSuccess(supabase: SupabaseClient, claim: JobClaim): Pr
 }
 
 export async function markFailedForRetry(supabase: SupabaseClient, claim: JobClaim,
-  lastError: string, lastErrorType: string, runAfter: Date): Promise<boolean> {
+  lastError: string, lastErrorType: string, runAfter: Date, expectedType?: JobType): Promise<boolean> {
   return updateClaim(supabase, claim, { status: "queued", run_after: runAfter.toISOString(),
-    last_error: lastError, last_error_type: lastErrorType });
+    last_error: lastError, last_error_type: lastErrorType }, expectedType);
 }
 
 /** Refund a claim that never reached a handler, without touching a replacement. */
