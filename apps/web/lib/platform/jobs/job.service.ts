@@ -82,6 +82,13 @@ export async function processJobs(
   let failed = 0;
   let dead = 0;
 
+  const releaseBudgetClaim = async (job: Job) => {
+    const runAfter = nextRunAfter(1);
+    if (await repo.requeueUnstarted(admin, job, "Request time budget exhausted before dispatch", "TIME_BUDGET", runAfter)) {
+      await repo.emitEvent(admin, job, "retry", { error_type: "TIME_BUDGET", run_after: runAfter.toISOString() });
+    }
+  };
+
   // Claim immediately before dispatch: a slow handler must not strand the
   // remainder of an already-claimed batch when the request budget expires.
   for (let claimedCount = 0; claimedCount < limit; claimedCount++) {
@@ -90,6 +97,7 @@ export async function processJobs(
     if (!job) break;
     if (job.status !== "running" || job.locked_by !== workerId
       || (options.tenantId && job.tenant_id !== options.tenantId)) continue;
+    if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     try {
       if (!await repo.ownsClaim(admin, job)) continue;
     } catch {
@@ -103,6 +111,7 @@ export async function processJobs(
       }
       continue;
     }
+    if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     await repo.emitEvent(admin, job, "locked", { worker_id: workerId });
 
     const acquired = await queue.tryAcquireSlot(admin, job.tenant_id);
@@ -114,6 +123,11 @@ export async function processJobs(
     const jobStartMs = Date.now();
     // claim_jobs already increments attempts before returning this row.
     const attempts = Math.max(1, job.attempts);
+
+
+    const handler = HANDLERS[job.type as JobType];
+    try {
+      if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     logStructured({
       event: "job_started",
       job_id: job.id,
@@ -122,9 +136,6 @@ export async function processJobs(
       attempts,
       request_id: job.trace_id ?? undefined,
     });
-
-    const handler = HANDLERS[job.type as JobType];
-    try {
       if (!handler) {
         if (!await queue.markDead(admin, job, "Unknown job type", "UNKNOWN_TYPE")) continue;
         await repo.emitEvent(admin, job, "failed", { error_type: "unknown_job_type" });

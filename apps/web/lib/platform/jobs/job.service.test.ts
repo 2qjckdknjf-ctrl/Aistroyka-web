@@ -131,5 +131,19 @@ describe("job.service", () => {
       expect(await processJobs(admin as any,"worker-1",{limit:1})).toEqual({processed:0,success:0,failed:0,dead:0});expect(handleAiAnalyzeReport).not.toHaveBeenCalled();
       expect(repo.requeueUnstarted).toHaveBeenCalledWith(admin,job,"Tenant concurrency cap","CONCURRENCY_CAP",expect.any(Date));expect(repo.markFailedForRetry).not.toHaveBeenCalled();
     });
+    it.each(["claim","ownership","slot"].flatMap(phase=>[true,false].map(winner=>({phase,winner}))))("refunds an unstarted lease after $phase delay only on CAS winner=$winner",async ({phase,winner})=>{
+      vi.clearAllMocks();vi.mocked(repo.ownsClaim).mockReset();vi.mocked(repo.claim).mockReset();vi.mocked(handleAiAnalyzeReport).mockReset();let now=1000;const clock=vi.spyOn(Date,"now").mockImplementation(()=>now);
+      const job={id:"j1",tenant_id:"t1",type:"ai_analyze_report",status:"running",locked_by:"worker-1",locked_at:"2026-10-12T00:00:00.000123Z",attempts:1,max_attempts:3,payload:{report_id:"r1"}};
+      vi.mocked(repo.claim).mockImplementationOnce(async()=>{if(phase==="claim")now+=10000;return [job] as any;});
+      vi.mocked(repo.ownsClaim).mockImplementationOnce(async()=>{if(phase==="ownership")now+=10000;return true;});
+      vi.mocked(repo.requeueUnstarted).mockResolvedValue(winner);
+      const admin={rpc:vi.fn(async(name:string)=>{if(name==="try_acquire_job_slot"&&phase==="slot")now+=10000;return {data:true,error:null};})};
+      try { expect(await processJobs(admin as any,"worker-1",{limit:3,tenantId:"t1",timeBudgetMs:1000})).toEqual({processed:0,success:0,failed:0,dead:0});
+        expect(repo.claim).toHaveBeenCalledTimes(1);expect(handleAiAnalyzeReport).not.toHaveBeenCalled();expect(repo.markSuccess).not.toHaveBeenCalled();
+        expect(repo.requeueUnstarted).toHaveBeenCalledWith(admin,job,"Request time budget exhausted before dispatch","TIME_BUDGET",expect.any(Date));
+        if(winner)expect(repo.emitEvent).toHaveBeenCalledWith(admin,job,"retry",expect.objectContaining({error_type:"TIME_BUDGET"}));else expect(vi.mocked(repo.emitEvent).mock.calls.map(c=>c[2])).toEqual(phase==="slot"?["locked"]:[]);
+        if(phase==="slot")expect(admin.rpc).toHaveBeenCalledWith("release_job_slot",{p_tenant_id:"t1"});else expect(admin.rpc).not.toHaveBeenCalled();
+      } finally { clock.mockRestore(); }
+    });
   });
 });
