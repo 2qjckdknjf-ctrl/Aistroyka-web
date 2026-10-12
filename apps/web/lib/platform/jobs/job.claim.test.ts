@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
 import { markSuccess, markDead, markFailedForRetry, ownsClaim, requeueUnstarted } from "./job.repository";
 import type { JobClaim } from "./queue/queue.interface";
-const claim:JobClaim={id:"job-a",tenant_id:"tenant-a",locked_by:"worker-a",locked_at:"2026-10-12T00:00:00.000123Z",attempts:2};
+const claim:JobClaim={id:"job-a",tenant_id:"tenant-a",type:"ai_analyze_report",locked_by:"worker-a",locked_at:"2026-10-12T00:00:00.000123Z",attempts:2};
 function fixture(changed:Record<string,unknown>={}) {
   const state:Record<string,unknown>={...claim,status:"running",...changed};let calls=0;
   const client={from:()=>{
@@ -58,4 +58,10 @@ it("distinguishes an SDK read failure from a missing or replaced lease",async()=
     // depending on SDK-version-specific 503 backoff durations.
     global:{fetch:async()=>Response.json({message:"unavailable",code:"08006"},{status:400})}});
   await expect(ownsClaim(client,claim)).rejects.toMatchObject({code:"LEASE_CHECK_UNAVAILABLE",retryable:true});
+});
+
+it("executed acknowledgements require their captured slot proof",async()=>{
+  const missing=fixture();expect(await markSuccess(missing.client,claim,true)).toBe(false);expect(missing.state.status).toBe("running");
+  const held=fixture({slot_locked_by:claim.locked_by,slot_locked_at:claim.locked_at,slot_attempts:claim.attempts});expect(await markSuccess(held.client,claim,true)).toBe(true);
+  const replaced=fixture({slot_locked_by:claim.locked_by,slot_locked_at:"2026-10-12T00:00:00.000124Z",slot_attempts:3});expect(await markSuccess(replaced.client,claim,true)).toBe(false);
 });

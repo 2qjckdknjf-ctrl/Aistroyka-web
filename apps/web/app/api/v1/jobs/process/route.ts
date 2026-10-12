@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { JobError } from "@/lib/platform/jobs/job.errors";
 import { processJobs } from "@/lib/platform/jobs/job.service";
 import { JOB_CONFIG } from "@/lib/platform/jobs/job.config";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -57,11 +58,13 @@ export async function POST(request: Request) {
   );
 
   const workerId = `http-${ctx.tenantId}-${Date.now()}`;
-  const summary = await processJobs(admin, workerId, {
-    limit,
-    tenantId: ctx.tenantId,
-    timeBudgetMs: JOB_CONFIG.WORKER_TIME_BUDGET_MS,
-  });
+  let summary;
+  try {
+    summary = await processJobs(admin, workerId, { limit, tenantId: ctx.tenantId, timeBudgetMs: JOB_CONFIG.WORKER_TIME_BUDGET_MS });
+  } catch (error) {
+    if (!(error instanceof JobError)) throw error;
+    return withRequestIdAndTiming(request, NextResponse.json({error:"Queue executor temporarily unavailable",code:error.code},{status:503}),{route:ROUTE_KEY,method:"POST",duration_ms:Date.now()-start,tenantId:ctx.tenantId,userId:ctx.userId});
+  }
 
   return withRequestIdAndTiming(request, NextResponse.json({
     ok: true,
