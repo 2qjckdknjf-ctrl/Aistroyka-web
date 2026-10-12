@@ -1,7 +1,7 @@
 # P0 — AI pipeline recovery (media resolve + provider + UI)
 
-**Branch:** `fix/p0-ai-pipeline-recovery`  
-**Base:** `origin/main`  
+**Status:** Merged to `main` in PR #211 (2026-08-07)
+**Related:** [`AI_PLATFORM.md`](./AI_PLATFORM.md), [`AUDIT_AI_RUNTIME_ARCHITECTURE_TRUTH.md`](./AUDIT_AI_RUNTIME_ARCHITECTURE_TRUTH.md), [`../API-v1-ENDPOINTS.md`](../API-v1-ENDPOINTS.md)
 **Scope:** Restore `ai_analyze_media` processing and correct `/dashboard/ai` status display. No production data changes, no deploy, no migration apply.
 
 ## Root causes (code-confirmed)

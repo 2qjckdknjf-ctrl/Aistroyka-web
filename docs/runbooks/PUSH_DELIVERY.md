@@ -4,10 +4,23 @@ Outbox-based push: enqueue to `push_outbox`, drain via `push_send` job. APNS (iO
 
 ## Flow
 
-1. **Enqueue** — Call `enqueuePush(supabase, { tenantId, userId, platform, type, payload })` (e.g. from worker report submitted, task assigned). Inserts into `push_outbox` (status `queued`) and enqueues a `push_send` job (dedupe_key `push_drain`).
+1. **Enqueue** — Call `enqueuePush` / `enqueuePushToUser` (e.g. report ready, task assigned/updated, **task chat** `task_message`). Inserts into `push_outbox` (status `queued`) and enqueues a `push_send` job (dedupe_key `push_drain`).
 2. **Drain** — Job handler `push_send` runs (via cron calling `POST /api/v1/jobs/process`). It selects queued outbox rows (optionally where `next_retry_at` is null or past), loads device tokens for that tenant/user/platform (excluding `disabled_at`), and calls the push provider per token.
 3. **Status** — Outbox row is updated to `sent`, or `failed` with `last_error`, or left `queued` with `attempts` incremented, `last_error`, and `next_retry_at` (exponential backoff: 1m, 5m, 15m, 1h).
 4. **Token hygiene** — If the provider returns `invalid_token`, the corresponding `device_tokens` row is updated with `disabled_at` so it is not used again.
+
+## Task chat (`task_message`)
+
+| Field | Notes |
+|-------|--------|
+| Source | `createTaskMessage` → `notifyTaskMessageRecipients` |
+| Type | `task_message` |
+| Alert | `title` + short `body` preview |
+| Data map | `type`, `task_id`, `project_id`, `message_id`, `kind` (via `buildPushDataMap`) |
+| iOS Manager | `AiStroykaManagerAppDelegate` opens Tasks tab chat when `type` is `task_message` / `task_assigned` / `task_updated` and `task_id` is present |
+| iOS Worker | Home treats `task_message` like other task push types for unread refresh |
+
+API contract: [`../API-v1-ENDPOINTS.md#task-chat`](../API-v1-ENDPOINTS.md#task-chat). Overview: [`../PUSH-NOTIFICATIONS.md`](../PUSH-NOTIFICATIONS.md).
 
 ## Provider configuration
 

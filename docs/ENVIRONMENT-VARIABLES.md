@@ -83,6 +83,23 @@ Vercel может встречаться как исторический/доп�
 
 ---
 
+## Platform admin / owner gate (опционально)
+
+Канонический вход: `https://admin.aistroyka.ai/{locale}/platform-admin`. См. `docs/security/ADMIN_DOMAIN_CURRENT_STATE.md`.
+
+| Variable | Описание | Default if unset |
+|----------|----------|------------------|
+| `OWNER_ALLOWED_HOSTS` | Comma-separated hosts for owner/platform surfaces **and** admin-host classification. Phase 3 hard cutover (commented in `wrangler.deploy.toml`) — do not enable without an explicit plan. | Owner gate allows all hosts; admin-host routing defaults to `admin.aistroyka.ai` |
+| `OWNER_IP_ALLOWLIST` | IP allowlist for platform-owner middleware/API/page gates. | No IP filter |
+| `OWNER_GATE_SECRET` | Optional `X-Owner-Key` for selected platform API paths. | Not required |
+| `OWNER_STEP_UP_SECRET` | HMAC step-up for `critical` platform mutations. | Critical routes return 503 if missing |
+| `OWNER_TOTP_SECRET` | Optional TOTP header check. | Not enforced |
+| `OWNER_AUDIT_DENIED` | When set, denied owner-gate attempts may be written to DB audit. | Off |
+
+Cloudflare Access on `admin.aistroyka.ai` is **separate** from Supabase auth: Access success does not create a Supabase session; operators still need login + `platform_owner_grants`.
+
+---
+
 ## Дополнительные (опционально)
 
 | Variable | Описание |
