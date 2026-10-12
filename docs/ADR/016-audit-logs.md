@@ -6,3 +6,5 @@
 **Context:** Compliance and forensics require a trail of who did what and when.
 
 **Consequences:** High-volume actions should remain minimal payload; details kept small. Retention enforced separately (data_retention_policies + scheduled job).
+
+**Later emit behavior (2026-09-28):** `login` is the first workspace login for activation, not every session. `viewer` and `stakeholder` are skipped. Password recovery (`recovery=1`) and identity link (`intent=link`) do not write it. `notification_opened` is product telemetry for an inbox target open (direct insert, not `emitAudit`); it is not mark-read. See `docs/growth/PRODUCT_ANALYTICS_PLAN.md`.
