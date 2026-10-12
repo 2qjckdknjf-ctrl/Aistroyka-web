@@ -1,0 +1,19 @@
+{
+  "shared_contract_tests_passed": 7,
+  "manager_debug_simulator_build": "PASS",
+  "live_ui": "PASS_SIMULATOR",
+  "physical_device": "NOT_VERIFIED",
+  "source_sha256": {
+    "ios/Shared/Sources/Shared/ReportPhotoPublication.swift": "524b720aa9b6c59e6ac953fea9e665494e0b31051e8389b918887a5bd0e59d73",
+    "ios/Shared/Tests/SharedTests/ReportPhotoPublicationTests.swift": "07929ae7aa16cee5f9cca4e6dbe6b4a6a762ba8ade3ff701f3fb4f8b0e891c89",
+    "ios/AiStroykaManager/AiStroykaManager/Services/ManagerAPI.swift": "8e03b1cca3d12bd66fdc8ae3f534aeff4a30ad284c6edc0c8bcc7978534d38c7",
+    "ios/AiStroykaManager/AiStroykaManager/Views/ReportsInboxView.swift": "1ef961864f3f9f0d43ffab2cfdc93b783a4dfe15c7390ce3ee28e80bd4187eb4",
+    "ios/AiStroykaManager/AiStroykaManager/ManagerUITestLaunchHooks.swift": "38bdd2fbaf962c45a4176b832307d19716eebaac62624c17a2168973c8cad038",
+    "ios/AiStroykaManager/AiStroykaManager/Views/ManagerTabShell.swift": "3bc63f2d3a8440f5f661b49eac84fbc4c49e0c6ab93a0c99c86a14cd5a97820b",
+    "ios/AiStroykaManager/AiStroykaManagerUITests/ManagerSmokeUITests.swift": "c554391964b881331566aa8109db588f5a0174a741a172e352d89749d0f40af4"
+  },
+  "live_ui_tests_passed": 1,
+  "live_ui_seconds": 16.475,
+  "server_final_published": false,
+  "private_runner_credentials_scrubbed": true
+}

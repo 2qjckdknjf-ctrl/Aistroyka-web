@@ -178,6 +178,18 @@ enum ManagerAPI {
         return data
     }
 
+    static func reportPhotoPublication(reportId: String) async throws -> ReportPhotoPublication.State {
+        let path = try ReportPhotoPublication.requestPath(reportId: reportId)
+        let response: ReportPhotoPublication.Response = try await APIClient.shared.request(path: path)
+        return try response.data.validated(reportId: reportId)
+    }
+
+    static func setReportPhotoPublication(reportId: String, item: ReportPhotoPublication.Item) async throws {
+        let path = try ReportPhotoPublication.requestPath(reportId: reportId)
+        let action = try ReportPhotoPublication.Action(attachmentId: item.attachmentId, visible: !item.published, expectedVersion: item.version)
+        let _: ReportPhotoPublication.WriteResponse = try await APIClient.shared.request(path: path, method: "PATCH", body: action)
+    }
+
     /// PATCH /api/v1/reports/:id — manager review (approved / rejected / changes_requested). Optional manager_note.
     static func reportReview(reportId: String, status: String, managerNote: String?) async throws -> ReportDetailDTO {
         struct Body: Encodable {
