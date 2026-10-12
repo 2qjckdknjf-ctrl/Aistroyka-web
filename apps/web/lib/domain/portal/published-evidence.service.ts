@@ -4,6 +4,8 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import { downloadPrivateOriginal } from "@/lib/platform/media/private-original-download";
+import { emitAudit } from "@/lib/observability/audit.service";
+import { boundedProductWrite } from "@/lib/growth/product-events";
 import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
 
 export class PublishedEvidenceError extends Error {
@@ -146,7 +148,11 @@ export async function downloadPublishedEvidence(client: SupabaseClient, ctx: Ten
     resolved.retryable ? "Original temporarily unavailable" : "Original not available");
   if (resolved.trustedProjectId !== projectId) throw new PublishedEvidenceError(404, "Original not available");
   const { data: blob, error } = await downloadPrivateOriginal(admin, resolved.objectPath, 20 * 1024 * 1024);
-  if (error || !blob) throw new PublishedEvidenceError(error?.status === 413 ? 415 : 503, "Original temporarily unavailable");
+  if (error || !blob) {
+    await boundedProductWrite(() => emitAudit(admin, { tenant_id: ctx.tenantId, user_id: ctx.userId, action: "private_original_read_error",
+      resource_type: "published_evidence", resource_id: evidenceId, details: error ? { ...error } : { stage: "missing_blob" } }));
+    throw new PublishedEvidenceError(error?.status === 413 ? 415 : 503, "Original temporarily unavailable");
+  }
   // Check again after Storage I/O: do not return bytes if access/publication was withdrawn.
   await authorize(client, ctx, projectId);
   const [current] = await readSources(admin, ctx, projectId, evidenceId);
