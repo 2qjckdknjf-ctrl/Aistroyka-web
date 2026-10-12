@@ -11,8 +11,8 @@ vi.mock("@/lib/observability/audit.service", () => ({
   emitAudit: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
-  notifyProjectManagers: vi.fn().mockResolvedValue(undefined),
-  notifyTenantManagers: vi.fn().mockResolvedValue(undefined),
+  notifyProjectReportReviewers: vi.fn().mockResolvedValue(undefined),
+  notifyTenantReportReviewers: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/platform/jobs/job.service", () => ({
   enqueueJob: vi.fn().mockResolvedValue(null),
@@ -20,8 +20,11 @@ vi.mock("@/lib/platform/jobs/job.service", () => ({
 vi.mock("./report.policy", () => ({
   canCreateReport: vi.fn().mockReturnValue(true),
 }));
+vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn(() => null) }));
 
 import { canCreateReport } from "./report.policy";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { notifyProjectReportReviewers, notifyTenantReportReviewers } from "@/lib/domain/notifications/manager-notifications.repository";
 
 const tenantId = "tenant-1";
 const userId = "user-1";
@@ -37,6 +40,7 @@ const ctx = {
 describe("submitReport report_submit audit", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getAdminClient).mockReturnValue(null);
     vi.mocked(canCreateReport).mockReturnValue(true);
     vi.mocked(emitAudit).mockResolvedValue(undefined);
     vi.mocked(repo.getProjectIdForReport).mockResolvedValue(null);
@@ -161,5 +165,29 @@ describe("submitReport report_submit audit", () => {
     vi.mocked(emitAudit).mockRejectedValue(new Error("audit down"));
     const result = await submitReport({} as never, ctx as never, "rpt-1", null, {});
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("submitted report reviewer authorization", () => {
+  const draft = { id:"rpt-1",tenant_id:tenantId,user_id:userId,status:"draft",task_id:"task-1",day_id:null };
+  beforeEach(() => {
+    vi.clearAllMocks();vi.mocked(canCreateReport).mockReturnValue(true);
+    vi.mocked(repo.submit).mockResolvedValue(true);
+    vi.mocked(repo.listMediaByReportId).mockResolvedValue([{media_id:"m1",upload_session_id:null}]);
+  });
+  it("looks up assigned managers through the server after validating an author's submitted report",async () => {
+    const caller={},admin={};vi.mocked(getAdminClient).mockReturnValue(admin as never);
+    vi.mocked(repo.getById).mockResolvedValueOnce(draft as never).mockResolvedValueOnce({...draft,status:"submitted"} as never);
+    vi.mocked(repo.getProjectIdForReport).mockImplementation(async client => client===admin?"project-1":null);
+    expect((await submitReport(caller as never,ctx as never,"rpt-1")).ok).toBe(true);
+    expect(notifyProjectReportReviewers).toHaveBeenCalledWith(admin,tenantId,"project-1",expect.objectContaining({target_id:"rpt-1"}));
+    expect(notifyTenantReportReviewers).not.toHaveBeenCalled();
+  });
+  it.each([{tenant_id:"other-tenant"},{user_id:"other-author"},{status:"draft"}])("does not use server privileges when fresh binding changes %j",async changed => {
+    vi.mocked(getAdminClient).mockReturnValue({} as never);
+    vi.mocked(repo.getById).mockResolvedValueOnce(draft as never).mockResolvedValueOnce({...draft,status:"submitted",...changed} as never);
+    vi.mocked(repo.getProjectIdForReport).mockResolvedValue(null);
+    await submitReport({} as never,ctx as never,"rpt-1");
+    expect(notifyProjectReportReviewers).not.toHaveBeenCalled();expect(notifyTenantReportReviewers).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,11 @@
+{
+  "expected_sha7": "b47742e",
+  "create_http": 202,
+  "same_request_key_reuses_job": true,
+  "process_http": 200,
+  "processed_exact_fixture_job": true,
+  "job_status": "completed",
+  "job_error_type": null,
+  "source_result_rows": 1,
+  "fixture_cleanup_required": true
+}
