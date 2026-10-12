@@ -42,3 +42,15 @@ it("preserves RLS denial and sanitizes private errors", async () => {
   info.mockResolvedValueOnce({ data: null, error: { message: "private credential" } });
   const r = await downloadPrivateOriginal(client, "path", 3); expect(r.error?.status).toBe(503); expect(JSON.stringify(r)).not.toContain("credential"); expect(download).not.toHaveBeenCalled();
 });
+it("records only the HTTP status of an SDK-wrapped failed Response", async () => {
+  stream.mockResolvedValue({ data: null, error: { name: "StorageUnknownError", message: "secret", originalError: new Response("private upstream body", { status: 403 }) } });
+  const r = await downloadPrivateOriginal(client, "private/path", 3);
+  expect(r).toEqual({ data: null, error: { status: 503, stage: "stream_open", kind: "unknown", storage_status: 403 } });
+  expect(JSON.stringify(r)).not.toMatch(/secret|upstream|private\/path/);
+});
+it("classifies a wrapped transport exception without disclosing its message", async () => {
+  stream.mockResolvedValue({ data: null, error: { name: "StorageUnknownError", originalError: new TypeError("Cache mode 'no-store' is not supported; secret URL") } });
+  const r = await downloadPrivateOriginal(client, "private/path", 3);
+  expect(r.error).toMatchObject({ stage: "stream_open", kind: "cache_compatibility" });
+  expect(JSON.stringify(r)).not.toContain("secret");
+});
