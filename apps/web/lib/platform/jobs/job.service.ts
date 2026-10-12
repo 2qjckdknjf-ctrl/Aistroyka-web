@@ -77,40 +77,57 @@ export async function processJobs(
   const start = Date.now();
   const queue = getQueueAdapter();
 
-  const claimed = await repo.claim(admin, workerId, limit, options.tenantId ?? undefined);
-
   let processed = 0;
   let success = 0;
   let failed = 0;
   let dead = 0;
 
-  for (const job of claimed) {
+  const releaseBudgetClaim = async (job: Job) => {
+    const runAfter = nextRunAfter(1);
+    if (await repo.requeueUnstarted(admin, job, "Request time budget exhausted before dispatch", "TIME_BUDGET", runAfter)) {
+      await repo.emitEvent(admin, job, "retry", { error_type: "TIME_BUDGET", run_after: runAfter.toISOString() });
+    }
+  };
+
+  // Claim immediately before dispatch: a slow handler must not strand the
+  // remainder of an already-claimed batch when the request budget expires.
+  for (let claimedCount = 0; claimedCount < limit; claimedCount++) {
     if (Date.now() - start >= budgetMs) break;
+    const [job] = await repo.claim(admin, workerId, 1, options.tenantId ?? undefined);
+    if (!job) break;
     if (job.status !== "running" || job.locked_by !== workerId
       || (options.tenantId && job.tenant_id !== options.tenantId)) continue;
+    if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     try {
       if (!await repo.ownsClaim(admin, job)) continue;
     } catch {
       // A failed read is not evidence that another worker owns the claim.
       // Requeue only this exact lease; a concurrent replacement remains untouched.
       const runAfter = nextRunAfter(job.attempts);
-      if (await repo.markFailedForRetry(admin, job, "Execution lease verification unavailable", "LEASE_CHECK_UNAVAILABLE", runAfter)) {
+      if (await repo.requeueUnstarted(admin, job, "Execution lease verification unavailable", "LEASE_CHECK_UNAVAILABLE", runAfter)) {
         await repo.emitEvent(admin, job, "retry", { error_type: "LEASE_CHECK_UNAVAILABLE", run_after: runAfter.toISOString() });
         failed++;
         processed++;
       }
       continue;
     }
+    if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     await repo.emitEvent(admin, job, "locked", { worker_id: workerId });
 
     const acquired = await queue.tryAcquireSlot(admin, job.tenant_id);
     if (!acquired) {
-      await repo.markFailedForRetry(admin, job, "Tenant concurrency cap", "CONCURRENCY_CAP", new Date());
+      await repo.requeueUnstarted(admin, job, "Tenant concurrency cap", "CONCURRENCY_CAP", nextRunAfter(1));
       continue;
     }
 
     const jobStartMs = Date.now();
-    const attempts = job.attempts ?? 0;
+    // claim_jobs already increments attempts before returning this row.
+    const attempts = Math.max(1, job.attempts);
+
+
+    const handler = HANDLERS[job.type as JobType];
+    try {
+      if (Date.now() - start >= budgetMs) { await releaseBudgetClaim(job); break; }
     logStructured({
       event: "job_started",
       job_id: job.id,
@@ -119,9 +136,6 @@ export async function processJobs(
       attempts,
       request_id: job.trace_id ?? undefined,
     });
-
-    const handler = HANDLERS[job.type as JobType];
-    try {
       if (!handler) {
         if (!await queue.markDead(admin, job, "Unknown job type", "UNKNOWN_TYPE")) continue;
         await repo.emitEvent(admin, job, "failed", { error_type: "unknown_job_type" });
@@ -130,7 +144,7 @@ export async function processJobs(
           job_id: job.id,
           job_type: job.type,
           tenant_id: job.tenant_id,
-          attempts: attempts + 1,
+          attempts,
           duration_ms: Date.now() - jobStartMs,
           retryable: false,
           error_code: "UNKNOWN_TYPE",
@@ -148,14 +162,14 @@ export async function processJobs(
         job_type: job.type,
         tenant_id: job.tenant_id,
         duration_ms: Date.now() - jobStartMs,
-        attempts: attempts + 1,
+        attempts,
       });
       success++;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Handler error";
       const code = e instanceof JobError ? e.code : "JOB_ERROR";
       const retryable = e instanceof JobError ? (e as JobError).retryable : true;
-      const attemptCount = attempts + 1;
+      const attemptCount = attempts;
       if (attemptCount >= job.max_attempts || !retryable || e instanceof JobPayloadError) {
         if (!await queue.markDead(admin, job, message, code)) continue;
         await repo.emitEvent(admin, job, "failed", { error_type: code, message });

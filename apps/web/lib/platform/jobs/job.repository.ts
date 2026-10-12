@@ -113,6 +113,13 @@ export async function markFailedForRetry(supabase: SupabaseClient, claim: JobCla
     last_error: lastError, last_error_type: lastErrorType });
 }
 
+/** Refund a claim that never reached a handler, without touching a replacement. */
+export async function requeueUnstarted(supabase: SupabaseClient, claim: JobClaim,
+  lastError: string, lastErrorType: string, runAfter: Date): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "queued", attempts: Math.max(0, claim.attempts - 1),
+    run_after: runAfter.toISOString(), last_error: lastError, last_error_type: lastErrorType });
+}
+
 export async function markDead(supabase: SupabaseClient, claim: JobClaim,
   lastError: string, lastErrorType: string): Promise<boolean> {
   return updateClaim(supabase, claim, { status: "dead", last_error: lastError, last_error_type: lastErrorType });

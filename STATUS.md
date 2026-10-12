@@ -2,9 +2,9 @@
 
 Факты сверены 2026-10-12. Последний наблюдённый main: `0891b08b6a5cb19c90d92769843fa7bffaa2fcc8` (#440). Текущий main при продолжении определяется свежим `origin/main` и GitHub. Проверенный runtime оригиналов: `fac7a17` (#437), staging 38189852934 SUCCESS, 13 живых HTTP-проверок PASS; production 38190089187 SUCCESS, apex/www обслуживают `fac7a17`.
 
-Текущий проверенный runtime: staging/apex/www `0891b08` (#440). Последний наблюдённый main: #442 `16a429f6`; staging 38201387888 ещё выполнялся при фиксации. #442 required CI 38201004961 SUCCESS, точное независимое одобрение, защищённое объединение. Четыре прямых live CAS и пять protected-source processor/SDK проверок PASS с очисткой; это не HTTP runtime proof. Два исторических running задания QA от 3 октября сохранены для отдельного восстановления.
+Текущий проверенный runtime: staging/apex/www `e22cb37` (#443), staging 38202052249 / production 38202330396 SUCCESS. Четыре live handler/SDK reconciliation проверки PASS; четыре session rows и два PNG удалены. Last main #443 `e22cb37d`; получить свежий origin/main при продолжении.
 
-Активная задача: `fix/platform-handler-tenant-scope-2026-10-12` в архивной рабочей папке runtime verification. 25 локальных handler тестов PASS. До durable report-media result закрыть границы служебных обработчиков, budget/attempt/recovery дефекты очереди; [audit](docs/audit/2026-10-12-platform-handler-scope-hard-audit.md), [lease proof](docs/reports/platform-job-lease-2026-10-12/RESULT.md). Получить свежие main/PR/registry и preflight перед продолжением.
+Активная задача: PR #444, `fix/platform-job-attempt-budget-2026-10-12` в `/Users/alex/Projects/AISTROYKA-main-clean`. 69 platform job тестов и пять native PostgreSQL контрактов PASS; P2 про медленный claim/ownership/slot исправлен с повторной проверкой бюджета и CAS refund; повторные CI/review нужны на окончательном HEAD. [Budget proof](docs/reports/platform-job-budget-2026-10-12/RESULT.md). Два исторических running задания QA от 3 октября сохранены для отдельного восстановления. До durable report-media result закрыть recovery/side-effect контракты очереди; [audit](docs/audit/2026-10-12-platform-handler-scope-hard-audit.md). Получить свежие main/PR/registry и preflight перед продолжением.
 
 | Контур | Факт | Следующая работа |
 |---|---|---|

@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
-import { markSuccess, markDead, markFailedForRetry, ownsClaim } from "./job.repository";
+import { markSuccess, markDead, markFailedForRetry, ownsClaim, requeueUnstarted } from "./job.repository";
 import type { JobClaim } from "./queue/queue.interface";
 const claim:JobClaim={id:"job-a",tenant_id:"tenant-a",locked_by:"worker-a",locked_at:"2026-10-12T00:00:00.000123Z",attempts:2};
 function fixture(changed:Record<string,unknown>={}) {
@@ -32,6 +32,12 @@ it("only the winning completion changes state and a duplicate acknowledgement is
 });
 it("fails closed before querying for missing lease fields",async()=>{
   const f=fixture();expect(await markSuccess(f.client,{...claim,locked_at:null})).toBe(false);expect(f.calls()).toBe(0);
+});
+it("refunds only the current unstarted lease and preserves a replacement attempt",async()=>{
+  const f=fixture();expect(await requeueUnstarted(f.client,claim,"unstarted","CAP",new Date())).toBe(true);
+  expect(f.state).toMatchObject({status:"queued",attempts:1,locked_by:null,locked_at:null});
+  const replaced=fixture({attempts:3});expect(await requeueUnstarted(replaced.client,claim,"unstarted","CAP",new Date())).toBe(false);
+  expect(replaced.state).toMatchObject({status:"running",attempts:3,locked_by:claim.locked_by});
 });
 it("the real SDK encodes every CAS field and preserves microseconds",async()=>{
   const seen:URL[]=[];
