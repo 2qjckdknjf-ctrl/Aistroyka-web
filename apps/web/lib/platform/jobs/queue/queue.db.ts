@@ -32,15 +32,15 @@ export const queueDb: IQueueAdapter = {
     await admin.rpc("release_job_slot", { p_tenant_id: tenantId });
   },
 
-  async markSuccess(admin, jobId) {
-    return repo.markSuccess(admin, jobId);
+  async markSuccess(admin, claim) {
+    return repo.markSuccess(admin, claim);
   },
 
-  async markFailedForRetry(admin, jobId, lastError, lastErrorType, runAfter) {
-    return repo.markFailedForRetry(admin, jobId, lastError, lastErrorType, runAfter);
+  async markFailedForRetry(admin, claim, lastError, lastErrorType, runAfter) {
+    return repo.markFailedForRetry(admin, claim, lastError, lastErrorType, runAfter);
   },
 
-  async markDead(admin, jobId, lastError, lastErrorType) {
-    return repo.markDead(admin, jobId, lastError, lastErrorType);
+  async markDead(admin, claim, lastError, lastErrorType) {
+    return repo.markDead(admin, claim, lastError, lastErrorType);
   },
 };

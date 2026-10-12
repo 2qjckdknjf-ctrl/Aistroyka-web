@@ -1,3 +1,5 @@
+import type { JobClaim } from "./queue/queue.interface";
+import { JobHandlerError } from "./job.errors";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Job, JobEventType, JobType } from "./job.types";
 
@@ -71,67 +73,73 @@ export async function claim(
   return data as Job[];
 }
 
-/** Mark job success. */
-export async function markSuccess(supabase: SupabaseClient, jobId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("jobs")
-    .update({ status: "success", updated_at: new Date().toISOString(), locked_by: null, locked_at: null })
-    .eq("id", jobId);
-  return !error;
+function validClaim(claim: JobClaim): boolean {
+  return Boolean(claim.id && claim.tenant_id && claim.locked_by && claim.locked_at
+    && Number.isInteger(claim.attempts) && claim.attempts >= 0);
 }
 
-/** Mark job failed and schedule retry: set status to queued, run_after, clear lock. */
-export async function markFailedForRetry(
-  supabase: SupabaseClient,
-  jobId: string,
-  lastError: string,
-  lastErrorType: string,
-  runAfter: Date
-): Promise<boolean> {
-  const { error } = await supabase
-    .from("jobs")
-    .update({
-      status: "queued",
-      run_after: runAfter.toISOString(),
-      last_error: lastError,
-      last_error_type: lastErrorType,
-      updated_at: new Date().toISOString(),
-      locked_by: null,
-      locked_at: null,
-    })
-    .eq("id", jobId);
-  return !error;
+/** Exact claim predicate also distinguishes a reused worker ID's later lease. */
+function withClaim(query: { eq(column: string, value: unknown): unknown }, claim: JobClaim): void {
+  // PostgREST filters mutate the same builder. Keep the SDK's result type outside
+  // this small predicate helper rather than recursively inferring its generics.
+  for (const [column, value] of Object.entries({ id: claim.id, tenant_id: claim.tenant_id,
+    status: "running", locked_by: claim.locked_by, locked_at: claim.locked_at, attempts: claim.attempts })) query.eq(column, value);
 }
 
-/** Mark job dead (no more retries). */
-export async function markDead(
-  supabase: SupabaseClient,
-  jobId: string,
-  lastError: string,
-  lastErrorType: string
-): Promise<boolean> {
-  const { error } = await supabase
-    .from("jobs")
-    .update({
-      status: "dead",
-      last_error: lastError,
-      last_error_type: lastErrorType,
-      updated_at: new Date().toISOString(),
-      locked_by: null,
-      locked_at: null,
-    })
-    .eq("id", jobId);
-  return !error;
+export async function ownsClaim(supabase: SupabaseClient, claim: JobClaim): Promise<boolean> {
+  if (!validClaim(claim)) return false;
+  const query = supabase.from("jobs").select("id"); withClaim(query, claim);
+  const { data, error } = await query.maybeSingle();
+  if (error) throw new JobHandlerError("Execution lease verification unavailable", true, "LEASE_CHECK_UNAVAILABLE");
+  return data?.id === claim.id;
 }
 
-/** Emit job event. */
+async function updateClaim(supabase: SupabaseClient, claim: JobClaim, patch: Record<string, unknown>): Promise<boolean> {
+  if (!validClaim(claim)) return false;
+  const query = supabase.from("jobs").update({ ...patch,
+    updated_at: new Date().toISOString(), locked_by: null, locked_at: null }); withClaim(query, claim);
+  const { data, error } = await query.select("id").maybeSingle();
+  return !error && data?.id === claim.id;
+}
+
+/** A stale completion never clears another worker's lease. */
+export async function markSuccess(supabase: SupabaseClient, claim: JobClaim): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "success" });
+}
+
+export async function markFailedForRetry(supabase: SupabaseClient, claim: JobClaim,
+  lastError: string, lastErrorType: string, runAfter: Date): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "queued", run_after: runAfter.toISOString(),
+    last_error: lastError, last_error_type: lastErrorType });
+}
+
+export async function markDead(supabase: SupabaseClient, claim: JobClaim,
+  lastError: string, lastErrorType: string): Promise<boolean> {
+  return updateClaim(supabase, claim, { status: "dead", last_error: lastError, last_error_type: lastErrorType });
+}
+
+/** Platform events use the existing tenant audit store. Live job_events belongs
+ * to analysis_jobs and must not be repurposed for this queue. */
 export async function emitEvent(
   supabase: SupabaseClient,
-  jobId: string,
+  job: Pick<Job, "id" | "tenant_id" | "user_id" | "trace_id" | "type" | "attempts" | "locked_at">,
   event: JobEventType,
   details?: Record<string, unknown>
 ): Promise<void> {
-  await supabase.from("job_events").insert({ job_id: jobId, event, details: details ?? {} });
+  const safe: Record<string, unknown> = { event, job_type: job.type, attempts: job.attempts, claim_locked_at: job.locked_at };
+  if (typeof details?.error_type === "string" && /^[a-zA-Z0-9_]{1,64}$/.test(details.error_type)) safe.error_type = details.error_type;
+  if (typeof details?.run_after === "string" && Number.isFinite(Date.parse(details.run_after))) safe.run_after = new Date(details.run_after).toISOString();
+  try {
+    // Await the write so edge requests keep it alive, with a transport deadline.
+    // Never persist raw handler errors, payloads, signed URLs or provider output.
+    await supabase.from("audit_logs").insert({
+      tenant_id: job.tenant_id, user_id: job.user_id ?? null, trace_id: job.trace_id ?? null,
+      action: `platform_job_${event}`, resource_type: "platform_job", resource_id: job.id,
+      details: safe,
+    }).abortSignal(AbortSignal.timeout(2000));
+  } catch {
+    // Observability failure must not reverse an acknowledged job transition.
+  }
 }
 
 /** Get job by id (for handlers). */
