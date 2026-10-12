@@ -51,7 +51,7 @@ describe("session worker scope and ownership", () => {
     expect(f.write.is).toHaveBeenCalledWith("execution_token", null);
     expect(f.read.or).toHaveBeenCalledWith(expect.stringContaining("next_retry_at.lte."));
     expect(f.admin.rpc).toHaveBeenCalledWith("complete_session_analysis_job", expect.objectContaining({ p_tenant_id: "tenant-a", p_execution_token: "claim-a" }));
-    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ redirect: "error", headers: expect.objectContaining({ authorization: "Bearer test-only" }) }));
+    expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ redirect: "manual", headers: expect.objectContaining({ authorization: "Bearer test-only" }) }));
   });
   it("does not send foreign media to the provider", async () => {
     const f = fixture({ foreignMedia: true }); const fetchMock = vi.fn(); vi.stubGlobal("fetch", fetchMock);
@@ -64,5 +64,18 @@ describe("session worker scope and ownership", () => {
     const f = fixture(); vi.stubGlobal("fetch", vi.fn(async () => Response.json(result, { headers: { "X-AI-Fallback-Reason": "provider_unavailable" } })));
     expect(await f.run()).toEqual({ ok: true, jobId: "job-a", status: "failed" });
     expect(f.admin.rpc).not.toHaveBeenCalledWith("complete_session_analysis_job", expect.anything());
+  });
+  it.each([301, 302, 303, 307, 308])("refuses HTTP %i without completing or retrying the job", async status => {
+    const f = fixture();
+    const cancel = vi.fn();
+    const response = new Response(new ReadableStream({ cancel }), { status, headers: { Location: "https://foreign.test/collect" } });
+    const fetchMock = vi.fn(async () => response); vi.stubGlobal("fetch", fetchMock);
+    expect(await f.run()).toEqual({ ok: true, jobId: "job-a", status: "failed" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe("https://safe.test/api/ai/analyze-image");
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ redirect: "manual" });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(f.admin.rpc).not.toHaveBeenCalledWith("complete_session_analysis_job", expect.anything());
+    expect(f.admin.rpc).toHaveBeenCalledWith("fail_session_analysis_job", expect.objectContaining({ p_tenant_id: "tenant-a", p_execution_token: "claim-a" }));
   });
 });

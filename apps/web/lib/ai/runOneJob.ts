@@ -63,7 +63,9 @@ async function callAiAnalysis(
       const res = await fetch(baseUrl, {
         method: "POST",
         headers: { ...Object.fromEntries(new Headers(requestHeaders)), "Content-Type": "application/json" },
-        redirect: "error",
+        // Workerd rejects redirect:"error". Manual never forwards the caller's
+        // bearer token to a redirect destination; non-2xx remains a failed job.
+        redirect: "manual",
         body: JSON.stringify(params),
         signal: controller.signal,
       });
@@ -79,6 +81,8 @@ async function callAiAnalysis(
         return data;
       }
 
+      // A refused redirect body is not needed for classification.
+      if (res.status >= 300 && res.status < 400) await res.body?.cancel().catch(() => {});
       const classified = classifyVisionFailure({ message: `AI analysis failed: ${res.status}`, httpStatus: res.status });
       const err = new VisionProviderError({
         message: `AI analysis failed: ${res.status}`,
