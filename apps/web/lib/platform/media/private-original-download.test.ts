@@ -12,7 +12,7 @@ beforeEach(() => {
 it("uses authenticated SDK streaming and exact MIME/bytes with strict transport options", async () => {
   const r = await downloadPrivateOriginal(client, "tenant/project/photo.png", 3);
   expect(new Uint8Array(await r.data!.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3])); expect(r.data!.type).toBe("image/png");
-  expect(download).toHaveBeenCalledWith("tenant/project/photo.png", {}, expect.objectContaining({ redirect: "error", cache: "no-store", signal: expect.any(AbortSignal) }));
+  expect(download).toHaveBeenCalledWith("tenant/project/photo.png", {}, expect.objectContaining({ redirect: "manual", cache: "no-store", signal: expect.any(AbortSignal) }));
   expect(info).toHaveBeenCalledTimes(2);
 });
 it("rejects known oversized objects before starting their stream", async () => {

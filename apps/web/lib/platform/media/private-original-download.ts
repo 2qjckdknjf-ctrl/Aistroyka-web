@@ -32,7 +32,9 @@ export async function downloadPrivateOriginal(client: SupabaseClient, path: stri
     if (before.error || !before.data) return failure(503, before.error);
     if (typeof before.data.size === "number" && before.data.size > maxBytes) return { data: null, error: { status: 413 } };
     stage = "stream_open";
-    const transport = { cache: "no-store" as const, redirect: "error" as const, signal: AbortSignal.timeout(20000) };
+    // Workerd rejects redirect:"error". Manual prevents following any redirect;
+    // the SDK rejects its non-2xx Response before exposing a body stream.
+    const transport = { cache: "no-store" as const, redirect: "manual" as const, signal: AbortSignal.timeout(20000) };
     const stream = await storage.download(path, {}, transport).asStream();
     if (stream.error || !stream.data) return failure(503, stream.error);
     stage = "stream_read";
