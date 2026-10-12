@@ -1,0 +1,12 @@
+{
+  "sha": "0891b08b6a5cb19c90d92769843fa7bffaa2fcc8",
+  "staging_run": 38195757048,
+  "production_run": 38196026174,
+  "conclusions": "SUCCESS",
+  "served_hosts": [
+    "staging.aistroyka.ai",
+    "aistroyka.ai",
+    "www.aistroyka.ai"
+  ],
+  "served_sha7": "0891b08"
+}
