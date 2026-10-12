@@ -12,7 +12,7 @@ vi.mock("@/lib/observability/audit.service", () => ({
 }));
 vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
   notifyProjectManagers: vi.fn().mockResolvedValue(undefined),
-  notifyTenantManagers: vi.fn().mockResolvedValue(undefined),
+  notifyTenantReportReviewers: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/platform/jobs/job.service", () => ({
   enqueueJob: vi.fn().mockResolvedValue(null),

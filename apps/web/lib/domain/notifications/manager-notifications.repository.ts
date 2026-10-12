@@ -183,12 +183,12 @@ export async function notifyProjectManagers(
       .eq("status", "active");
     const userIds = [...new Set((data ?? []).map((r: { user_id: string }) => r.user_id))];
     if (userIds.length === 0) {
-      await notifyTenantManagers(supabase, tenantId, { ...input, project_id: projectId });
+      await notifyTenantReportReviewers(supabase, tenantId, { ...input, project_id: projectId });
       return;
     }
     await insertNotifications(supabase, tenantId, userIds, { ...input, project_id: projectId });
   } catch {
-    await notifyTenantManagers(supabase, tenantId, { ...input, project_id: projectId });
+    await notifyTenantReportReviewers(supabase, tenantId, { ...input, project_id: projectId });
   }
 }
 
@@ -268,12 +268,30 @@ export async function notifyTenantManagers(
   tenantId: string,
   input: CreateManagerNotificationInput
 ): Promise<void> {
+  await notifyTenantMembersWithRoles(supabase, tenantId, input, MANAGER_ROLES);
+}
+
+/** Report fallback: tenant members alone are not assigned project reviewers. */
+export async function notifyTenantReportReviewers(
+  supabase: SupabaseClient,
+  tenantId: string,
+  input: CreateManagerNotificationInput,
+): Promise<void> {
+  await notifyTenantMembersWithRoles(supabase, tenantId, input, ["owner", "admin"]);
+}
+
+async function notifyTenantMembersWithRoles(
+  supabase: SupabaseClient,
+  tenantId: string,
+  input: CreateManagerNotificationInput,
+  roles: string[],
+): Promise<void> {
   try {
     const { data: members } = await supabase
       .from("tenant_members")
       .select("user_id")
       .eq("tenant_id", tenantId)
-      .in("role", MANAGER_ROLES);
+      .in("role", roles);
     if (!members?.length) return;
     const userIds = [...new Set((members as { user_id: string }[]).map((m) => m.user_id))];
     await insertNotifications(supabase, tenantId, userIds, input);

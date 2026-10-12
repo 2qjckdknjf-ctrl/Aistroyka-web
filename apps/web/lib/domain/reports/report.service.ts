@@ -8,7 +8,7 @@ import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
-import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { notifyProjectManagers, notifyTenantReportReviewers } from "@/lib/domain/notifications/manager-notifications.repository";
 import { boundedProductWrite, reportSubmitAuditDetails } from "@/lib/growth/product-events";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
@@ -148,7 +148,7 @@ export async function submitReport(
   if (projectId) {
     await notifyProjectManagers(supabase, ctx.tenantId, projectId, input);
   } else {
-    await notifyTenantManagers(supabase, ctx.tenantId, input);
+    await notifyTenantReportReviewers(supabase, ctx.tenantId, input);
   }
 
   const jobIds: string[] = [];
