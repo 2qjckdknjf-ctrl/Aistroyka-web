@@ -23,7 +23,7 @@ vi.mock("@/lib/platform/ai-usage/ai-usage.service", async (original) => ({
 vi.mock("@/lib/platform/ai/ai.service", async (original) => ({
   ...await original<typeof import("@/lib/platform/ai/ai.service")>(), analyzeImage: mocks.analyze,
 }));
-vi.mock("@/lib/observability/audit.service", () => ({ emitAiRuntimeAudit: vi.fn() }));
+vi.mock("@/lib/observability/audit.service", () => ({ emitAiRuntimeAudit: vi.fn(async () => {}) }));
 
 const valid = { tenantId: "tenant-a", userId: "user-a", role: "member", subscriptionTier: "pro" };
 const absent = { tenantId: null, userId: null, role: null, subscriptionTier: null };
