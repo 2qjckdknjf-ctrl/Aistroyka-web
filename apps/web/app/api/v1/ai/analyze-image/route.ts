@@ -35,6 +35,7 @@ import {
   getAiReleaseCorrelation,
 } from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
+import { boundedProductWrite } from "@/lib/growth/product-events";
 import { AnalyzeImageRequestSchema, AnalysisResultSchema } from "@aistroyka/contracts";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
@@ -280,7 +281,7 @@ export async function POST(request: Request) {
       ...r,
     });
     if (tenantCtx.tenantId) {
-      void emitAiRuntimeAudit(userSupabase, {
+      await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
@@ -294,7 +295,7 @@ export async function POST(request: Request) {
           provider: "vision_router",
           ...r,
         },
-      });
+      }));
     }
     const validated = AnalysisResultSchema.safeParse(result);
     const bodyToReturn = validated.success ? validated.data : result;
@@ -317,7 +318,7 @@ export async function POST(request: Request) {
         ...r,
       });
       if (tenantCtx.tenantId) {
-        void emitAiRuntimeAudit(userSupabase, {
+        await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
@@ -331,7 +332,7 @@ export async function POST(request: Request) {
             error_kind: "output_validation_failure",
             ...r,
           },
-        });
+        }));
       }
       return wrap(NextResponse.json({ error: err.message, code: "ai_policy_denied", request_id: requestId }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
     }
@@ -350,7 +351,7 @@ export async function POST(request: Request) {
         ...r,
       });
       if (tenantCtx.tenantId) {
-        void emitAiRuntimeAudit(userSupabase, {
+        await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
@@ -364,7 +365,7 @@ export async function POST(request: Request) {
             error_kind: ek,
             ...r,
           },
-        });
+        }));
       }
       if (fallbackEnabled) {
         const fallbackResult = buildVisionDeterministicFallback(ek);
@@ -383,7 +384,7 @@ export async function POST(request: Request) {
           ...r,
         });
         if (tenantCtx.tenantId) {
-          void emitAiRuntimeAudit(userSupabase, {
+          await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
             tenant_id: tenantCtx.tenantId,
             user_id: tenantCtx.userId ?? null,
             trace_id: requestId,
@@ -399,7 +400,7 @@ export async function POST(request: Request) {
               fallback_reason: ek,
               ...r,
             },
-          });
+          }));
         }
         const fallbackResponse = NextResponse.json(fallbackResult, { status: 200 });
         fallbackResponse.headers.set("X-AI-Fallback-Reason", ek);
@@ -420,7 +421,7 @@ export async function POST(request: Request) {
       ...r,
     });
     if (tenantCtx.tenantId) {
-      void emitAiRuntimeAudit(userSupabase, {
+      await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
@@ -434,7 +435,7 @@ export async function POST(request: Request) {
           error_kind: "unknown_internal_error",
           ...r,
         },
-      });
+      }));
     }
     return wrap(NextResponse.json({ error: message, request_id: requestId }, { status: 500 }), tenantCtx.tenantId, tenantCtx.userId);
   }

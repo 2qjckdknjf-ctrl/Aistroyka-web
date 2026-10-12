@@ -1,6 +1,6 @@
 # AISTROYKA — план/факт,2026-10-11
 
-Сверка 2026-10-12: наблюдённый main #438 `be28832c`; текущий код всегда проверяется свежим origin/main. #429/#431/#432 доставлены. #433/#434 дали регрессию оригиналов в Worker; #437 исправил redirect:error и прошёл 13 реальных staging PNG/Proof Pack/PDF/revocation проверок на `fac7a17` с точной очисткой. Production 38190089187 SUCCESS, apex/www `fac7a17`. #435 native Manager реализован: live UI 1/1 и server readback PASS; после включения #438 нужен свежий protected CI/review. #438 исправил тот же transport в существующем async executor, 38 тестов PASS; live job/result остаётся следующим доказательством. Не повторять уже включённые модули из-за старого TODO. [STATUS](../../STATUS.md), [runtime proof](../reports/private-original-runtime-2026-10-12/RESULT.md), [native proof](../reports/manager-native-publication-2026-10-12/RESULT.md). Исторические строки ниже сохраняют собственный объём доказательств.
+Сверка 2026-10-12: наблюдённый main #435 `7fc8fa2d`; текущий код всегда проверяется свежим origin/main. #429/#431/#432 доставлены. #433/#434 дали регрессию оригиналов в Worker; #437 исправил redirect:error и прошёл 13 реальных staging PNG/Proof Pack/PDF/revocation проверок на `fac7a17` с точной очисткой. Production 38190089187 SUCCESS, apex/www `fac7a17`. #435 native Manager защищённо объединён на 4d3ddf75 после CI/three-app smoke SUCCESS, live UI 1/1 и readback PASS; runtime проверяется отдельно. #438 исправил transport; живой job завершён, один результат связан с media/job/tenant; strict provider gate exit 0, fallback 0. Durable audit проверяется следующим срезом. Не повторять уже включённые модули из-за старого TODO. [STATUS](../../STATUS.md), [runtime proof](../reports/private-original-runtime-2026-10-12/RESULT.md), [native proof](../reports/manager-native-publication-2026-10-12/RESULT.md). Исторические строки ниже сохраняют собственный объём доказательств.
 
 | Контур | Факт | Следующая работа |
 |---|---|---|
@@ -11,7 +11,7 @@
 | B2/B3 | Daily-log persist and manual intake CRUD/submit/withdraw already exist | AI scope extraction этим не реализован |
 | C1/C2 Customer iOS | Separate target/auth/list/detail/intake exists; current Debug branch physical positive+save+revocation+logout PASS | QA fixes #426 delivered; gallery #431 delivered, manual keyboard/OAuth/push/offline and store/pilot binary separately |
 | E1 AI | Deployed canonical provider live-success/fallback 0; scope boundaries repaired | All capability/eval claims require their own real evidence |
-| E2 Vision | Async request_key/lifecycle and service-only live RPC present | Executor/source provenance/retry/cancel and reviewed video result E2 E |
+| E2 Vision | Async request_key/lifecycle and service-only live RPC present | Живой image job/result PASS в #438; durable audit, reviewed observations, cancel/video executor далее |
 | E3 Graph | Model/repository/overlay persisted and tested | Full lineage/spatial/human-review and intake-ID promotion scenario |
 | AIS-CLIENT-005A | Manual drafts, tenant scope and human lifecycle present | Owner-bound preproject workspace + async observations/rooms/zones/work items; [hard audit](../audit/2026-10-11-intake-extraction-hard-audit.md) |
 | AIS-CLIENT-005B | Live camera/voice planned | After Owner/Graph +consent/provider/session/budget gates; flag off |
