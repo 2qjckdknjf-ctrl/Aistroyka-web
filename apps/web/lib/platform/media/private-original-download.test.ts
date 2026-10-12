@@ -12,7 +12,7 @@ beforeEach(() => {
 it("uses authenticated SDK streaming and exact MIME/bytes with strict transport options", async () => {
   const r = await downloadPrivateOriginal(client, "tenant/project/photo.png", 3);
   expect(new Uint8Array(await r.data!.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3])); expect(r.data!.type).toBe("image/png");
-  expect(download).toHaveBeenCalledWith("tenant/project/photo.png", {}, expect.objectContaining({ redirect: "error", cache: "no-store", signal: expect.any(AbortSignal) }));
+  expect(download).toHaveBeenCalledWith("tenant/project/photo.png", {}, expect.objectContaining({ redirect: "manual", cache: "no-store", signal: expect.any(AbortSignal) }));
   expect(info).toHaveBeenCalledTimes(2);
 });
 it("rejects known oversized objects before starting their stream", async () => {
@@ -41,4 +41,16 @@ it.each([{ version: "changed" }, { etag: "changed" }, { contentType: "text/html"
 it("preserves RLS denial and sanitizes private errors", async () => {
   info.mockResolvedValueOnce({ data: null, error: { message: "private credential" } });
   const r = await downloadPrivateOriginal(client, "path", 3); expect(r.error?.status).toBe(503); expect(JSON.stringify(r)).not.toContain("credential"); expect(download).not.toHaveBeenCalled();
+});
+it("records only the HTTP status of an SDK-wrapped failed Response", async () => {
+  stream.mockResolvedValue({ data: null, error: { name: "StorageUnknownError", message: "secret", originalError: new Response("private upstream body", { status: 403 }) } });
+  const r = await downloadPrivateOriginal(client, "private/path", 3);
+  expect(r).toEqual({ data: null, error: { status: 503, stage: "stream_open", kind: "unknown", storage_status: 403 } });
+  expect(JSON.stringify(r)).not.toMatch(/secret|upstream|private\/path/);
+});
+it("classifies a wrapped transport exception without disclosing its message", async () => {
+  stream.mockResolvedValue({ data: null, error: { name: "StorageUnknownError", originalError: new TypeError("Cache mode 'no-store' is not supported; secret URL") } });
+  const r = await downloadPrivateOriginal(client, "private/path", 3);
+  expect(r.error).toMatchObject({ stage: "stream_open", kind: "cache_compatibility" });
+  expect(JSON.stringify(r)).not.toContain("secret");
 });
