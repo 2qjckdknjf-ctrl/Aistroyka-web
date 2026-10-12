@@ -173,6 +173,26 @@ export async function notifyProjectManagers(
   projectId: string,
   input: CreateManagerNotificationInput
 ): Promise<void> {
+  await notifyProjectManagersWithFallback(supabase, tenantId, projectId, input, notifyTenantManagers);
+}
+
+/** Report-specific fallback; generic project notification consumers retain their routing. */
+export async function notifyProjectReportReviewers(
+  supabase: SupabaseClient,
+  tenantId: string,
+  projectId: string,
+  input: CreateManagerNotificationInput,
+): Promise<void> {
+  await notifyProjectManagersWithFallback(supabase, tenantId, projectId, input, notifyTenantReportReviewers);
+}
+
+async function notifyProjectManagersWithFallback(
+  supabase: SupabaseClient,
+  tenantId: string,
+  projectId: string,
+  input: CreateManagerNotificationInput,
+  fallback: typeof notifyTenantManagers,
+): Promise<void> {
   try {
     const { data } = await supabase
       .from("project_members")
@@ -183,12 +203,12 @@ export async function notifyProjectManagers(
       .eq("status", "active");
     const userIds = [...new Set((data ?? []).map((r: { user_id: string }) => r.user_id))];
     if (userIds.length === 0) {
-      await notifyTenantReportReviewers(supabase, tenantId, { ...input, project_id: projectId });
+      await fallback(supabase, tenantId, { ...input, project_id: projectId });
       return;
     }
     await insertNotifications(supabase, tenantId, userIds, { ...input, project_id: projectId });
   } catch {
-    await notifyTenantReportReviewers(supabase, tenantId, { ...input, project_id: projectId });
+    await fallback(supabase, tenantId, { ...input, project_id: projectId });
   }
 }
 
@@ -277,7 +297,18 @@ export async function notifyTenantReportReviewers(
   tenantId: string,
   input: CreateManagerNotificationInput,
 ): Promise<void> {
-  await notifyTenantMembersWithRoles(supabase, tenantId, input, ["owner", "admin"]);
+  try {
+    const [{ data: tenant }, { data: members }] = await Promise.all([
+      supabase.from("tenants").select("user_id").eq("id", tenantId).maybeSingle(),
+      supabase.from("tenant_members").select("user_id").eq("tenant_id", tenantId).in("role", ["owner", "admin"]),
+    ]);
+    const reviewers = new Set<string>();
+    if (tenant?.user_id) reviewers.add(tenant.user_id);
+    for (const member of members ?? []) reviewers.add(member.user_id);
+    await insertNotifications(supabase, tenantId, [...reviewers], input);
+  } catch {
+    // Best-effort, under the current caller's RLS.
+  }
 }
 
 async function notifyTenantMembersWithRoles(

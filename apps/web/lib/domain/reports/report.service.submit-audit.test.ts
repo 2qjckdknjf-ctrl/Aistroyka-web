@@ -11,7 +11,7 @@ vi.mock("@/lib/observability/audit.service", () => ({
   emitAudit: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
-  notifyProjectManagers: vi.fn().mockResolvedValue(undefined),
+  notifyProjectReportReviewers: vi.fn().mockResolvedValue(undefined),
   notifyTenantReportReviewers: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/platform/jobs/job.service", () => ({
