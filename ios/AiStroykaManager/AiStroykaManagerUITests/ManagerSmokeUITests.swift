@@ -8,6 +8,43 @@
 import XCTest
 
 final class ManagerSmokeUITests: XCTestCase {
+    @MainActor
+    func testLiveSelectedPhotoPublication() throws {
+        let env = ProcessInfo.processInfo.environment
+        let keys = ["MANAGER_PUBLICATION_E2E_ACCESS_TOKEN", "MANAGER_PUBLICATION_E2E_USER_ID", "MANAGER_PUBLICATION_E2E_PROJECT_ID", "MANAGER_PUBLICATION_E2E_REPORT_ID", "MANAGER_PUBLICATION_E2E_TAG"]
+        guard keys.allSatisfy({ !(env[$0] ?? "").isEmpty }) else { throw XCTSkip("Requires an exact synthetic publication fixture") }
+        let tag = env["MANAGER_PUBLICATION_E2E_TAG"]!
+        guard tag.hasPrefix("qa-published-evidence-"), UUID(uuidString: String(tag.dropFirst("qa-published-evidence-".count))) != nil,
+              UUID(uuidString: env["MANAGER_PUBLICATION_E2E_PROJECT_ID"]!) != nil,
+              UUID(uuidString: env["MANAGER_PUBLICATION_E2E_REPORT_ID"]!) != nil else { XCTFail("Unexpected fixture scope"); return }
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchEnvironment["AISTROYKA_E2E"] = "1"
+        app.launchEnvironment["AISTROYKA_E2E_BASE_URL"] = "https://staging.aistroyka.ai"
+        app.launchEnvironment["AISTROYKA_E2E_ACCESS_TOKEN"] = env["MANAGER_PUBLICATION_E2E_ACCESS_TOKEN"]
+        app.launchEnvironment["AISTROYKA_E2E_USER_ID"] = env["MANAGER_PUBLICATION_E2E_USER_ID"]
+        app.launchEnvironment["AISTROYKA_E2E_PROJECT_ID"] = env["MANAGER_PUBLICATION_E2E_PROJECT_ID"]
+        app.launchEnvironment["AISTROYKA_E2E_PUBLICATION_REPORT_ID"] = env["MANAGER_PUBLICATION_E2E_REPORT_ID"]
+        app.launchEnvironment["AISTROYKA_E2E_PUBLICATION_TAG"] = tag
+        if let file = env["MANAGER_PUBLICATION_E2E_CRED_FILE"] { app.launchEnvironment["AISTROYKA_E2E_CRED_FILE"] = file }
+        app.launch()
+        let button = app.buttons["pilot_manager_publication_toggle"]
+        guard button.waitForExistence(timeout: 90) else { XCTFail("Actual report publication control unavailable"); return }
+        for _ in 0..<5 where !button.isHittable { app.swipeUp() }
+        let status = app.staticTexts["pilot_manager_publication_status"]
+        if status.label.contains("Publication enabled") {
+            button.tap()
+            XCTAssertTrue(NSPredicate(format: "label CONTAINS %@", "Internal only").evaluate(with: status) || status.waitForExistence(timeout: 10))
+        }
+        let isPrivate = NSPredicate(format: "label CONTAINS %@", "Internal only")
+        expectation(for: isPrivate, evaluatedWith: status); waitForExpectations(timeout: 30)
+        button.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "Publication enabled"), evaluatedWith: status); waitForExpectations(timeout: 30)
+        button.tap()
+        expectation(for: isPrivate, evaluatedWith: status); waitForExpectations(timeout: 30)
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "Synthetic selected photo publication and withdrawal"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.terminate()
+    }
     private func launchForE2E(email: String, password: String, deepLinkProject: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["AISTROYKA_E2E"] = "1"
