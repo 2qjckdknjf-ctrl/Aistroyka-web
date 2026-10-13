@@ -326,3 +326,7 @@ Autoresearch использует ROMA-CORPUS-004 / package promotion / schedule
 
 ### Порядок
 Существующий Assurance Graph/product P0 → shared contract fixtures с Artifact Egress/Destination → synthetic pre-egress enforcement после ADR → offline retrieval benchmark → один scoped product adapter. Runtime autonomy без доказанного broker/egress/kill enforcement остаётся blocked. Research references не разрешают production migration.
+
+## Сверка ежедневных и недельных разборов 2026-10-13
+
+[Детализированная сверка](AI_DIGEST_RECONCILIATION_2026-10-13.md) уточняет существующие IDs: Task Readiness (ROMA-PLAN-002), runtime MCP enforcement / sandbox / Action Boundary, Agent Handoff Checkpoint (GROW-RUNTIME-002/SCHEDULER-004/MEM-004), WAITING_INFRASTRUCTURE (OBSERVER/SCHEDULER), independent calibration/skill bake-off и workflow holdout (EVAL/CORPUS/ARENA), Incident/Failure→Regression и Harness Ledger. Mergeability/Multi-Verifier/Attack Graph/dependency admission — расширения existing VER/PACKAGE/CAP/EFFORT, не параллельные engines. Main advisory assurance graph частично реализован; полный shared engineering runtime не доказан. Marketing growth-os не получает executor ownership.

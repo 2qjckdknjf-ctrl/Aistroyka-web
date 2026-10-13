@@ -1,6 +1,6 @@
 # AISTROYKA — дополнение к плану, 2026-09-23
 
-> Последняя корректировка: 2026-10-07 (вечер). Актуальные дополнения по сигналам 7 октября — в последнем разделе; прежние task IDs, очереди и gates сохраняются.
+> Последняя корректировка: 2026-10-13. Актуальная сверка всех доступных разборов — в последнем разделе; прежние task IDs, очереди и gates сохраняются.
 
 Статус: PLANNED backlog + 2026-10-03 runtime reconciliation. Документ задаёт очередь; наличие строк плана не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
@@ -177,3 +177,7 @@ EmbeddingGemma 2 candidate claims/license/modalities/hardware verify before spik
 Geometry from confirmed dimensions or approved calibrated adapter; deterministic area/length/waste/coverage/pack rounding, source product spec and product compatibility. Missing thickness/coverage/input → question, no invented number. PriceSearch returns normalized regional dated offers/source evidence with ambiguity/IVA/shipping/unit handling; model не financial authority.
 AC: unit conversion, openings, unknown scale, waste boundaries, pack size/rounding, conflicting product specifications и stale region prices. Output draft проходит professional review; tools не делают safety certification, orders или baseline mutation. Independent checks link Requirement→AC→Evidence→Verdict; estimated quantity отличается от measured actual consumption.
 AIS-MATERIAL-008 Supply Agent использует эти skills после прежних Graph/pilot gates, external messages/orders separately authorized. Spatial retrieval не включает 360/BIM vendor интеграцию автоматически.
+
+## Сверка всех доступных AI разборов 2026-10-13
+
+[Сверка функций и критериев завершения](AI_DIGEST_RECONCILIATION_2026-10-13.md) фиксирует CODE_PRESENT / PR_ONLY / PARTIAL / PLANNED по main и открытым работам. Existing IDs сохраняются; добавлен только AIS-RECON-017 (Tender Reconciliation, alias AIST-P1-09). Owner UI Composer, completeness/takeoff, graph source lifecycle, private retrieval и infrastructure-aware pilot gate встроены в существующую очередь. Contractor pilot/security/release и customer-finance isolation остаются первыми.

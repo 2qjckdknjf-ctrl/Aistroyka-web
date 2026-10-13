@@ -7,3 +7,7 @@
 | 2026-09-23 | [docs-roadmap-consolidation.md](docs-roadmap-consolidation.md) | Customer and ROMA planning amendments | `docs/roadmap-consolidation-2026-09-23` | docs prepared; PR review pending |
 
 Current open development: [ACTIVE_WORK_REGISTRY.csv](ACTIVE_WORK_REGISTRY.csv). Refresh its PR HEAD and state before resuming. Task template: [TASK_TEMPLATE](../ops/TASK_TEMPLATE.md).
+
+## AI разборы 2026-10-13
+
+При выборе новой работы читать [product reconciliation](../roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md) и [ROMA reconciliation](../roma/AI_DIGEST_RECONCILIATION_2026-10-13.md). Сначала existing task/main/open PR audit. Новая capability AIS-RECON-017 запланирована после evidence/graph/takeoff и текущего pilot; остальные уточнения используют прежние IDs. Наличие документа не implementation PASS.
