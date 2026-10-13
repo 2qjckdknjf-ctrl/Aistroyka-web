@@ -47,7 +47,7 @@ export function ceilNonnegative(value: Rational): bigint {
 }
 
 /** Intake adapter only; thousands separators/unknown units are deliberately rejected. */
-export function normalizeLength(value: string, unit: "m" | "cm" | "mm"): string {
+export function normalizeLength(value: string, unit: string): string {
   if (!["m", "cm", "mm"].includes(unit)) throw new Error("Unknown length unit");
   const parsed = decimal(value.trim().replace(",", "."));
   if (cmp(parsed, zero) < 0) throw new Error("Negative length");
@@ -64,4 +64,22 @@ export function priceLineTotalMinor(amountMinor: string, coverage: string, quant
   const denominator = decimal(coverage), q = decimal(quantity);
   if (cmp(denominator, zero) <= 0 || cmp(q, zero) < 0) throw new Error("Invalid rate coverage or quantity");
   return roundHalfUp(mul(div(rational(BigInt(amountMinor)), denominator), q), 0);
+}
+
+/** Legacy calc.v1 accepts a safe integer unit cost; never approximate an exact new rate. */
+export function legacyUnitCostMinor(amountMinor: string, coverage: string): {
+  unit_cost_minor: number | null; issue: "precision_loss" | "invalid_input" | null;
+} {
+  try {
+    if (!/^(0|[1-9][0-9]{0,29})$/.test(amountMinor)) throw new Error("Invalid amount");
+    const denominator = decimal(coverage);
+    if (cmp(denominator, zero) <= 0) throw new Error("Invalid coverage");
+    const rate = div(rational(BigInt(amountMinor)), denominator);
+    if (rate.d !== ONE || rate.n > BigInt(Number.MAX_SAFE_INTEGER)) {
+      return { unit_cost_minor: null, issue: "precision_loss" };
+    }
+    return { unit_cost_minor: Number(rate.n), issue: null };
+  } catch {
+    return { unit_cost_minor: null, issue: "invalid_input" };
+  }
 }
