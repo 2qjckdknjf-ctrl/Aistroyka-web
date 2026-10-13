@@ -6,7 +6,7 @@
 
 В изолированном PGlite 0.5.8 прошли **27 SQL проверок**. Harness читает последние реальные определения функций из миграций: воспроизводит анонимный existence lookup до исправления, проверяет права после него, сохранность тела/OID/trigger binding, идемпотентность повторного выполнения, разрешённое RLS чтение, освобождение dedupe terminal job и server-stamped confirmation. Отказы при подмене project/job/media, self-promotion и поддельном customer approval сохраняются. Service операции остаются доступны. Восемь receipt guard tests также PASS.
 
-Harness добавлен в required CI для PGlite и отдельной пустой native PostgreSQL БД. Локальный native PostgreSQL binary на Mac имеет несовместимую архитектуру; локальный native PASS не заявляется. Проверка CI даст отдельное native доказательство на том же HEAD.
+Harness добавлен в required CI для PGlite и отдельной пустой native PostgreSQL БД. Локальный native PostgreSQL binary на Mac имеет несовместимую архитектуру; локальный native PASS не заявляется. Required CI 38374397506 завершён SUCCESS на code HEAD d3b37133: 27 PGlite и 27 native PostgreSQL checks PASS, вместе с прочими required checks. Это isolated schema evidence; hosted apply не выполнялся.
 
 ```sh
 cp scripts/ops/verify_private_helper_grants_postgres.mjs /path/to/isolated-runtime/helper-grants.mjs
