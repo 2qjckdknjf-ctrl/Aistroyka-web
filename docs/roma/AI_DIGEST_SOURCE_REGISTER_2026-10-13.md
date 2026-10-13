@@ -56,4 +56,3 @@
 [ROMA/Grow reconciliation](AI_DIGEST_RECONCILIATION_2026-10-13.md) и [AISTROYKA reconciliation](../roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md) содержат AC и состояние code/main/PR. Другие владельцы: growth-os/docs/roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md; HiAir/docs/roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md; obraprecio-ai/docs/canonical/20_AI_DIGEST_RECONCILIATION_2026-10-13.md; sasha-memory-os/docs/AI_DIGEST_RECONCILIATION_2026-10-13.md.
 
 Совпадающие идеи присоединены к прежним IDs и проверенным primitives. Имена из заголовков (GrowBench, Harness Ledger, Action Boundary, Freshness Router и т.п.) — уточнения, не автоматически отдельные services/backlogs. Замена моделей, собственная BIM/CAD/graph platform, unrestricted swarm/live HFT/self-training и новая HiAir forecasting model остаются deferred/non-goals по разборам. Canonical repo engineering Grow/Trading не найден; contracts не выдаются за внедрение.
-
