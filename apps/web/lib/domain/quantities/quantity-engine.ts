@@ -52,7 +52,7 @@ const countSchema = z.object({
 const requestSchema = z.discriminatedUnion("kind", [areaSchema, jointSchema, countSchema]);
 export type QuantityRequest = z.infer<typeof requestSchema>;
 type Issue = "invalid_input" | "unsupported_rule" | "incomplete_basis" | "unresolved_mapping"
-  | "invalid_geometry" | "outside_parent" | "complexity_limit" | "below_storage_resolution";
+  | "invalid_geometry" | "outside_parent" | "complexity_limit" | "below_storage_resolution" | "quantity_out_of_range";
 class InputError extends Error { constructor(public readonly code: Issue) { super(code); } }
 export type QuantityCalculation = {
   quantity: string | null; unit: "m2" | "m" | "ea" | null; quantity_basis: string | null;
@@ -159,11 +159,16 @@ export function calculateQuantity(raw: unknown): QuantityCalculation {
     ? PILOT_CATALOGUE[input.work_code as WorkCode] : null;
   if (!catalogue || ({ area: "m2", joint: "m", element: "ea" } as const)[input.kind] !== catalogue[0]) return { ...base, issues: ["unsupported_rule"] };
   const metadata = { ...base, unit: catalogue[0], quantity_basis: catalogue[1], rule_id: catalogue[2] };
+  if (input.quantity_kind === "system_complete" && catalogue[1] !== "system_area") {
+    return { ...metadata, issues: ["unsupported_rule"] };
+  }
   try {
     const result = input.kind === "area" ? areaTotal(input) : input.kind === "joint" ? jointTotal(input) : countTotal(input);
     if (cmp(result.total, zero) === 0 && input.absence_confirmed !== true) throw new InputError("incomplete_basis");
     if (cmp(result.total, zero) > 0 && cmp(result.total, decimal("0.000001")) < 0) throw new InputError("below_storage_resolution");
-    return { ...metadata, quantity: roundHalfUp(result.total, 6), trace: {
+    const stored = roundHalfUp(result.total, 6);
+    if (stored.length > 40) throw new InputError("quantity_out_of_range");
+    return { ...metadata, quantity: stored, trace: {
       exact_fraction: key(result.total), entity_ids: result.ids, rounding: "ROUND_HALF_UP_6",
     } };
   } catch (error) {
@@ -172,14 +177,40 @@ export function calculateQuantity(raw: unknown): QuantityCalculation {
   }
 }
 
-/** Consumption and waste are explicit material parameters, never physical-work multipliers. */
-export function materialRequirement(workQuantity: string, consumption: string | null, waste: string | null, packCoverage: string | null) {
-  if (consumption === null || waste === null || packCoverage === null) return null;
-  const work = decimal(workQuantity), c = decimal(consumption), w = decimal(waste), pack = decimal(packCoverage);
-  if (cmp(work, zero) < 0 || cmp(c, zero) <= 0 || cmp(w, zero) < 0 || cmp(pack, zero) <= 0) return null;
-  const need = mul(mul(work, c), add(one, w));
-  if (cmp(need, zero) > 0 && cmp(need, decimal("0.000001")) < 0) return null;
-  const packs = ceilNonnegative({ n: need.n * pack.d, d: need.d * pack.n });
-  return { work_quantity: roundHalfUp(work, 6), material_need: roundHalfUp(need, 6),
-    pack_count: packs.toString(), purchase_quantity: roundHalfUp(mul(rational(packs), pack), 6) };
+export type MaterialCalculation = {
+  work_quantity: string | null; material_need: string | null;
+  pack_count: string | null; purchase_quantity: string | null;
+  issues: ("invalid_input" | "material_parameters_missing" | "pack_coverage_missing" | "below_storage_resolution" | "quantity_out_of_range" | "quantity_precision_loss")[];
+};
+
+/** Need can be known before packaging. Neither result changes the work quantity. */
+export function materialRequirement(workQuantity: string, consumption: string | null, waste: string | null, packCoverage: string | null): MaterialCalculation {
+  const result: MaterialCalculation = { work_quantity: null, material_need: null,
+    pack_count: null, purchase_quantity: null, issues: [] };
+  try {
+    const work = decimal(workQuantity);
+    if (cmp(work, zero) < 0) return { ...result, issues: ["invalid_input"] };
+    if (cmp(work, zero) > 0 && cmp(work, decimal("0.000001")) < 0) return { ...result, issues: ["below_storage_resolution"] };
+    const storedWork = roundHalfUp(work, 6);
+    if (storedWork.length > 40) return { ...result, issues: ["quantity_out_of_range"] };
+    if (cmp(decimal(storedWork), work) !== 0) return { ...result, issues: ["quantity_precision_loss"] };
+    result.work_quantity = storedWork;
+    if (consumption === null || waste === null) return { ...result, issues: ["material_parameters_missing"] };
+    const c = decimal(consumption), w = decimal(waste);
+    if (cmp(c, zero) <= 0 || cmp(w, zero) < 0) return { ...result, issues: ["invalid_input"] };
+    const need = mul(mul(work, c), add(one, w));
+    if (cmp(need, zero) > 0 && cmp(need, decimal("0.000001")) < 0) return { ...result, issues: ["below_storage_resolution"] };
+    const storedNeed = roundHalfUp(need, 6);
+    if (storedNeed.length > 40) return { ...result, issues: ["quantity_out_of_range"] };
+    result.material_need = storedNeed;
+    if (packCoverage === null) return { ...result, issues: ["pack_coverage_missing"] };
+    const pack = decimal(packCoverage);
+    if (cmp(pack, zero) <= 0) return { ...result, issues: ["invalid_input"] };
+    const packs = ceilNonnegative({ n: need.n * pack.d, d: need.d * pack.n });
+    const purchase = roundHalfUp(mul(rational(packs), pack), 6);
+    if (packs.toString().length > 33 || purchase.length > 40) return { ...result, issues: ["quantity_out_of_range"] };
+    return { ...result, pack_count: packs.toString(), purchase_quantity: purchase };
+  } catch {
+    return { ...result, issues: ["invalid_input"] };
+  }
 }
