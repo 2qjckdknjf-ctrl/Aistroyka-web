@@ -14,6 +14,7 @@ function makeSupabase(opts: {
   report?: TableRow;
   task?: TableRow;
   day?: TableRow;
+  attachment?: TableRow;
   /** Map of projectId → tenant_id that owns it (or null = missing). */
   projects?: Record<string, string | null>;
   projectQueryError?: boolean;
@@ -37,12 +38,14 @@ function makeSupabase(opts: {
       const chain: any = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn(async () => {
           if (table === "media") return { data: opts.media ?? null, error: null };
           if (table === "upload_sessions") return { data: opts.session ?? null, error: null };
           if (table === "worker_reports") return { data: opts.report ?? null, error: null };
           if (table === "worker_tasks") return { data: opts.task ?? null, error: null };
           if (table === "worker_day") return { data: opts.day ?? null, error: null };
+          if (table === "worker_report_media") return { data: opts.attachment ?? null, error: null };
           if (table === "projects") {
             if (opts.projectQueryError) {
               return { data: null, error: { message: "db error" } };
@@ -279,12 +282,14 @@ describe("resolveAIMediaImage", () => {
         },
         task: { project_id: projectId },
         projects: { [projectId]: tenantId },
+        attachment: { id: "attachment", report_id: reportId, media_id: mediaId },
+        media: { id: mediaId, tenant_id: tenantId, project_id: projectId, file_url: `${projectId}/photo.jpg` },
         signedUrl: "https://signed.example/legacy-project",
       });
       const result = await resolveAIMediaImage(supabase, {
         tenantId,
         reportId,
-        imageUrl: `${projectId}/photo.jpg`,
+        mediaId,
       });
       expect(result.ok).toBe(true);
       expect(supabase._createSignedUrl).toHaveBeenCalledWith(`${projectId}/photo.jpg`, 900);

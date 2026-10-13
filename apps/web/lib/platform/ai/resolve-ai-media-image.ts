@@ -76,7 +76,7 @@ function fail(
 export async function createSignedUrlForPath(
   supabase: SupabaseClient,
   objectPath: string,
-  options: { tenantId: string }
+  options: { tenantId: string; trustedProjectId?: string | null }
 ): Promise<ResolveAIMediaImageResult> {
   const inspection = inspectMediaPathScope(objectPath, options.tenantId);
 
@@ -98,6 +98,9 @@ export async function createSignedUrlForPath(
       }
       relative = inspection.bucketRelativePath;
       trustedProjectId = proof.projectId;
+      if (options.trustedProjectId && trustedProjectId !== options.trustedProjectId) {
+        return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Storage project does not match source scope", false);
+      }
       break;
     }
     case "denied":
@@ -186,6 +189,7 @@ async function deriveTrustedProjectFromReport(
     .from("worker_reports")
     .select("id, tenant_id, task_id, day_id")
     .eq("id", reportId)
+    .eq("tenant_id", tenantId)
     .maybeSingle();
 
   if (error) {
@@ -216,11 +220,16 @@ async function deriveTrustedProjectFromReport(
         true
       );
     }
+    if (!task) {
+      return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Report task is unavailable", false);
+    }
     candidate = (task as { project_id?: string } | null)?.project_id ?? null;
-  } else if (dayId) {
+  }
+  if (dayId) {
     const { data: day, error: dayErr } = await supabase
       .from("worker_day")
-      .select("project_id")
+      // Legacy worker_day schemas have no project_id column.
+      .select("*")
       .eq("id", dayId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -231,7 +240,14 @@ async function deriveTrustedProjectFromReport(
         true
       );
     }
-    candidate = (day as { project_id?: string } | null)?.project_id ?? null;
+    if (!day) {
+      return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Report day is unavailable", false);
+    }
+    const dayProject = (day as { project_id?: string | null }).project_id ?? null;
+    if (candidate && dayProject && candidate !== dayProject) {
+      return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Conflicting report projects", false);
+    }
+    candidate = candidate ?? dayProject;
   }
 
   if (!candidate) {
@@ -353,7 +369,7 @@ async function resolveFromMediaId(
   }
 
   // Central chokepoint re-proves project-prefixed paths against projects table.
-  const signed = await createSignedUrlForPath(supabase, extracted.path, { tenantId });
+  const signed = await createSignedUrlForPath(supabase, extracted.path, { tenantId, trustedProjectId: effectiveTrusted });
   if (signed.ok) {
     return {
       ...signed,
@@ -436,7 +452,7 @@ async function resolveFromUploadSession(
     );
   }
 
-  const signed = await createSignedUrlForPath(supabase, rel, { tenantId });
+  const signed = await createSignedUrlForPath(supabase, rel, { tenantId, trustedProjectId });
   if (signed.ok) {
     return {
       ...signed,
@@ -475,7 +491,7 @@ async function resolveFromLegacyImageUrl(
     return extracted;
   }
 
-  const signed = await createSignedUrlForPath(supabase, extracted.path, { tenantId });
+  const signed = await createSignedUrlForPath(supabase, extracted.path, { tenantId, trustedProjectId });
   if (signed.ok) {
     const source = /^https?:\/\//i.test(trimmed) ? "legacy_storage_url" : "storage_path";
     return {
@@ -520,6 +536,25 @@ export async function resolveAIMediaImage(
   );
   if (!claimResolved.ok) return claimResolved;
   trustedProjectId = claimResolved.trustedProjectId;
+
+  // A tenant/project check does not prove that a source belongs to this report.
+  // Check the exact supplied pair before signing or considering any fallback.
+  if (input.reportId) {
+    if (!input.mediaId && !input.uploadSessionId) {
+      return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Report attachment reference required", false);
+    }
+    let query = supabase.from("worker_report_media").select("id")
+      .eq("report_id", input.reportId);
+    if (input.mediaId) query = query.eq("media_id", input.mediaId);
+    if (input.uploadSessionId) query = query.eq("upload_session_id", input.uploadSessionId);
+    const attachment = await query.limit(1).maybeSingle();
+    if (attachment.error) {
+      return fail(AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY, "Temporary error loading report attachment", true);
+    }
+    if (!attachment.data) {
+      return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Source is not attached to report", false);
+    }
+  }
 
   const pendingNotReady: ResolveAIMediaImageFailure[] = [];
   const permanentFailures: ResolveAIMediaImageFailure[] = [];
@@ -566,7 +601,9 @@ export async function resolveAIMediaImage(
     }
   }
 
-  if (input.imageUrl) {
+  // Raw URLs cannot replace a bound report attachment. Standalone legacy previews
+  // retain their storage/tenant/project checks.
+  if (input.imageUrl && !input.reportId) {
     const legacy = await resolveFromLegacyImageUrl(
       supabase,
       input.imageUrl,
