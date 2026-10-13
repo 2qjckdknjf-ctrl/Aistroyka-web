@@ -1,4 +1,4 @@
-# ROMA и инженерный Grow OS Сверка AI разборов
+# ROMA и Growth OS Сверка AI разборов
 
 Дата фиксации: **2026-10-13**. Это сверка и уточнение действующих задач, не второй master plan. Статусы относятся к коду и планам на указанном SHA; production и устройства этим проходом не сертифицированы.
 
@@ -8,7 +8,7 @@ Baseline origin/main: `e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc`. Провере
 
 P0 — обязательный gate до соответствующей операции; P1 — следующий ограниченный срез после зависимостей; P2 — исследование/поздняя интеграция. Приоритет не разрешает перепрыгнуть текущую продуктовую очередь.
 
-Владелец очереди: [Execution Assurance](ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md). Marketing Growth OS не является shared engineering runtime. Отдельный engineering Grow OS repo не найден в доступном repo inventory; contracts остаются здесь, исполняемая platform не объявляется готовой.
+ROMA verification backlog: [Execution Assurance](ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md). Владелец уточнил 2026-10-13: Grow OS означает Growth OS, репозиторий 2qjckdknjf-ctrl/growth-os. [Growth task mapping](https://github.com/2qjckdknjf-ctrl/growth-os/blob/docs/ai-digest-reconciliation-2026-10-13/docs/canonical/AI_CONTROL_PLANE_TASKS.md#growth-os-ai-рекомендации-2026-10-13) находится там; shared definitions ниже являются verification/interface references, не вторым implementation backlog. Current marketing runtime и будущие engineering capabilities имеют разные стадии готовности; complete platform не объявляется внедрённой.
 
 ## Состояние и уточнение действующих задач
 
@@ -44,7 +44,7 @@ Muse Wonder/Mellum/Jebadiah/EmbeddingGemma/Clef-omni and other names из обз
 
 ## Очередь
 
-Current AISTROYKA pilot/assurance integration → readiness+identity/capability/budget schemas → enforced sandbox/egress/STOP → single durable worker+handoff/infra observer → independent corpus/calibration/skill bake-off → failure feedback/ledger → bounded workflow experiments → parallel/platform/product adapters. Уже принятые task IDs сохраняются; broad shared execution требует установленного canonical runtime repo.
+Current AISTROYKA pilot/assurance integration → readiness+identity/capability/budget schemas → enforced sandbox/egress/STOP → single durable worker+handoff/infra observer → independent corpus/calibration/skill bake-off → failure feedback/ledger → bounded workflow experiments → parallel/platform/product adapters. Уже принятые task IDs сохраняются; Growth repo установлен, broad shared execution требует завершённых task/security/evidence gates, не поиска другого Grow repo.
 
 ## Дополнения из ранних недельных обзоров
 
