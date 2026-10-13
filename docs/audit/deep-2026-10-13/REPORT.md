@@ -8,7 +8,7 @@
 
 Staging, `aistroyka.ai` и `www.aistroyka.ai` отвечают успешным health с `buildStamp.sha7=e0c9f51`, соответствующим main. Последний PR #445 объединён, required check SUCCESS. [Снимок runtime](runtime.json) подтверждает публикацию исходной основы; изменения этой ветки ещё не опубликованы.
 
-На GitHub остаются 74 открытых PR и шесть issues. Все 74 HEAD имеют отдельную историю относительно main; это не означает, что все их функции отсутствуют. [Инвентарь PR](open-prs.json) сохраняет SHA, основу и изменённые файлы. Старые смешанные стеки требуют сравнения конкретного поведения; широкое объединение восстановит также устаревшие изменения.
+На исходном снимке GitHub оставались 74 открытых PR и шесть issues; новые PR этой работы учитываются отдельно в registry. Все 74 HEAD имеют отдельную историю относительно main; это не означает, что все их функции отсутствуют. [Инвентарь PR](open-prs.json) сохраняет SHA, основу и изменённые файлы. Старые смешанные стеки требуют сравнения конкретного поведения; широкое объединение восстановит также устаревшие изменения.
 
 ## Сверка планов
 
@@ -37,7 +37,7 @@ Customer iOS, ручной intake, Graph persistence, async image jobs и ROMA a
 | P1 | Preproject AI intake не завершён | Ручной customer-intake существует; owner-bound workspace, extraction/review/promote ещё нужны | После Owner/evidence/Graph dependencies |
 | P1 | Новые количества, цены и строки заказа отсутствуют | В AISTROYKA не найдены реализации QuantityRevision/WorkSpecification; customer_estimate_items остаётся SQL основой без полного line CRUD | C04/C05 → A01/A02/A03/A04/A05 |
 | P1 | Два дефекта ObraPrecio из C01 остаются зависимостями общего плана | Нормализация cm/mm и trusted price fallback проверялись отдельным C01; этот срез не изменяет второй репозиторий | Повторить на актуальном Obra HEAD, затем исправить без потери WIP |
-| P2 | Служебные функции имеют лишний доступ из Data API | Живые advisors и определения показывают EXECUTE для anon у 12 SECURITY DEFINER функций | Отдельный минимальный SQL с проверкой разрешений |
+| P2 | Служебные функции имеют лишний доступ из Data API | Живые advisors и определения показывают EXECUTE для anon у 12 SECURITY DEFINER функций | PR #447 подготовлен, 27 PGlite и 27 native PostgreSQL checks PASS; hosted apply открыт |
 | P2 | Статусы, registry и truth snapshot устарели | STATUS указывает #444/активный #445 после объединения; snapshot августа содержит прежние SHA | Новый аудит даёт текущую основу; исторические файлы не переписываются как новые доказательства |
 | P2 | Устройства и полные пользовательские пути требуют отдельной приёмки | Старый physical gallery имел UI initialization timeout; текущий unit/build PASS не проверяет camera/OAuth/push/offline/store | Сохраняются существующие device/distribution gates |
 
@@ -60,11 +60,20 @@ Customer iOS, ручной intake, Graph persistence, async image jobs и ROMA a
 | Resolver и media-handler после исправления | 3 файла, 53 теста PASS |
 | Полный набор после исправления | 485 файлов, 2809 тестов PASS |
 | Исходные lint и i18n | PASS |
+| Текущие iOS Manager/Worker/Customer simulator Debug сборки | Все три BUILD SUCCEEDED на основе e0c9f51, signing disabled; UI/device/store этим не проверены |
+| SQL grant срез PR #447 | 27 PGlite + 27 native PostgreSQL checks PASS в required CI 38374397506 |
+| C04 вычислительное ядро | 24 сценария, включая 40 независимых синтетических сеток; 485 файлов / 2822 tests, lint/typecheck PASS на отдельной ветке |
 | Cloudflare/OpenNext сборка до и после исправления | PASS |
 | Runtime health staging/apex/www | Три успешных ответа, SHA MATCH |
 | Hosted schema/advisors/history | Read-only; бизнес-данные и схема не изменялись |
 
 Первый локальный прогон имел пять ошибок subprocess: Node выбирал `/usr/local/bin/python3` другой архитектуры. Прогон с `PATH=/usr/bin:$PATH` проверил те же сценарии без изменения тестов. Это ошибка локального инструментария, а не пять найденных продуктовых дефектов. Сборка, unit tests и health не заменяют полный browser/device/eval сценарий.
+
+## Выполненные срезы доработки
+
+[PR #446](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/446) закрывает source binding; required CI 38373708355 PASS на code HEAD 520b7750. [PR #447](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/447) убирает лишний прямой RPC доступ; required CI 38374397506 PASS на d3b37133, включая native PostgreSQL. Оба остаются draft/не объединены; source/runtime/migration статусы различаются.
+
+[PR #448](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/448) содержит первый C04 срез: точные rational area unions/deductions/stage intersections, seam intervals, stable element counts, material/waste/pack quantities и exact normalized-price line arithmetic. Исходный commit b7fbbc78. [Документ с объёмом и остатком](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/blob/b7fbbc78efee836dbbc8223c3c7e97a225b70cbc/docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md) находится в этой отдельной ветке. Это pure core, без новых API/UI/hosted storage и без статуса verified. C04 и C05 остаются открытыми целиком.
 
 ## Очередь полной доработки
 
