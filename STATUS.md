@@ -1,19 +1,22 @@
 # STATUS — AISTROYKA
 
-Обновлено 2026-10-05. Статусы ниже — датированное наблюдение; перед действием обновите GitHub и health.
+Факты сверены 2026-10-12. Последний наблюдённый main: `ec0c2c6f333b21a44684ea944fe90d9f973a158d` (#444). Текущий main при продолжении определяется свежим `origin/main` и GitHub. Исторические доказательства оригиналов: #437, 13 живых HTTP-проверок PASS; следующие изменения очереди имеют отдельные отчёты.
 
-| Что | Где проверить |
-|---|---|
-| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (снимок этой сверки `0db34ede`) |
-| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; [START_HERE](START_HERE.md) |
-| Активная очередь | [реестр PR](docs/tasks/ACTIVE_WORK_REGISTRY.csv) |
-| Открытое продолжение | Customer intake submit [#405](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/405) и withdraw [#406](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/406) — после #404 нужны non-author APPROVED на текущий HEAD |
-| Публикация | `/api/v1/health` production и staging; SHA в Git не доказывает развёртывание |
+Текущий проверенный runtime: staging/apex/www `ec0c2c6` (#444), staging 38203225218 / production 38203511775 SUCCESS. #444 required CI 38202800356 SUCCESS, final HEAD 3e8338c5, точное независимое одобрение и защищённое объединение. #443: четыре live handler/SDK reconciliation проверки PASS; четыре session rows и два PNG удалены.
 
-Сегодня в main: #408 D1 Android audit, #404 PATCH intake, #407 ROMA-VER-009 advisory. #403 viewer-replay ранее. A2–A5, video authz #386, vision #385 уже в main.
+Активная задача: `fix/platform-maintenance-lease-recovery-2026-10-12` в архивной рабочей папке runtime verification. 83 job/route теста и четыре native PostgreSQL recovery контракта PASS; [recovery proof](docs/reports/platform-maintenance-recovery-2026-10-12/RESULT.md). Две точные старые блокировки QA возвращены в queued с аудитом; шесть старых maintenance claims других компаний ждут защищённого rollout/restore. Один AI job с существующим report/attachment удерживается до durable-result/idempotency контракта. Recovery helper исключает AI и push. После этого — [сохранение report-media результатов](docs/audit/2026-10-12-report-media-result-hard-audit.md), human review/Graph/video и reviewed preproject extraction. Получить свежие main/PR/registry и preflight перед продолжением.
 
-Не реализовывать заново. OWNER_GATE: live apply `create_analysis_job` 4-arg и `customer_intake_drafts`; stores; billing cutover; LEGAL; live AI E1. 005B live intake не начинать. 317/347/348/351/352 — RECONCILE_BACKLOG, не restack. B2 daily-log persist уже в cabinet (`persistThenConfirmFieldDailyLog`). D2 Android не стартовать.
+| Контур | Факт | Следующая работа |
+|---|---|---|
+| Оригиналы и доступ | #433/#434 вызвали runtime-регрессию; #436 локализовал stream_open; #437 исправил несовместимый redirect:error. Пять реальных SDK/Workerd контрактов и 13 живых PNG/Proof Pack/PDF/revocation проверок PASS | Проверить production и свежий SHA после последующих публикаций |
+| Публикация | #432 web/API/unique-source rollout доставлен; #435 native Manager реализован, live simulator 1/1 PASS и независимый readback published=false; три приложения smoke PASS на предыдущем HEAD | CI/review #435 завершены; серверный runtime подтверждён; API flow 12/12 PASS, camera/native Worker UX отдельно |
+| Customer | #431 web/iOS gallery и live simulator image decode PASS | iPhone wired/Developer Mode, Debug build PASS; два UI initialization timeout, 0 tests. Ожидается UI Automation readiness. Camera/manual keyboard/OAuth/push/offline/store отдельно |
+| Vision | #438 исправил transport; живой job завершён, один результат привязан к media/job/tenant; strict provider gate exit 0, fallback 0 | Durable audit PASS в #439; report-media handler пока отбрасывает результат. Lease/source-safe persistence и human review → video/Graph lineage |
+| БД и очистка | 11 источников / 10 remote IDs в receipts, 199 записей истории; в этом срезе новых DDL нет. Свежий тестовый PNG/PDF/share/document, восемь записей и Auth удалены; task sessions закрыты | Historical full-reset/drift отдельно; до каждого apply свежий receipt preflight, применённый SQL неизменен |
+| План | Ручной intake, async request_key, Graph persistence и Customer уже существуют | Source-linked Vision/Graph → reviewed preproject extractor; Android D2/live camera после зависимостей. Legal/store/billing 7-day gates требуют реальных внешних/временных доказательств |
+
+[Worker API proof](docs/reports/worker-publication-flow-2026-10-12/RESULT.md), [Async Vision live proof](docs/reports/async-vision-live-2026-10-12/RESULT.md), [Runtime repair](docs/reports/private-original-runtime-2026-10-12/RESULT.md), [native Manager](docs/reports/manager-native-publication-2026-10-12/RESULT.md), [registry](docs/tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). 74 старых смешанных PR требуют semantic review; dirty/ahead/release/cursor источники сохранены. Полная готовность проекта остаётся открытой. [Physical gallery](docs/reports/customer-physical-gallery-2026-10-12/RESULT.md).
 
 Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
 
-PR #350: [планирование Customer / ROMA](docs/handoff/2026-09-23-roadmap-consolidation.md), дополнения 2026-10-07 — PLANNED; runtime/deployment не перепроверены.
+PR #350: [планирование Customer / ROMA](docs/handoff/2026-09-23-roadmap-consolidation.md), сверка 2026-10-13 — [product](docs/roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md) / [ROMA](docs/roma/AI_DIGEST_RECONCILIATION_2026-10-13.md). Planning changes не подтверждают новый runtime/deployment.

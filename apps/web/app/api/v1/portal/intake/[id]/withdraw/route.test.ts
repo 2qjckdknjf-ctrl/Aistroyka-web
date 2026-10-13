@@ -25,9 +25,13 @@ const { withdrawCustomerIntakeDraft } = vi.hoisted(() => ({
   withdrawCustomerIntakeDraft: vi.fn(),
 }));
 
-vi.mock("@/lib/domain/customer-intake/portal-intake-tenant", () => ({
-  resolvePortalIntakeTenant,
-}));
+vi.mock("@/lib/domain/customer-intake/portal-intake-tenant", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/domain/customer-intake/portal-intake-tenant")>();
+  return {
+    ...actual,
+    resolvePortalIntakeTenant,
+  };
+});
 vi.mock("@/lib/domain/customer-intake/customer-intake.service", () => ({
   withdrawCustomerIntakeDraft,
 }));
@@ -69,5 +73,18 @@ describe("POST /api/v1/portal/intake/:id/withdraw", () => {
     expect((await res.json()).data.status).toBe("withdrawn");
     expect(withdrawCustomerIntakeDraft.mock.calls[0][1].tenantId).toBe("t1");
     expect(withdrawCustomerIntakeDraft.mock.calls[0][2]).toBe("d1");
+  });
+
+  it("forwards a project_id query when the stakeholder withdraw has no tenant header", async () => {
+    resolvePortalIntakeTenant.mockResolvedValueOnce({
+      error: "x-tenant-id or project_id is required for portal intake",
+      status: 400,
+    });
+    const res = await POST(
+      new Request("https://test/api/v1/portal/intake/d1/withdraw?project_id=p9", { method: "POST" }),
+      { params: Promise.resolve({ id: "d1" }) }
+    );
+    expect(res.status).toBe(400);
+    expect(resolvePortalIntakeTenant.mock.calls[0][3]).toBe("p9");
   });
 });

@@ -12,6 +12,8 @@ export const JOB_CONFIG = {
   BACKOFF_MAX_MS: 600_000,
   /** Worker time budget: stop processing before this (ms) to avoid Cloudflare timeout. */
   WORKER_TIME_BUDGET_MS: 25_000,
+  /** Conservative expiry for repeatable maintenance only; AI/push are excluded. */
+  MAINTENANCE_LEASE_TTL_MS: 600_000,
 } as const;
 
 export function nextRunAfter(attempt: number): Date {

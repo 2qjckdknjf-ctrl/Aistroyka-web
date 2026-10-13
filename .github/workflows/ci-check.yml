@@ -23,6 +23,24 @@ jobs:
       - name: Workspace preflight safety tests
         run: python3 scripts/ops/test_workspace_preflight.py
 
+      - name: Verified migration receipt guard tests
+        run: python3 scripts/ops/test_migration_receipts_preflight.py -v
+      - name: Published evidence live probe scope tests
+        run: python3 scripts/ops/test_verify_published_evidence_live.py -v
+
+      - name: Production deploy boundary tests
+        run: python3 scripts/release/test_deploy_production_worker.py -v
+      - name: Verify served deployment commit checks
+        run: python3 scripts/release/test_verify_deployed_commit.py -v
+
+      - name: AI deployment proof boundary tests
+        run: python3 scripts/smoke/test_ai_live_provider.py -v
+
+      - name: Customer finance proof boundary tests
+        run: |
+          python3 scripts/verify/test_customer_portal_payload.py -v
+          python3 scripts/verify/test_stakeholder_finance_sanity.py -v
+
       # CI builds with bun; Vercel installs with npm from the root lock. Catch
       # npm-lock corruption (missing versions, macOS-only platform binaries)
       # here instead of on the next Vercel deploy.
@@ -36,6 +54,49 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Private original SDK transport in Workerd
+        run: node scripts/ops/verify_private_original_workerd.cjs
+
+      - name: Isolated AI SQL access contracts
+        run: |
+          set -euo pipefail
+          sql_test_dir="$RUNNER_TEMP/aistroyka-sql-contracts"
+          mkdir -p "$sql_test_dir"
+          npm install --prefix "$sql_test_dir" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.8
+          cp scripts/ops/verify_session_analysis_postgres.mjs "$sql_test_dir/session.mjs"
+          cp scripts/ops/verify_media_analysis_rls_postgres.mjs "$sql_test_dir/media.mjs"
+          cp scripts/ops/verify_published_evidence_guard_postgres.mjs "$sql_test_dir/evidence.mjs"
+          cp scripts/ops/verify_upload_session_source_postgres.mjs "$sql_test_dir/upload-source.mjs"
+          cp scripts/ops/verify_published_source_uniqueness_postgres.mjs "$sql_test_dir/published-unique.mjs"
+          cp scripts/ops/verify_platform_job_slots_postgres.mjs "$sql_test_dir/job-slots.mjs"
+          node "$sql_test_dir/session.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/media.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/evidence.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/upload-source.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/published-unique.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/job-slots.mjs" "$GITHUB_WORKSPACE"
+
+      - name: Native evidence approval race contracts
+        run: |
+          set -euo pipefail
+          sudo systemctl start postgresql
+          race_user="$(id -un)"
+          sudo -u postgres createuser --superuser "$race_user"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_evidence_race_ci
+          sql_test_dir="$RUNNER_TEMP/aistroyka-sql-contracts"
+          npm install --prefix "$sql_test_dir" --ignore-scripts --no-audit --no-fund --package-lock=false pg@8.23.1
+          EVIDENCE_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_evidence_race_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/evidence.mjs" "$GITHUB_WORKSPACE"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_upload_source_ci
+          UPLOAD_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_upload_source_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/upload-source.mjs" "$GITHUB_WORKSPACE"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_published_unique_ci
+          EVIDENCE_UNIQUE_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_published_unique_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/published-unique.mjs" "$GITHUB_WORKSPACE"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_platform_slots_ci
+          PLATFORM_SLOTS_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_platform_slots_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/job-slots.mjs" "$GITHUB_WORKSPACE"
 
       - name: i18n messages (dashboard + activation)
         run: bun run i18n:check

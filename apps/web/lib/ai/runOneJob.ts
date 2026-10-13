@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import { getServerConfig } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
@@ -47,7 +48,8 @@ function logJobLifecycle(
  */
 async function callAiAnalysis(
   aiUrl: string,
-  params: { media_id: string; image_url: string; project_id: string }
+  params: { media_id: string; image_url: string; project_id: string },
+  requestHeaders?: HeadersInit
 ): Promise<AnalysisResult> {
   const { AI_REQUEST_TIMEOUT_MS, AI_RETRY_ATTEMPTS } = getServerConfig();
   const baseUrl = aiUrl.replace(/\/$/, "");
@@ -60,18 +62,27 @@ async function callAiAnalysis(
     try {
       const res = await fetch(baseUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...Object.fromEntries(new Headers(requestHeaders)), "Content-Type": "application/json" },
+        // Workerd rejects redirect:"error". Manual never forwards the caller's
+        // bearer token to a redirect destination; non-2xx remains a failed job.
+        redirect: "manual",
         body: JSON.stringify(params),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
+        if (res.headers.get("X-AI-Fallback-Reason")) {
+          throw new VisionProviderError({ message: "AI returned a degraded fallback", httpStatus: 503,
+            errorType: "provider_unavailable", retryable: true });
+        }
         const data: unknown = await res.json();
         if (!isAnalysisResult(data)) throw new Error("AI returned invalid analysis format");
         return data;
       }
 
+      // A refused redirect body is not needed for classification.
+      if (res.status >= 300 && res.status < 400) await res.body?.cancel().catch(() => {});
       const classified = classifyVisionFailure({ message: `AI analysis failed: ${res.status}`, httpStatus: res.status });
       const err = new VisionProviderError({
         message: `AI analysis failed: ${res.status}`,
@@ -124,11 +135,15 @@ async function callAiAnalysis(
 async function markJobFailed(
   supabase: SupabaseClient,
   jobId: string,
+  tenantId: string,
+  executionToken: string,
   message: string,
   errorType: string
 ): Promise<number> {
-  const { data, error } = await supabase.rpc("record_analysis_job_failure", {
+  const { data, error } = await supabase.rpc("fail_session_analysis_job", {
     p_job_id: jobId,
+    p_tenant_id: tenantId,
+    p_execution_token: executionToken,
     p_error_message: message,
     p_error_type: errorType,
   });
@@ -140,13 +155,13 @@ async function markJobFailed(
 
 /**
  * Process one job: dequeue → claim → AI → complete (or mark failed).
- * Uses RPCs dequeue_job(null, workerId), claim_job_execution(jobId, workerId), complete_analysis_job(...).
+ * Caller-visible candidates and tenant-scoped atomic claims; completion/failure use service RPCs.
  * Optional traceId is included in job logs when provided (e.g. from request x-request-id).
  */
 export async function processOneJob(
   supabase: SupabaseClient,
   aiAnalysisUrl: string | undefined,
-  options?: { traceId?: string }
+  options: { tenantId: string; callerClient: SupabaseClient; traceId?: string; aiRequestHeaders?: HeadersInit }
 ): Promise<ProcessOneJobResult> {
   const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
   if (!aiAnalysisUrl?.trim()) {
@@ -157,60 +172,63 @@ export async function processOneJob(
   // a FK to a workers table not seeded by web-session users.
   const workerId: string | null = null;
 
-  const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_job", {
-    p_region_id: null,
-    p_worker_id: workerId,
-  });
-
-  if (dequeueError) {
-    return { ok: false, reason: "error", message: dequeueError.message };
+  const tenantId = options?.tenantId?.trim();
+  if (!tenantId || !options?.callerClient) {
+    return { ok: false, reason: "error", message: "Caller tenant scope is required" };
   }
-
-  const job = Array.isArray(jobRow) ? jobRow[0] : jobRow;
-  if (!job?.id) {
-    return { ok: false, reason: "no_job" };
+  const now = new Date().toISOString();
+  const retryDue = `next_retry_at.is.null,next_retry_at.lte.${now}`;
+  // Candidate visibility is checked with the user's RLS client, never service role.
+  const { data: candidates, error: candidateError } = await options.callerClient
+    .from("analysis_jobs").select("id, media_id, tenant_id")
+    .eq("tenant_id", tenantId).eq("status", "queued")
+    .is("execution_token", null).or(retryDue)
+    .order("started_at", { ascending: true })
+    .limit(5);
+  if (candidateError) return { ok: false, reason: "error", message: candidateError.message };
+  let job: { id: string; media_id: string; tenant_id: string; execution_token: string } | null = null;
+  for (const candidate of candidates ?? []) {
+    if (candidate.tenant_id !== tenantId) continue;
+    // Claim state and execution together. A competing worker wins or loses this UPDATE,
+    // and a loser must never call a failure RPC on the winner's job.
+    const { data: claimed, error } = await supabase.from("analysis_jobs")
+      .update({ status: "processing", started_at: now, execution_started_at: now,
+        execution_token: crypto.randomUUID(), worker_id: workerId })
+      .eq("id", candidate.id).eq("tenant_id", tenantId).eq("status", "queued")
+      .is("execution_token", null).or(retryDue)
+      .select("id, media_id, tenant_id, execution_token").maybeSingle();
+    if (error) return { ok: false, reason: "error", message: error.message };
+    if (claimed?.id && claimed.tenant_id === tenantId) { job = claimed; break; }
   }
+  if (!job) return { ok: false, reason: "no_job" };
 
   const jobId = job.id as string;
   const mediaId = job.media_id as string;
 
   const { data: media, error: mediaError } = await supabase
     .from("media")
-    .select("file_url, project_id, type")
+    .select("file_url, project_id, type, tenant_id")
     .eq("id", mediaId)
+    .eq("tenant_id", tenantId)
     .single();
 
-  if (mediaError || !media) {
+  if (mediaError || !media || media.tenant_id !== tenantId) {
     await markJobFailed(
       supabase,
       jobId,
+      tenantId,
+      job.execution_token,
       mediaError?.message ?? "Media not found",
       "validation_error"
     );
     return { ok: true, jobId, status: "failed" };
   }
 
-  const fileUrl = media.file_url as string;
   const projectId = media.project_id as string;
   const type = (media.type as string) || "image";
 
   if (type === "video") {
-    await markJobFailed(supabase, jobId, VIDEO_NOT_IMPLEMENTED, "validation_error");
-    return { ok: true, jobId, status: "failed" };
-  }
-
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_job_execution", {
-    p_job_id: jobId,
-    p_worker_id: workerId,
-  });
-
-  if (claimError || !claimed) {
-    await markJobFailed(
-      supabase,
-      jobId,
-      claimError?.message ?? "Failed to claim execution",
-      "rpc_conflict"
-    );
+    await markJobFailed(supabase, jobId, tenantId, job.execution_token, VIDEO_NOT_IMPLEMENTED, "validation_error");
     return { ok: true, jobId, status: "failed" };
   }
 
@@ -218,14 +236,22 @@ export async function processOneJob(
   logJobLifecycle("job_started", { job_id: jobId, request_id: traceId });
 
   try {
+    const source = await resolveAIMediaImage(supabase, { tenantId, mediaId, projectIdClaim: projectId });
+    if (!source.ok || source.trustedProjectId !== projectId) {
+      const retryable = !source.ok && source.retryable;
+      throw new VisionProviderError({ message: retryable ? "Private media source temporarily unavailable" : "Private media source denied",
+        errorType: retryable ? "provider_unavailable" : "validation_error", retryable });
+    }
     const result = await callAiAnalysis(aiAnalysisUrl, {
       media_id: mediaId,
-      image_url: fileUrl,
+      image_url: source.imageUrl,
       project_id: projectId,
-    });
+    }, options.aiRequestHeaders);
 
-    const { error: completeError } = await supabase.rpc("complete_analysis_job", {
+    const { error: completeError } = await supabase.rpc("complete_session_analysis_job", {
       p_job_id: jobId,
+      p_tenant_id: tenantId,
+      p_execution_token: job.execution_token,
       p_stage: result.stage,
       p_completion_percent: Math.round(result.completion_percent),
       p_risk_level: result.risk_level,
@@ -248,7 +274,7 @@ export async function processOneJob(
         ? { errorType: err.errorType, retryable: err.retryable }
         : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
     const message = err instanceof Error ? err.message : "Analysis failed";
-    const attempts = await markJobFailed(supabase, jobId, message, classified.errorType);
+    const attempts = await markJobFailed(supabase, jobId, tenantId, job.execution_token, message, classified.errorType);
     logJobLifecycle("job_failed", {
       job_id: jobId,
       duration_ms: Date.now() - startMs,

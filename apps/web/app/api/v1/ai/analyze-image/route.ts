@@ -3,7 +3,8 @@
  *
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
- * - When project_id is set: requires tenant auth and project membership (403 Insufficient rights).
+ * - Requires an authenticated internal tenant member, including unscoped calls.
+ * - Optional project/media identifiers must be visible in that tenant.
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
  * - Degraded success: 200 deterministic AnalysisResult when vision routers fail but `AI_VISION_DETERMINISTIC_FALLBACK` is enabled (default); `X-AI-Fallback-Reason` header set.
  * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI when fallback disabled), 503 (no vision provider configured).
@@ -17,8 +18,10 @@ import {
   getTenantContextFromRequest,
   requireTenant,
   TenantRequiredError,
+  TenantForbiddenError,
 } from "@/lib/tenant";
-import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
+import { authorize } from "@/lib/tenant/tenant.policy";
+import { resolveVisionInputScope } from "@/lib/platform/ai/vision-input-scope";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -32,6 +35,7 @@ import {
   getAiReleaseCorrelation,
 } from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
+import { boundedProductWrite } from "@/lib/growth/product-events";
 import { AnalyzeImageRequestSchema, AnalysisResultSchema } from "@aistroyka/contracts";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
@@ -89,6 +93,23 @@ export async function POST(request: Request) {
     withRequestIdAndTiming(request, res, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId, userId });
 
   const rel = () => getAiReleaseCorrelation();
+
+  let tenantCtx;
+  try {
+    tenantCtx = await getTenantContextFromRequest(request);
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError || e instanceof TenantForbiddenError) {
+      return wrap(NextResponse.json(
+        { error: e.message, request_id: requestId },
+        { status: e instanceof TenantForbiddenError ? 403 : 401 }
+      ));
+    }
+    throw e;
+  }
+  if (!authorize(tenantCtx, "analysis:trigger")) {
+    return wrap(NextResponse.json({ error: "Insufficient rights", request_id: requestId }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
+  }
 
   if (!isAnyVisionProviderConfigured()) {
     logVisionAnalyzeError({
@@ -158,57 +179,18 @@ export async function POST(request: Request) {
     return wrap(NextResponse.json({ error: urlCheck.error, request_id: requestId }, { status: 400 }));
   }
 
-  const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
-
-  const projectId = parsed.data.project_id?.trim() || null;
-  if (projectId) {
-    try {
-      requireTenant(tenantCtx);
-    } catch (e) {
-      if (e instanceof TenantRequiredError) {
-        logVisionAnalyzeError({
-          request_id: requestId,
-          route: ROUTE_KEY,
-          tenant_id: tenantCtx.tenantId,
-          project_id: projectId,
-          latency_ms: Date.now() - start,
-          error_kind: "auth_failure",
-          http_status: 401,
-          ...rel(),
-        });
-        return wrap(
-          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
-          tenantCtx.tenantId,
-          tenantCtx.userId
-        );
-      }
-      throw e;
-    }
-    const { data: project, error: projectError } = await getProjectForInternalWorkspace(
-      userSupabase,
-      tenantCtx,
-      projectId
-    );
-    if (projectError || !project) {
-      const status = projectError === "Insufficient rights" ? 403 : 404;
-      logVisionAnalyzeError({
-        request_id: requestId,
-        route: ROUTE_KEY,
-        tenant_id: tenantCtx.tenantId,
-        project_id: projectId,
-        latency_ms: Date.now() - start,
-        error_kind: status === 403 ? "tenant_failure" : "validation_failure",
-        http_status: status,
-        ...rel(),
-      });
-      return wrap(
-        NextResponse.json({ error: projectError ?? "Not found", request_id: requestId }, { status }),
-        tenantCtx.tenantId,
-        tenantCtx.userId
-      );
-    }
+  const scope = await resolveVisionInputScope(userSupabase, tenantCtx, {
+    projectId: parsed.data.project_id, mediaId: parsed.data.media_id,
+  });
+  if (scope.error !== null) {
+    logVisionAnalyzeError({ request_id: requestId, route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId, project_id: parsed.data.project_id ?? null,
+      latency_ms: Date.now() - start, error_kind: scope.status === 403 ? "tenant_failure" : "validation_failure",
+      http_status: scope.status, ...rel() });
+    return wrap(NextResponse.json({ error: scope.error, request_id: requestId }, { status: scope.status }), tenantCtx.tenantId, tenantCtx.userId);
   }
+  const projectId = scope.projectId;
 
   const admin = getAdminClient();
   if (admin) {
@@ -279,7 +261,7 @@ export async function POST(request: Request) {
       traceId: requestId,
     }, {
       imageUrl,
-      projectId: parsed.data.project_id ?? null,
+      projectId: projectId,
       mediaId: parsed.data.media_id ?? null,
     });
 
@@ -289,7 +271,7 @@ export async function POST(request: Request) {
       request_id: requestId,
       route: ROUTE_KEY,
       tenant_id: tenantCtx.tenantId,
-      project_id: parsed.data.project_id ?? null,
+      project_id: projectId,
       user_id: tenantCtx.userId ?? null,
       latency_ms: durationMs,
       output_type: "vision",
@@ -299,11 +281,11 @@ export async function POST(request: Request) {
       ...r,
     });
     if (tenantCtx.tenantId) {
-      void emitAiRuntimeAudit(userSupabase, {
+      await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         action: "ai_vision_analyze_complete",
         details: {
           request_id: requestId,
@@ -313,7 +295,7 @@ export async function POST(request: Request) {
           provider: "vision_router",
           ...r,
         },
-      });
+      }));
     }
     const validated = AnalysisResultSchema.safeParse(result);
     const bodyToReturn = validated.success ? validated.data : result;
@@ -329,18 +311,18 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         latency_ms: durationMs,
         error_kind: "output_validation_failure",
         http_status: 403,
         ...r,
       });
       if (tenantCtx.tenantId) {
-        void emitAiRuntimeAudit(userSupabase, {
+        await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           action: "ai_vision_analyze_error",
           details: {
             request_id: requestId,
@@ -350,7 +332,7 @@ export async function POST(request: Request) {
             error_kind: "output_validation_failure",
             ...r,
           },
-        });
+        }));
       }
       return wrap(NextResponse.json({ error: err.message, code: "ai_policy_denied", request_id: requestId }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
     }
@@ -362,18 +344,18 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         latency_ms: durationMs,
         error_kind: ek,
         http_status: isTimeout ? 504 : 502,
         ...r,
       });
       if (tenantCtx.tenantId) {
-        void emitAiRuntimeAudit(userSupabase, {
+        await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           action: "ai_vision_analyze_error",
           details: {
             request_id: requestId,
@@ -383,7 +365,7 @@ export async function POST(request: Request) {
             error_kind: ek,
             ...r,
           },
-        });
+        }));
       }
       if (fallbackEnabled) {
         const fallbackResult = buildVisionDeterministicFallback(ek);
@@ -391,7 +373,7 @@ export async function POST(request: Request) {
           request_id: requestId,
           route: ROUTE_KEY,
           tenant_id: tenantCtx.tenantId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           user_id: tenantCtx.userId ?? null,
           latency_ms: durationMs,
           output_type: "vision",
@@ -402,11 +384,11 @@ export async function POST(request: Request) {
           ...r,
         });
         if (tenantCtx.tenantId) {
-          void emitAiRuntimeAudit(userSupabase, {
+          await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
             tenant_id: tenantCtx.tenantId,
             user_id: tenantCtx.userId ?? null,
             trace_id: requestId,
-            project_id: parsed.data.project_id ?? null,
+            project_id: projectId,
             action: "ai_vision_analyze_complete",
             details: {
               request_id: requestId,
@@ -418,7 +400,7 @@ export async function POST(request: Request) {
               fallback_reason: ek,
               ...r,
             },
-          });
+          }));
         }
         const fallbackResponse = NextResponse.json(fallbackResult, { status: 200 });
         fallbackResponse.headers.set("X-AI-Fallback-Reason", ek);
@@ -432,18 +414,18 @@ export async function POST(request: Request) {
       request_id: requestId,
       route: ROUTE_KEY,
       tenant_id: tenantCtx.tenantId,
-      project_id: parsed.data.project_id ?? null,
+      project_id: projectId,
       latency_ms: durationMs,
       error_kind: "unknown_internal_error",
       http_status: 500,
       ...r,
     });
     if (tenantCtx.tenantId) {
-      void emitAiRuntimeAudit(userSupabase, {
+      await boundedProductWrite(() => emitAiRuntimeAudit(userSupabase, {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         action: "ai_vision_analyze_error",
         details: {
           request_id: requestId,
@@ -453,7 +435,7 @@ export async function POST(request: Request) {
           error_kind: "unknown_internal_error",
           ...r,
         },
-      });
+      }));
     }
     return wrap(NextResponse.json({ error: message, request_id: requestId }, { status: 500 }), tenantCtx.tenantId, tenantCtx.userId);
   }

@@ -34,14 +34,18 @@ jobs:
 
       - name: Xcode / pick iPhone simulator
         id: sim
+        timeout-minutes: 10
         run: |
           xcodebuild -version
           xcrun simctl list devices available | head -50
           UDID="$(bash ios/scripts/ci-pick-iphone-simulator-udid.sh)"
           echo "destination=id=$UDID" >> "$GITHUB_OUTPUT"
           echo "Using id=$UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
 
       - name: AiStroykaWorker UI smoke
+        timeout-minutes: 20
         run: |
           set -eo pipefail
           xcodebuild test \
@@ -78,7 +82,7 @@ jobs:
             UDID="${UDID#id=}"
             xcrun simctl shutdown "$UDID" || true
             xcrun simctl boot "$UDID" || true
-            sleep 5
+            xcrun simctl bootstatus "$UDID" -b
             run_manager_smoke
           fi
 

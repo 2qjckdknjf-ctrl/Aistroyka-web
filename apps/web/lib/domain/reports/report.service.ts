@@ -8,8 +8,9 @@ import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
-import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { notifyProjectReportReviewers, notifyTenantReportReviewers } from "@/lib/domain/notifications/manager-notifications.repository";
 import { boundedProductWrite, reportSubmitAuditDetails } from "@/lib/growth/product-events";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -137,19 +138,7 @@ export async function submitReport(
   });
 
   const projectId = await repo.getProjectIdForReport(supabase, ctx.tenantId, report);
-  const input = {
-    type: "report_submitted" as const,
-    title: "New report submitted",
-    body: `Report ${reportId.slice(0, 8)}…`,
-    target_type: "report" as const,
-    target_id: reportId,
-    project_id: projectId,
-  };
-  if (projectId) {
-    await notifyProjectManagers(supabase, ctx.tenantId, projectId, input);
-  } else {
-    await notifyTenantManagers(supabase, ctx.tenantId, input);
-  }
+  await notifySubmittedReportReviewers(ctx, reportId);
 
   const jobIds: string[] = [];
   try {
@@ -199,4 +188,23 @@ export async function submitReport(
     /* enqueue best-effort; still return success with whatever jobIds we have */
   }
   return { ok: true, error: "", jobIds };
+}
+
+/** Called only after caller-RLS author validation and a successful submit CAS.
+ * Recipient IDs stay server-side: assignees need not read project membership rows.
+ */
+async function notifySubmittedReportReviewers(ctx: TenantContext, reportId: string): Promise<void> {
+  try {
+    const admin = getAdminClient();
+    if (!admin) return; // Notifications are best-effort; never infer manager absence from hidden rows.
+    const current = await repo.getById(admin, reportId, ctx.tenantId);
+    if (!current || current.tenant_id !== ctx.tenantId || current.user_id !== ctx.userId || current.status !== "submitted") return;
+    const projectId = await repo.getProjectIdForReport(admin, ctx.tenantId, current);
+    const input = { type: "report_submitted", title: "New report submitted",
+      body: `Report ${reportId.slice(0, 8)}…`, target_type: "report", target_id: reportId, project_id: projectId };
+    if (projectId) await notifyProjectReportReviewers(admin, ctx.tenantId, projectId, input);
+    else await notifyTenantReportReviewers(admin, ctx.tenantId, input);
+  } catch {
+    // Report persistence and its job enqueue remain independent of inbox availability.
+  }
 }

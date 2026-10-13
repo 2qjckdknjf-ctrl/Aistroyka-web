@@ -1,0 +1,17 @@
+# Platform job execution lease — 2026-10-12
+
+Before durable report-result writes, platform jobs also need safe lifecycle acknowledgements. Existing markSuccess/retry/dead updates matched only job ID. A late handler could clear a replacement worker's lease and report success or failure for its attempt. The existing session analysis engine has its own guarded completion; this repair applies to public.jobs through the current DB queue adapter.
+
+Updates now match job/tenant, running state, worker ID, exact locked_at string and attempt number, then require row readback. Missing/foreign/replaced claims fail closed. The processor checks current ownership before dispatch, reports events/counts only after successful state transition, and releases acquired tenant slots even after losing its claim. No new queue or live DDL.
+
+Validation: 33 claim/event/processor/media-handler cases PASS, including actual SDK filter encoding. TypeScript/scoped lint PASS. An isolated native PostgreSQL 17 harness ran the bundled actual repository and SDK against atomic SQL predicates: two acknowledgements have one winner; a microsecond-later same-worker lease rejects success/dead/retry; foreign tenant remains unchanged; successful retry clears only its lease. Four native contracts PASS; local server stopped afterward. Private harness/data are synthetic and were not uploaded.
+
+Protected CI/review and live staging state-transition verification remain required. This is a prerequisite for result persistence, not proof that report media AI output is already stored or reviewed. See the report-result hard audit on main.
+
+Review P1: an ownership SELECT error is now a typed retryable failure, distinct from an actual mismatch. Before handler dispatch, the processor conditionally requeues that exact lease and records a retry only when its CAS succeeds. A replaced claim is unchanged. New real-SDK error and processor winner/loser tests cover this path. Persistent transport failure still requires operational recovery; this slice does not claim a stale-lease sweeper exists.
+
+Live schema audit also confirmed job_events is an analysis_jobs table (different columns and FK). Platform lifecycle metadata now uses existing owner/admin-readable audit_logs, with server-returned tenant/job/user/trace identity, bounded awaited writes and no raw errors/payload/provider output. No change to the analysis engine event table or live DDL. See the dedicated collision audit.
+
+Direct live SDK lease proof on the reviewed branch passed four cases and removed the one exact synthetic job. This is database/repository evidence before protected integration, not proof of the deployed processor. The later staging HTTP processor proof remains required.
+
+Protected #442 merged as 16a429f68ebbc2d68482eb675fe4a7fdf57664b1 from final HEAD 497402ca765d57b3c06e603934a524d0fdc24da1, required CI 38201004961 SUCCESS and exact non-author approval. Actual protected-source processor + SDK ran one legitimate synthetic project/task/report/sentinel on live Supabase: five checks PASS, including two durable audit records and no execution on a repeated tick. Four exact rows removed; audit retained. This ran locally against the live DB, not through the deployed HTTP processor. The two historical running QA jobs from 2026-10-03 were read back unchanged; no global queue drain or provider call. Staging rollout 38201387888 was still in progress at this observation.

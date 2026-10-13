@@ -1,0 +1,9 @@
+# Restore the enabled-project portal contract
+
+Fresh baseline a6fd98d8 after protected #423. Reuse the clean runtime-verification checkout for this next task; Customer Debug work remains preserved separately in the canonical checkout.
+
+Physical live preflight: a task-created active stakeholder can read its exact project/media through live RLS, but GET /portal/projects/:id returns403. Source cause: project.repository.getById does not SELECT client_portal_enabled; canReadClientPortalView requires that field. Existing policy mocks return it anyway, hiding the defect. The selected-field repair exists in retained commit fc78f95f; restore the needed client_portal_enabled slice on current main, without broad merging that old branch or restoring financial fields.
+
+Also correct stakeholder_finance_sanity.sh: it currently treats an HTTP403 error object as a successful safe portal projection because it only searches for forbidden JSON keys. Require HTTP200 and the expected project envelope before declaring finance proof; isolate temporary files and clean up login/cookie responses. No SQL, new API/module/provider or permission expansion. Validate real selected-column behavior, decision-maker/viewer/disabled/revoked/foreign scopes and false smoke successes, then protected delivery and physical retry.
+
+Validation: selected-column regression reproduced three positive authorization failures before the repair; all six regression cases pass after it. Four affected Vitest suites:26/26. Payload and hermetic shell proof guards:10/10, including HTTP403, HTTP200 error, nested internal financial fields, login JSON escaping and temporary credential cleanup. ESLint, TypeScript and bash syntax pass. These are local checks; physical portal/intake retry and deployed finance proof remain pending delivery.

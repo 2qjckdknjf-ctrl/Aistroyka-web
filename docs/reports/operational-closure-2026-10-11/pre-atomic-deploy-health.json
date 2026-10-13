@@ -1,0 +1,12 @@
+[
+  {
+    "host": "staging.aistroyka.ai",
+    "http": 200,
+    "sha7": "7657963"
+  },
+  {
+    "host": "aistroyka.ai",
+    "http": 200,
+    "sha7": "7657963"
+  }
+]

@@ -1,4 +1,5 @@
 import SwiftUI
+import ImageIO
 import Shared
 
 struct CustomerProjectDetailView: View {
@@ -7,6 +8,8 @@ struct CustomerProjectDetailView: View {
     @State private var view: CustomerPortalProjectView?
     @State private var message: String?
     @State private var loading = true
+    @State private var accessDenied = false
+    @State private var loadGeneration = 0
     @State private var respondingRequestId: String?
     @State private var respondingEstimateId: String?
     @State private var respondMessage: String?
@@ -23,6 +26,7 @@ struct CustomerProjectDetailView: View {
                     actionTitle: NSLocalizedString("cust_retry", comment: ""),
                     action: { Task { await load() } }
                 )
+                .accessibilityIdentifier("pilot_customer_project_unavailable")
             } else if let view {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -46,27 +50,38 @@ struct CustomerProjectDetailView: View {
                         requestsSection(view.clientRequests)
                         estimatesSection(view.customerEstimates)
                         documentsSection(view.documents)
+                        CustomerPublishedPhotosSection(projectId: projectId, refreshGeneration: loadGeneration)
                     }
                     .padding(24)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .background(CustomerTokens.canvas.ignoresSafeArea())
+                .modifier(CustomerProjectScrollBounce())
                 .refreshable { await load() }
                 .accessibilityIdentifier("pilot_customer_project_detail")
             }
         }
-        .navigationTitle(view?.project.name ?? fallbackName)
+        .navigationTitle(accessDenied ? NSLocalizedString("cust_home_title", comment: "") : (view?.project.name ?? fallbackName))
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    CustomerIntakeListView(
-                        boundProjectId: projectId,
-                        boundProjectName: view?.project.name ?? fallbackName
-                    )
-                } label: {
-                    Text(NSLocalizedString("cust_intake_nav", comment: ""))
+            if view != nil {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        Task { await load() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .accessibilityLabel(NSLocalizedString("cust_refresh_project", comment: ""))
+                    .accessibilityIdentifier("pilot_customer_project_refresh")
+                    NavigationLink {
+                        CustomerIntakeListView(
+                            boundProjectId: projectId,
+                            boundProjectName: view?.project.name ?? fallbackName
+                        )
+                    } label: {
+                        Text(NSLocalizedString("cust_intake_nav", comment: ""))
+                    }
+                    .accessibilityIdentifier("pilot_customer_project_intake_nav")
                 }
-                .accessibilityIdentifier("pilot_customer_project_intake_nav")
             }
         }
         .task { await load() }
@@ -394,24 +409,163 @@ struct CustomerProjectDetailView: View {
     }
 
     private func load() async {
+        loadGeneration &+= 1
+        let generation = loadGeneration
         let keepVisibleView = view != nil
         if !keepVisibleView {
             loading = true
         }
         message = nil
         do {
-            view = try await CustomerAPI.portalProject(id: projectId)
+            let latest = try await CustomerAPI.portalProject(id: projectId)
+            guard generation == loadGeneration else { return }
+            view = latest
+            accessDenied = false
         } catch let apiError as APIError {
+            guard generation == loadGeneration else { return }
             message = apiError.message
-            if !keepVisibleView {
+            accessDenied = apiError.isUnauthorized || apiError.isForbidden || apiError.statusCode == 404
+            if !keepVisibleView || accessDenied {
                 view = nil
+                feedbackDrafts = [:]
+                respondMessage = nil
             }
         } catch {
+            guard generation == loadGeneration else { return }
             message = NSLocalizedString("cust_project_error", comment: "")
             if !keepVisibleView {
                 view = nil
             }
         }
         loading = false
+    }
+}
+
+private struct CustomerPublishedPhotosSection: View {
+    let projectId: String
+    let refreshGeneration: Int
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var photos: [CustomerPublishedEvidence.Item] = []
+    @State private var message: String?
+    @State private var loading = true
+    @State private var generation = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("cust_photos_title", comment: "")).font(.headline)
+            if loading && photos.isEmpty {
+                ProgressView()
+            } else if let message {
+                Text(message).foregroundStyle(CustomerTokens.textSecondary)
+                Button(NSLocalizedString("cust_retry", comment: "")) { Task { await load() } }
+            } else if photos.isEmpty {
+                Text(NSLocalizedString("cust_portalPhotosEmpty", comment: "")).foregroundStyle(CustomerTokens.textSecondary)
+            } else {
+                ForEach(photos.prefix(9)) { photo in
+                    CustomerPublishedPhotoCard(projectId: projectId, photo: photo) { Task { await load() } }
+                }
+            }
+        }
+        .accessibilityIdentifier("pilot_customer_published_photos")
+        .task(id: refreshGeneration) {
+            await load()
+            while !Task.isCancelled {
+                do { try await Task.sleep(nanoseconds: 30_000_000_000) } catch { break }
+                if scenePhase == .active { await load() }
+            }
+        }
+        .onChange(of: scenePhase) { phase in if phase == .active { Task { await load() } } }
+    }
+
+    @MainActor private func load() async {
+        generation += 1
+        let current = generation
+        loading = true
+        do {
+            let latest = try await CustomerAPI.publishedPhotos(projectId: projectId)
+            guard current == generation, !Task.isCancelled else { return }
+            photos = latest
+            message = nil
+        } catch {
+            guard current == generation, !Task.isCancelled else { return }
+            photos = []
+            let api = error as? APIError
+            let denied = api?.isUnauthorized == true || api?.isForbidden == true || api?.statusCode == 404
+            message = NSLocalizedString(denied ? "cust_portalPhotosAccessUnavailable" : "cust_portalPhotosLoadError", comment: "")
+        }
+        loading = false
+    }
+}
+
+private struct CustomerPublishedPhotoCard: View {
+    let projectId: String
+    let photo: CustomerPublishedEvidence.Item
+    let onUnavailable: () -> Void
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+                    .frame(maxHeight: 260)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityAddTraits(.isImage)
+                    .accessibilityLabel(photo.zoneLabel ?? NSLocalizedString("cust_photos_title", comment: ""))
+                    .accessibilityIdentifier("pilot_customer_published_photo_image_\(photo.id)")
+                Text(NSLocalizedString("cust_portalPhotosVerified", comment: "")).font(.caption)
+            } else if failed {
+                Text(NSLocalizedString("cust_portalPhotosOriginalUnavailable", comment: ""))
+                Button(NSLocalizedString("cust_retry", comment: "")) { Task { await load() } }
+            } else { ProgressView() }
+            if let zone = photo.zoneLabel { Text(zone).font(.caption) }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("pilot_customer_published_photo_\(photo.id)")
+        .task(id: photo.updatedAt) { await load() }
+    }
+
+    @MainActor private func load() async {
+        image = nil
+        failed = false
+        do {
+            let project = projectId, evidence = photo.id
+            let loaded = try await PhotoPreviewQueue.shared.run {
+                let data = try await APIClient.shared.requestPublishedPhoto(projectId: project, evidenceId: evidence)
+                try Task.checkCancellation()
+                guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
+                      let preview = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                        kCGImageSourceCreateThumbnailFromImageAlways: true,
+                        kCGImageSourceCreateThumbnailWithTransform: true,
+                        kCGImageSourceThumbnailMaxPixelSize: 1200,
+                        kCGImageSourceShouldCacheImmediately: true,
+                      ] as CFDictionary) else { throw APIError(statusCode: 415, code: nil, message: "Invalid photo") }
+                try Task.checkCancellation()
+                return CustomerPhotoPreview(image: UIImage(cgImage: preview))
+            }
+            guard !Task.isCancelled else { return }
+            image = loaded.image
+        } catch {
+            guard !Task.isCancelled else { return }
+            image = nil
+            failed = true
+            onUnavailable()
+        }
+    }
+}
+
+/// The completed immutable preview crosses to MainActor; original bytes never do.
+private struct CustomerPhotoPreview: @unchecked Sendable {
+    let image: UIImage
+}
+
+private struct CustomerProjectScrollBounce: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) {
+            content.scrollBounceBehavior(.always)
+        } else {
+            content
+        }
     }
 }

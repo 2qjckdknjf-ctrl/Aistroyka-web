@@ -1,0 +1,6 @@
+{
+  "source_baseline": "d20827fd14b957232abccff64aacbd84bfb8ec9e",
+  "migration": "apps/web/supabase/migrations/20261011091100_hide_intake_policy_helpers.sql",
+  "sha256": "ea482beef24ae9337d8ec280f322fb3907aa04afb7f501faed5cc1421c9ebccd",
+  "vitest_passed": 97
+}

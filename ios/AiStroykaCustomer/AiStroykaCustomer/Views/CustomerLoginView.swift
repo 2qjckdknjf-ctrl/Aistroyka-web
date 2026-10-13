@@ -44,6 +44,8 @@ struct CustomerLoginView: View {
 
                 SecureField(NSLocalizedString("cust_password_placeholder", comment: ""), text: $password)
                     .textContentType(.password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
                     .focused($focusedField, equals: .password)
                     .submitLabel(.go)
                     .onSubmit { signIn() }
@@ -70,6 +72,9 @@ struct CustomerLoginView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(isLoading)
                 .accessibilityIdentifier("pilot_customer_sign_in")
+                #if DEBUG
+                .accessibilityValue(Text(fixtureInputStatus))
+                #endif
 
                 SignInWithAppleButton(.signIn) { request in
                     appleNonce = AuthNonce.random()
@@ -96,7 +101,30 @@ struct CustomerLoginView: View {
             .padding(24)
         }
         .background(Color.black.ignoresSafeArea())
+        #if DEBUG
+        .onAppear {
+            // Same private launch-environment contract as Shared live E2E.
+            // Physical secure-input automation did not preserve fixture text.
+            guard E2EAutoSignIn.isEnabled,
+                  let fixtureEmail = E2EAutoSignIn.email,
+                  let fixturePassword = E2EAutoSignIn.password else { return }
+            email = fixtureEmail
+            password = fixturePassword
+        }
+        #endif
     }
+
+    #if DEBUG
+    /// QA diagnostics expose comparisons only, never entered credentials.
+    private var fixtureInputStatus: String {
+        guard E2EAutoSignIn.isEnabled,
+              let expectedEmail = E2EAutoSignIn.email,
+              let expectedPassword = E2EAutoSignIn.password else { return "" }
+        if email != expectedEmail { return "fixture_email_mismatch" }
+        if password != expectedPassword { return "fixture_password_mismatch" }
+        return "fixture_match"
+    }
+    #endif
 
     private func signIn() {
         sessionState.clearAuthError()
@@ -114,7 +142,9 @@ struct CustomerLoginView: View {
                 try await AuthService.shared.signIn(email: emailTrimmed, password: passwordTrimmed)
                 sessionState.checkSession()
             } catch let apiError as APIError {
-                errorMessage = apiError.message
+                errorMessage = apiError.code == "invalid_credentials"
+                    ? NSLocalizedString("cust_err_invalid_credentials", comment: "")
+                    : apiError.message
             } catch {
                 errorMessage = error.localizedDescription
             }

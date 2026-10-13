@@ -1,0 +1,77 @@
+{
+  "checks": [
+    {
+      "check": "unlimited_initial_ttl_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "own_source_finalization_allowed",
+      "pass": true
+    },
+    {
+      "check": "finalized_path_rebind_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "finalized_status_rollback_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "client_expiry_renewal_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "uploader_reassignment_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "finalized_content_metadata_rewrite_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "tenant_owner_cannot_rewrite_other_uploader_session",
+      "pass": true
+    },
+    {
+      "check": "service_unreviewed_media_correction_allowed",
+      "pass": true
+    },
+    {
+      "check": "member_reviewed_media_rebind_denied",
+      "http": 403,
+      "pass": true
+    },
+    {
+      "check": "service_reviewed_media_rebind_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "detachment_cannot_unseal_reviewed_media",
+      "http": 403,
+      "pass": true
+    },
+    {
+      "check": "reviewed_media_delete_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "non_source_metadata_update_compatible",
+      "pass": true
+    },
+    {
+      "check": "stakeholder_raw_sessions_hidden",
+      "pass": true
+    }
+  ],
+  "metadata_only": true,
+  "storage_objects_written": 0,
+  "business_records_untouched": true
+}

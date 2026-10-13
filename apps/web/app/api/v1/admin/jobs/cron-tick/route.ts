@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueueJob, processJobs } from "@/lib/platform/jobs/job.service";
 import { JOB_CONFIG } from "@/lib/platform/jobs/job.config";
+import { recoverExpiredMaintenanceClaims } from "@/lib/platform/jobs/job.recovery";
 import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
 import { blockAuthenticatedNonPlatformCronCaller } from "@/lib/api/require-platform-admin-legacy-route";
 
@@ -40,8 +41,12 @@ export async function POST(request: Request) {
     }
     const tenantList = (tenants ?? []) as { id: string }[];
     let scheduled = 0;
+    let recovered = 0;
+  let exhausted = 0;
     for (const t of tenantList) {
       try {
+        const recovery = await recoverExpiredMaintenanceClaims(admin, t.id);
+      recovered += recovery.requeued;exhausted += recovery.dead;
         const reconcileJob = await enqueueJob(admin, {
           tenant_id: t.id,
           user_id: null,
@@ -77,6 +82,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       scheduled,
+      recovered,
+      exhausted,
       processed: summary.processed,
       tenants: tenantList.length,
     });

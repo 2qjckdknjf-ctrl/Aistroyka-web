@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "gate": {
+    "canonical_gate": "scripts/smoke/ai_live_provider.sh",
+    "runtime": "apps/web/cloudflare_workers",
+    "provider_configured": true,
+    "live_provider_call_attempted": true,
+    "live_provider_call_succeeded": true,
+    "llm_success_count": 1,
+    "fallback_count": 0,
+    "missing_key_count": 0,
+    "fallback_rate": "0%",
+    "provider": "vision_router",
+    "model": "gpt-4o-mini",
+    "error_kind": null
+  }
+}

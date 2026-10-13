@@ -9,6 +9,7 @@ import { getServerConfig } from "@/lib/config/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+const HEALTH_HEADERS = { "Cache-Control": "no-store, max-age=0, must-revalidate", "CDN-Cache-Control": "no-store", "Cloudflare-CDN-Cache-Control": "no-store" };
 
 export async function GET() {
   try {
@@ -32,14 +33,14 @@ export async function GET() {
       }
       return NextResponse.json(
         { ok: false, db: "error", aiConfigured: false, openaiConfigured: false, reason: "validation_failed" },
-        { status: 503 }
+        { status: 503, headers: HEALTH_HEADERS }
       );
     }
-    return NextResponse.json(parsed.data, { status });
+    return NextResponse.json(parsed.data, { status, headers: HEALTH_HEADERS });
   } catch (outerErr) {
     return NextResponse.json(
       { ok: false, db: "error", aiConfigured: false, openaiConfigured: false, reason: "health_check_error" },
-      { status: 503 }
+      { status: 503, headers: HEALTH_HEADERS }
     );
   }
 }

@@ -1,6 +1,15 @@
-> **Текущая точка входа с 2026-10-04:** [STATUS](../STATUS.md), [START_HERE](../START_HERE.md), [реестр существующей разработки](tasks/ACTIVE_WORK_REGISTRY.csv). Текст ниже сохранён как исторический снимок: его SHA, открытые PR и readiness-статусы нельзя использовать как сегодняшние без повторной проверки.
-
 # AISTROYKA Current Project Truth Index
+
+Наблюдение 2026-10-12: main #440 `0891b08`; свежий origin/main остаётся источником текущего кода. #437 на staging `fac7a17` прошёл 13 реальных проверок PNG/Proof Pack/PDF/revocation, тестовый набор полностью очищен. Production run 38190089187 SUCCESS; apex/www обслуживают `fac7a17`. #433/#434 не являются успешным доказательством оригиналов: их регрессия исправлена #437. [Runtime proof](reports/private-original-runtime-2026-10-12/RESULT.md).
+
+#435 реализует явную публикацию/отзыв выбранного фото в Manager: 7 Shared checks, Debug build, live simulator 1/1 и server readback PASS; previous-head three-app smoke PASS. #435 защищённо объединён на 4d3ddf75 после CI 38190538632/three-app smoke 38190538635 SUCCESS; runtime проверяется отдельно. #438 исправляет транспорт существующего async executor; 38 тестов PASS; живой scoped job завершён с одним связанным media/job/tenant result и strict provider gate exit 0/fallback 0. Durable audit #439 подтверждён fresh event/readback, staging/apex/www b47742e. Worker → Manager → отдельный Customer API flow 12/12 PASS; recipient fallback #440 protected merged/deployed, fresh fallback 13/13 и assigned manager 15/15 PASS. Runtime staging/apex/www 0891b08. [Async proof](reports/async-vision-live-2026-10-12/RESULT.md). [Native proof](reports/manager-native-publication-2026-10-12/RESULT.md).
+
+Далее: полный Worker/report/publication сценарий, source-linked Vision/Graph/video, затем reviewed preproject extraction. 11-source/10-ID receipts сохраняются; DDL в этом срезе не применялся. Physical iPhone wired/Developer Mode, Debug build PASS; UI automation initialization blocked (0 tests); store/legal/billing/time gates и 74 смешанных PR остаются открытыми. Сохранённые папки не переписываются. [STATUS](../STATUS.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md). Старые снимки ниже являются историей.
+
+---
+
+
+# Historical pointer snapshot — 2026-10-03 (superseded)
 
 **Last updated:** 2026-10-03  
 **Main tip:** `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7` (`0e3b1ed`)  
@@ -185,3 +194,5 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 ---
 
 *For deployment topology and canonical paths, see `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`. For live/staging smoke policy, see `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md`.*
+
+Next report-result gap: [hard audit](audit/2026-10-12-report-media-result-hard-audit.md). Reuse current provider/source/queue contracts; no duplicate execution or fake source entities. Physical readiness: [report](reports/customer-physical-gallery-2026-10-12/RESULT.md).

@@ -7,7 +7,10 @@ import {
   TenantRequiredError,
 } from "@/lib/tenant";
 import { withdrawCustomerIntakeDraft } from "@/lib/domain/customer-intake/customer-intake.service";
-import { resolvePortalIntakeTenant } from "@/lib/domain/customer-intake/portal-intake-tenant";
+import {
+  intakeProjectHintFromUrl,
+  resolvePortalIntakeTenant,
+} from "@/lib/domain/customer-intake/portal-intake-tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +42,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const supabase = await createClientFromRequest(request);
-  const resolved = await resolvePortalIntakeTenant(supabase, ctx, request, null);
+  const resolved = await resolvePortalIntakeTenant(
+    supabase,
+    ctx,
+    request,
+    intakeProjectHintFromUrl(request)
+  );
   if ("error" in resolved) {
     return NextResponse.json({ error: resolved.error }, { status: resolved.status });
   }

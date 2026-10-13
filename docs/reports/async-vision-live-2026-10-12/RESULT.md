@@ -1,0 +1,13 @@
+# Async image job live proof — 2026-10-12
+
+Protected #438 merged as `be28832ccf974a9af0b9a5fd1171241e50bed1ab`. Staging 38190300905 and production 38190541329 SUCCESS. Against served staging `be28832`, the canonical project jobs API created one exact synthetic image job (202); repeating request_key reused the same ID. The caller-visible queue was empty before creation and contained only that fixture before processing. The authenticated session executor processed that exact job and completed it; readback found one ai_analysis row linked to its job/media/tenant. This exercises the existing executor and result persistence, not a new implementation.
+
+The canonical `bash scripts/smoke/ai_live_provider.sh --require-live` gate returned exit 0: live provider attempted/succeeded, llm_success_count=1, fallback_count=0. The additional owner's task-local session was revoked. See [job](job.json) and [provider gate](provider.json).
+
+Exact cleanup removed the terminal job and source result, verified both absent, then removed the synthetic project/report/media/evidence/grant/identity and PNG. Temporary user sessions and owner task sessions were revoked; no repository fixture secret was uploaded. Audit traces were retained. See [job cleanup](job-cleanup.json) and [fixture cleanup](fixture-cleanup.json).
+
+The expected project-scoped ai_vision_analyze_complete audit row was absent after this successful scoped request. The route launched five metadata audit paths with void and returned without waiting. The candidate awaits the existing bounded writer (2-second maximum), retaining requester RLS and preserving responses when audit storage fails. Thirty-five route/authorization tests include delayed audit and rejected audit storage; TypeScript/lint PASS. Protected #439 merged as b47742ee0b4f266de2b9f803978761be3801ed5c, staging 38192822994 SUCCESS. A fresh scoped job again completed with one result; exact-project audit readback now contains ai_vision_analyze_complete / vision_router / build_sha7=b47742e. See [audit readback](audit-readback.json). Job/result cleanup verified absent; exact parent/identity/PNG cleanup completed, owner task session revoked. See [fresh job](audit-job.json), [job cleanup](audit-job-cleanup.json), [fixture cleanup](audit-fixture-cleanup.json).
+
+This proof does not establish reviewed AI observations, video execution, Graph promotion or full Worker camera/upload/submit UX. Those remain explicit plan tasks; physical iPhone/store/legal/billing gates are separate.
+
+Production #439 run 38193022679 SUCCESS; fresh staging/apex/www health matched b47742e. See [deployment proof](audit-production.json). All scoped audit-verification fixture data and sessions were cleaned.

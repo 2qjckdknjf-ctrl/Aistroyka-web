@@ -3,8 +3,10 @@ import { POST } from "./route";
 
 const tenantMocks = vi.hoisted(() => {
   class TenantRequiredError extends Error {}
+  class TenantForbiddenError extends Error {}
   return {
     TenantRequiredError,
+    TenantForbiddenError,
     getTenantContextFromRequest: vi.fn(),
     requireTenant: vi.fn(),
   };
@@ -62,6 +64,7 @@ vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: (...args: unknown[]) => tenantMocks.getTenantContextFromRequest(...args),
   requireTenant: (...args: unknown[]) => tenantMocks.requireTenant(...args),
   TenantRequiredError: tenantMocks.TenantRequiredError,
+  TenantForbiddenError: tenantMocks.TenantForbiddenError,
 }));
 
 vi.mock("@/lib/domain/projects/project.service", () => ({

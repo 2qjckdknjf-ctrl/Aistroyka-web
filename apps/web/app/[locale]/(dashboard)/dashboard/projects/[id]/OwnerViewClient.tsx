@@ -19,7 +19,7 @@ import {
   Button,
   Textarea,
 } from "@/components/ui";
-import { getPublicConfig } from "@/lib/config/public";
+import { projectDocumentFileUrl } from "./project-documents.api";
 import {
   statusLabel,
   statusBadgeClass,
@@ -234,12 +234,7 @@ async function submitBulkDecision(
   return json.data;
 }
 
-function documentFileUrl(objectPath: string | null | undefined): string | null {
-  if (!objectPath) return null;
-  const base = (getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/media/${objectPath}`;
-}
+
 
 async function fetchReports(projectId: string): Promise<{ data: Report[]; total: number }> {
   const res = await fetch(
@@ -1155,9 +1150,9 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             {decisionDoc.description && (
               <p className="text-sm text-aistroyka-text-primary">{decisionDoc.description}</p>
             )}
-            {decisionDoc.object_path && documentFileUrl(decisionDoc.object_path) && (
+            {decisionDoc.object_path && projectDocumentFileUrl(decisionDoc.object_path, projectId, decisionDoc.id) && (
               <a
-                href={documentFileUrl(decisionDoc.object_path)!}
+                href={projectDocumentFileUrl(decisionDoc.object_path, projectId, decisionDoc.id)!}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-aistroyka-accent hover:underline text-sm block"

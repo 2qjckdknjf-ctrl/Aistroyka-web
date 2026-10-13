@@ -134,6 +134,7 @@ jobs:
       - name: Validate deploy ref
         env:
           DEPLOY_REF: ${{ steps.deploy_ref.outputs.ref }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -146,19 +147,14 @@ jobs:
 
           # Only allow full 40-character SHA, not partial SHA.
           if echo "$DEPLOY_REF" | grep -Eq '^[0-9a-f]{40}$'; then
-            if git ls-remote --exit-code "$REPO_URL" "$DEPLOY_REF" >/dev/null 2>&1; then
-              echo "Resolved deploy ref as full commit SHA: $DEPLOY_REF"
+            # A successful staging SHA can be an ancestor after a docs-only merge.
+            # Verify the repository commit object, not equality with today's refs.
+            if gh api "repos/${GITHUB_REPOSITORY}/git/commits/$DEPLOY_REF" >/dev/null 2>&1; then
+              echo "Resolved deploy ref as repository commit: $DEPLOY_REF"
               exit 0
             fi
 
-            # Fallback: ls-remote by SHA may not always return direct object lookup.
-            # If checkout can fetch by exact SHA from repository, allow it only after verifying all refs contain it.
-            if git ls-remote "$REPO_URL" | awk '{print $1}' | grep -Fx "$DEPLOY_REF" >/dev/null; then
-              echo "Resolved deploy ref as exact remote commit SHA: $DEPLOY_REF"
-              exit 0
-            fi
-
-            echo "::error::Full commit SHA '$DEPLOY_REF' was not found in remote refs."
+            echo "::error::Full commit SHA '$DEPLOY_REF' does not resolve to a repository commit."
             exit 1
           fi
 
@@ -205,6 +201,11 @@ jobs:
           PILOT_SMOKE_BEARER: ${{ secrets.PILOT_SMOKE_BEARER_PRODUCTION }}
         run: bash scripts/release/check-env-config.sh deploy-production
 
+      - name: Setup Node for atomic Wrangler deploy
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -215,7 +216,7 @@ jobs:
 
       - name: Set build stamp and app env
         run: |
-          echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
 
@@ -252,38 +253,33 @@ jobs:
         run: |
           grep -q 'x.includes("middleware") && x.includes("manifest")' .open-next/deploy/worker-bootstrap.js || (echo "::error::Patch not applied: middleware-manifest stub missing in deploy bundle" && exit 1)
           echo "Patched bundle verified."
-      - name: Deploy to Cloudflare (production, patched bundle)
+      - name: Deploy reviewed bundle and provider secrets atomically
         working-directory: apps/web
         env:
           OPEN_NEXT_DEPLOY: "true"
-        run: |
-          set -euo pipefail
-          npx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml \
-            --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
-            --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
-            --var NEXT_PUBLIC_APP_ENV:production
-
-      - name: Persist AI provider secrets on Worker (production)
-        working-directory: apps/web
-        env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -n "${OPENAI_API_KEY:-}" ]; then
-            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY --env production --config wrangler.deploy.toml
-          fi
-          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put ANTHROPIC_API_KEY --env production --config wrangler.deploy.toml
-          fi
+        run: bash ../../scripts/release/deploy-production-worker.sh
+
+      - name: Checkout verification tooling from the workflow commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .deployment-verification
+          sparse-checkout: scripts/release/verify_deployed_commit.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Verify served production commit (blocking)
+        run: python3 .deployment-verification/scripts/release/verify_deployed_commit.py --target production --expected-sha "$NEXT_PUBLIC_BUILD_SHA"
 
       - name: Post-deploy summary
         run: |
-          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
+          SHA7="${NEXT_PUBLIC_BUILD_SHA:0:7}"
           echo "Deployed worker: aistroyka-web-production (apps/web)"
-          echo "Commit SHA (full): ${{ github.sha }}"
+          echo "Commit SHA (full): $NEXT_PUBLIC_BUILD_SHA"
           echo "Commit sha7: $SHA7"
-          echo "workers.dev URL: In the 'Deploy to Cloudflare (production)' step above, look for: https://aistroyka-web-production.<account>.workers.dev"
+          echo "workers.dev URL: In the atomic deploy step above, look for: https://aistroyka-web-production.<account>.workers.dev"
 
       - name: Verify pilot smoke secret (production)
         env:
@@ -428,4 +424,8 @@ jobs:
         continue-on-error: true
         env:
           BASE_URL: https://aistroyka.ai
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: bash scripts/smoke/ai_live_provider.sh --require-live

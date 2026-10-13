@@ -14,7 +14,9 @@ struct ManagerTabShell: View {
 
     var body: some View {
         Group {
-            if let projectId = ManagerUITestLaunchHooks.e2eProjectId {
+            if let fixture = ManagerUITestLaunchHooks.publicationFixture {
+                NavigationStack { ManagerPublicationFixtureView(reportId: fixture.reportId, projectId: fixture.projectId, tag: fixture.tag) }
+            } else if let projectId = ManagerUITestLaunchHooks.e2eProjectId {
                 NavigationStack {
                     ProjectDetailView(projectId: projectId, projectName: nil)
                 }
@@ -131,6 +133,30 @@ struct ManagerTabShell: View {
             .allowsHitTesting(router.selectedTab == tab)
             .disabled(router.selectedTab != tab)
             .accessibilityHidden(router.selectedTab != tab)
+    }
+}
+
+private struct ManagerPublicationFixtureView: View {
+    let reportId: String
+    let projectId: String
+    let tag: String
+    @State private var verified = false
+    @State private var failed = false
+    var body: some View {
+        Group {
+            if verified { ReportDetailReviewView(reportId: reportId, projectName: tag) }
+            else if failed { Text("Fixture scope unavailable").accessibilityIdentifier("pilot_manager_publication_fixture_error") }
+            else { ProgressView() }
+        }
+        .task {
+            do {
+                async let project = ManagerAPI.projectDetail(id: projectId)
+                async let state = ManagerAPI.reportPhotoPublication(reportId: reportId)
+                let p = try await project, s = try await state
+                guard p.id == projectId, p.name == tag, s.projectId == projectId, s.items.count == 1 else { failed = true; return }
+                verified = true
+            } catch { failed = true }
+        }
     }
 }
 

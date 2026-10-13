@@ -481,3 +481,16 @@
 "mgr_graph_ai_edges" = "Edges";
 
 "mgr_graph_ai_truncated" = "Graph view truncated for size.";
+
+// Explicit selected report photo publication
+"mgr_photo_publication_title" = "Photo publication";
+"mgr_photo_publication_hint" = "The action applies to the selected photo. Report approval does not publish it.";
+"mgr_photo_publication_refresh" = "Refresh";
+"mgr_photo_publication_enabled" = "Publication enabled";
+"mgr_photo_publication_paused" = "Publication paused";
+"mgr_photo_publication_private" = "Internal only";
+"mgr_photo_publication_prerequisite" = "Approve the report and enable the customer portal before publication.";
+"mgr_photo_publication_withdraw" = "Withdraw selected photo";
+"mgr_photo_publication_publish" = "Publish selected photo";
+"mgr_photo_publication_error" = "Photo publication unavailable. Refresh and try again.";
+"mgr_photo_publication_stale" = "Publication changed. Refresh before trying again.";

@@ -1,18 +1,28 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { fetchProjectMedia } from "@/components/canon/canon-live-data";
+import { fetchPublishedPortalPhotos, PortalPhotosError } from "./portal-published-evidence";
 
 export function CanonPortalPhotoGallery({ projectId }: { projectId: string }) {
   const t = useTranslations("canon");
+  const common = useTranslations("common");
+  const [failedIds, setFailedIds] = useState<string[]>([]);
   const mediaQuery = useQuery({
-    queryKey: ["portal-project-media", projectId],
-    queryFn: () => fetchProjectMedia(projectId, 9),
-    staleTime: 60_000,
+    queryKey: ["portal-published-photos", projectId],
+    queryFn: ({ signal }) => fetchPublishedPortalPhotos(projectId, signal),
+    enabled: !!projectId,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: "always",
+    refetchInterval: 30_000,
   });
 
-  const items = (mediaQuery.data ?? []).filter((m) => m.file_url);
+  // React Query retains the previous success on refetch failure. Never display
+  // those photos after access denial or an unverified current read.
+  const items = mediaQuery.isError ? [] : (mediaQuery.data ?? []);
   if (mediaQuery.isPending) {
     return (
       <section className="canon-glass p-4">
@@ -22,24 +32,49 @@ export function CanonPortalPhotoGallery({ projectId }: { projectId: string }) {
     );
   }
 
-  if (items.length === 0) return null;
-
   return (
-    <section className="canon-glass p-4">
+    <section className="canon-glass p-4" aria-busy={mediaQuery.isFetching}>
       <h3 className="font-semibold text-[var(--canon-text-primary)]">{t("portalPhotoGallery")}</h3>
-      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+      {mediaQuery.isError ? (
+        <div className="mt-3 space-y-2" role="status">
+          <p className="text-sm text-[var(--canon-text-muted)]">
+            {t(mediaQuery.error instanceof PortalPhotosError && [401, 403, 404].includes(mediaQuery.error.status)
+              ? "portalPhotosAccessUnavailable" : "portalPhotosLoadError")}
+          </p>
+          <button type="button" className="canon-ghost-btn !text-xs" onClick={() => void mediaQuery.refetch()}>
+            {common("retry")}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <p className="mt-3 text-sm text-[var(--canon-text-muted)]">{t("portalPhotosEmpty")}</p>
+      ) : <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         {items.map((m) => (
-          <a
+          failedIds.includes(m.id) ? <div key={m.id} className="rounded-lg border border-[var(--canon-border-glass)] p-3">
+            <p className="text-sm text-[var(--canon-text-muted)]">{t("portalPhotosOriginalUnavailable")}</p>
+            <button type="button" className="canon-ghost-btn mt-2 !text-xs" onClick={() => {
+              setFailedIds(ids => ids.filter(id => id !== m.id));
+              void mediaQuery.refetch();
+            }}>{common("retry")}</button>
+          </div> : <a
             key={m.id}
-            href={m.file_url}
+            href={m.original_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="aspect-square overflow-hidden rounded-lg border border-[var(--canon-border-glass)]"
+            className="overflow-hidden rounded-lg border border-[var(--canon-border-glass)]"
+            aria-label={m.zone_label ?? t("portalPhotoGallery")}
           >
-            <img src={m.file_url} alt="" className="h-full w-full object-cover" />
+            {/* Authenticated originals must avoid the shared image optimizer/cache. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={m.original_url} alt={m.zone_label ?? t("portalPhotoGallery")} loading="lazy"
+              className="aspect-square w-full object-cover" onError={(event) => {
+                event.currentTarget.hidden = true;
+                setFailedIds(ids => ids.includes(m.id) ? ids : [...ids, m.id]);
+                void mediaQuery.refetch();
+              }} />
+            <span className="block p-2 text-xs text-[var(--canon-text-secondary)]">{t("portalPhotosVerified")}</span>
           </a>
         ))}
-      </div>
+      </div>}
     </section>
   );
 }

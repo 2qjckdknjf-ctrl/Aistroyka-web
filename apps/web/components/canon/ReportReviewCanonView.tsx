@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui";
 import { CanonPageHeader, CanonReportDecisionPanel } from "@/components/canon";
 import { getCanonProjectGradient } from "@/components/canon/canon-project-visual";
+import { ReportPublicationControls } from "@/components/canon/ReportPublicationControls";
 
 export interface ReportReviewCanonData {
   id: string;
@@ -167,6 +168,8 @@ export function ReportReviewCanonView({
           </p>
         </div>
       </div>
+
+      <ReportPublicationControls key={`${report.id}:${report.status}`} reportId={report.id} previews={report.media ?? []} />
 
       <div className="canon-workflow-steps canon-scroll-x" aria-label={t("reportWorkflow")}>
         {workflowSteps.map((step) => (

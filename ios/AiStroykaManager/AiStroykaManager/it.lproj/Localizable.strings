@@ -480,3 +480,16 @@
 "mgr_graph_ai_edges" = "Archi";
 
 "mgr_graph_ai_truncated" = "Vista del grafo troncata per dimensione.";
+
+// Explicit selected report photo publication
+"mgr_photo_publication_title" = "Pubblicazione foto";
+"mgr_photo_publication_hint" = "L’azione riguarda la foto selezionata. Approvare il rapporto non la pubblica.";
+"mgr_photo_publication_refresh" = "Aggiorna";
+"mgr_photo_publication_enabled" = "Pubblicazione attiva";
+"mgr_photo_publication_paused" = "Pubblicazione sospesa";
+"mgr_photo_publication_private" = "Solo uso interno";
+"mgr_photo_publication_prerequisite" = "Approva il rapporto e attiva il portale cliente prima di pubblicare.";
+"mgr_photo_publication_withdraw" = "Ritira foto selezionata";
+"mgr_photo_publication_publish" = "Pubblica foto selezionata";
+"mgr_photo_publication_error" = "Pubblicazione non disponibile. Aggiorna e riprova.";
+"mgr_photo_publication_stale" = "La pubblicazione è cambiata. Aggiorna prima di riprovare.";

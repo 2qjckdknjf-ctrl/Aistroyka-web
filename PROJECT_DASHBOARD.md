@@ -1,17 +1,17 @@
 # AISTROYKA — панель проекта
 
-Обновлено 2026-10-05. Начало работы: [START_HERE](START_HERE.md). Статус: [STATUS](STATUS.md).
+Обновлено 2026-10-11. [START_HERE](START_HERE.md), [STATUS](STATUS.md), [актуальная сверка плана](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md).
 
-| Очередь | Уже в main | Продолжить существующее |
+| Очередь | Реальное состояние | Продолжить существующее |
 |---|---|---|
-| Customer iOS | #372 основание/auth, #375 список/детали, #382 portal estimates/requests | Device smoke + deploy `buildStamp` after #382 |
-| Construction Graph | #373 чтение, #376 overlay persistence | Overlay tables present on live DB; live-сценарий still open |
-| Vision | #374 lifecycle, #377 async jobs | [#385](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/385) atomic `request_key`; live RPC still 3-arg |
-| Intake | #378 draft intake | `customer_intake_drafts` not on live DB (`OWNER_GATE`) |
-| Agentic, Site Intelligence, AI Flywheel, старые UI/mobile | Сверять конкретную функцию | [реестр](docs/tasks/ACTIVE_WORK_REGISTRY.csv), без новой параллельной реализации |
+| Customer iOS | Target/auth/list/detail/intake код в main | Полный portal + physical device smoke; store readiness отдельно |
+| Construction Graph | Код persistence и live schema есть | Live lineage/review сценарий ещё нужно доказать |
+| Vision | Async/request_key в main; 4-arg RPC применён | Полный upload → job → result сценарий; не переписывать RPC |
+| Intake | CRUD/edit/submit/withdraw в main и live БД; API цикл PASS | Hard audit и недостающий AI scope extraction, без новых договоров/смет по AI |
+| Безопасность БД | Private intake helpers, lifecycle guard, timestamp/FK corrections применены | Исторические advisors — отдельная semantic review |
+| Deploy | Гонка provider-secret исправлена #417; source stamp из checkout | Health/workflow proof staging и production HTTP 200, buildStamp.sha7 = 35fa334 (проверка 2026-10-11 09:58 UTC) |
+| Старые PR | 75 открытых, все в реестре; дополнительные дубли #281/#289/#293 закрыты | Сверять конкретный diff/требование, не объединять старые стеки целиком |
 
-Открытые PR и статусы меняются. Перед продолжением проверить текущий HEAD, base, замечания review и обязательные проверки. Закрытие старого PR как заменённого не является подтверждением live-сценария.
+В реестре head_sha означает HEAD PR, merge_sha — коммит, вошедший в main. Перед действием обновить GitHub; состояние MERGED не доказывает DB/mobile/runtime readiness само по себе.
 
-Сохранённая локальная работа: основная старая папка, mobile-store-m1, Agentic, TestFlight и семь Cursor worktrees. Есть проверенные локальные резервные копии; эти папки не очищены и не сброшены. Чистые завершённые временные папки перенесены в архив с сохранением содержимого и истории.
-
-Правило завершения: код в ветке → проверка → main → staging → production; отдельно БД и номер мобильной сборки. Подробности: [RESULT](docs/reconciliation/workspace-2026-10-04/RESULT.md).
+Рабочая точка — AISTROYKA-main-clean. Старая первичная папка, protected/mobile/design/AI/Cursor worktrees и приватные снимки сохранены. Никакие dirty источники не сбрасывались. [Receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md) предотвращают повторный SQL apply; полная историческая сверка миграций ещё отдельная задача.

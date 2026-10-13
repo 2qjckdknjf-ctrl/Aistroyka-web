@@ -11,7 +11,10 @@ import {
   listCustomerIntakeDrafts,
   parseCreateCustomerIntakeInput,
 } from "@/lib/domain/customer-intake/customer-intake.service";
-import { resolvePortalIntakeTenant } from "@/lib/domain/customer-intake/portal-intake-tenant";
+import {
+  intakeProjectHintFromUrl,
+  resolvePortalIntakeTenant,
+} from "@/lib/domain/customer-intake/portal-intake-tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +40,12 @@ export async function GET(request: Request) {
     throw e;
   }
   const supabase = await createClientFromRequest(request);
-  const resolved = await resolvePortalIntakeTenant(supabase, ctx, request, null);
+  const resolved = await resolvePortalIntakeTenant(
+    supabase,
+    ctx,
+    request,
+    intakeProjectHintFromUrl(request)
+  );
   if ("error" in resolved) {
     return NextResponse.json({ error: resolved.error }, { status: resolved.status });
   }

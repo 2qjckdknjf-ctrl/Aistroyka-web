@@ -1,0 +1,135 @@
+{
+  "baseline": "d20827fd14b957232abccff64aacbd84bfb8ec9e",
+  "observed": "2026-10-11",
+  "audited_open_prs": 78,
+  "closed": [
+    {
+      "headRefName": "release-hardening/field-wave-2",
+      "headRefOid": "5fdf44cb79d06a3aa5053caa551b2498e822596c",
+      "number": 293,
+      "title": "fix(worker): preserve Today cache on task query failures (rebased)",
+      "files": [
+        {
+          "path": "apps/web/app/api/v1/worker/tasks/today/route.test.ts",
+          "status": "added",
+          "pr_blob": "abc6ff1efd9c4a5f23ed9631a9e722b719aa36ca",
+          "main_blob": "abc6ff1efd9c4a5f23ed9631a9e722b719aa36ca",
+          "identical": true
+        },
+        {
+          "path": "apps/web/app/api/v1/worker/tasks/today/route.ts",
+          "status": "modified",
+          "pr_blob": "ecf22962bf34a76335eade1110ab7b0ce4502a93",
+          "main_blob": "ecf22962bf34a76335eade1110ab7b0ce4502a93",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.repository.test.ts",
+          "status": "modified",
+          "pr_blob": "52109f676206bc3d1ede04209c41bea6e3ccba56",
+          "main_blob": "52109f676206bc3d1ede04209c41bea6e3ccba56",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.repository.ts",
+          "status": "modified",
+          "pr_blob": "9c665b5f5d527c98639ba43c6384f9fae0ec9aed",
+          "main_blob": "9c665b5f5d527c98639ba43c6384f9fae0ec9aed",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.service.test.ts",
+          "status": "modified",
+          "pr_blob": "51c6fb28dadb7e3ff10154ba59224a4aa1a33359",
+          "main_blob": "51c6fb28dadb7e3ff10154ba59224a4aa1a33359",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.service.ts",
+          "status": "modified",
+          "pr_blob": "a5bec626d1d40bb0a179c7edc1393e4bf706801f",
+          "main_blob": "a5bec626d1d40bb0a179c7edc1393e4bf706801f",
+          "identical": true
+        }
+      ],
+      "classification": "ALL_CHANGED_FILES_IDENTICAL",
+      "outcome": "CLOSED_INCLUDED_BRANCH_PRESERVED"
+    },
+    {
+      "headRefName": "release-hardening/field-wave-1",
+      "headRefOid": "4eb8c930039d6f6d9a44fa0a2540e1f0b6dc5d3d",
+      "number": 289,
+      "title": "fix(worker): preserve Today cache on task query failures",
+      "files": [
+        {
+          "path": "apps/web/app/api/v1/worker/tasks/today/route.test.ts",
+          "status": "added",
+          "pr_blob": "abc6ff1efd9c4a5f23ed9631a9e722b719aa36ca",
+          "main_blob": "abc6ff1efd9c4a5f23ed9631a9e722b719aa36ca",
+          "identical": true
+        },
+        {
+          "path": "apps/web/app/api/v1/worker/tasks/today/route.ts",
+          "status": "modified",
+          "pr_blob": "ecf22962bf34a76335eade1110ab7b0ce4502a93",
+          "main_blob": "ecf22962bf34a76335eade1110ab7b0ce4502a93",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.repository.test.ts",
+          "status": "modified",
+          "pr_blob": "52109f676206bc3d1ede04209c41bea6e3ccba56",
+          "main_blob": "52109f676206bc3d1ede04209c41bea6e3ccba56",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.repository.ts",
+          "status": "modified",
+          "pr_blob": "9c665b5f5d527c98639ba43c6384f9fae0ec9aed",
+          "main_blob": "9c665b5f5d527c98639ba43c6384f9fae0ec9aed",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.service.test.ts",
+          "status": "modified",
+          "pr_blob": "51c6fb28dadb7e3ff10154ba59224a4aa1a33359",
+          "main_blob": "51c6fb28dadb7e3ff10154ba59224a4aa1a33359",
+          "identical": true
+        },
+        {
+          "path": "apps/web/lib/domain/tasks/task.service.ts",
+          "status": "modified",
+          "pr_blob": "a5bec626d1d40bb0a179c7edc1393e4bf706801f",
+          "main_blob": "a5bec626d1d40bb0a179c7edc1393e4bf706801f",
+          "identical": true
+        }
+      ],
+      "classification": "ALL_CHANGED_FILES_IDENTICAL",
+      "outcome": "CLOSED_INCLUDED_BRANCH_PRESERVED"
+    },
+    {
+      "headRefName": "cursor/critical-bug-investigation-ab24",
+      "headRefOid": "20b8a956988546905bd42ae1ba6925b51d680264",
+      "number": 281,
+      "title": "fix(api): actually remove members on Team revoke",
+      "files": [
+        {
+          "path": "apps/web/app/api/v1/tenant/revoke/route.test.ts",
+          "status": "added",
+          "pr_blob": "485669b9acc53888f25cc346c3a6e268a04ca7c2",
+          "main_blob": "485669b9acc53888f25cc346c3a6e268a04ca7c2",
+          "identical": true
+        },
+        {
+          "path": "apps/web/app/api/v1/tenant/revoke/route.ts",
+          "status": "modified",
+          "pr_blob": "0f78f12f4eb9b0043707c9f56711c41ff9bbdac9",
+          "main_blob": "0f78f12f4eb9b0043707c9f56711c41ff9bbdac9",
+          "identical": true
+        }
+      ],
+      "classification": "ALL_CHANGED_FILES_IDENTICAL",
+      "outcome": "CLOSED_INCLUDED_BRANCH_PRESERVED"
+    }
+  ]
+}

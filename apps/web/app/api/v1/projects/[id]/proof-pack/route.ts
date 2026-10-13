@@ -23,7 +23,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const { data, error } = await getManagerProofPack(supabase, ctx, projectId);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404 });
-  return NextResponse.json({ data });
+  return NextResponse.json({ data }, { headers: { "Cache-Control": "private, no-store", "CDN-Cache-Control": "no-store" } });
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -44,5 +44,5 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   });
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: error || "Share failed" }, { status: 400 });
-  return NextResponse.json({ data });
+  return NextResponse.json({ data }, { headers: { "Cache-Control": "private, no-store", "CDN-Cache-Control": "no-store" } });
 }

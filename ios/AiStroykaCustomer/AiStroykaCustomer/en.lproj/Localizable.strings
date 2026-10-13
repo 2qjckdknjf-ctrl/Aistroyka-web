@@ -110,3 +110,17 @@
 "cust_intake_withdraw" = "Reject draft";
 "cust_intake_withdraw_ok" = "Draft rejected. This is not a contract.";
 "cust_intake_withdraw_error" = "Could not reject draft.";
+
+"cust_err_invalid_credentials" = "Incorrect email or password.";
+
+"cust_done" = "Done";
+
+"cust_refresh_project" = "Refresh project";
+
+// Published photo gateway states.
+"cust_portalPhotosEmpty" = "No photos have been shared yet.";
+"cust_portalPhotosLoadError" = "Photos could not be loaded. Try again.";
+"cust_portalPhotosAccessUnavailable" = "Photo access is unavailable.";
+"cust_portalPhotosVerified" = "Reviewed by the project manager";
+"cust_portalPhotosOriginalUnavailable" = "This photo is currently unavailable.";
+"cust_photos_title" = "Site photos";
