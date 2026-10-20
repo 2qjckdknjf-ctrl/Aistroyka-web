@@ -2,7 +2,7 @@
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
-**Текущая задача документации:** `docs/aistroyka-audit-v2-plan-2026-10-20`; baseline `04ec74bf955c29799ab535c043a33c1f9296c309` (fresh GitHub main и local HEAD совпали). [Task](docs/tasks/2026-10-20-audit-v2-plan-integration.md), [handoff](docs/handoff/2026-10-20-audit-v2-plan-integration.md), [интеграция 97 пакетов](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md). Состояние: подготовлена документация; Draft PR и текущий HEAD будут указаны в handoff/реестре после публикации. Ни один V2 implementation/runtime/release gate этим не закрывается.
+**Текущая задача документации:** `docs/aistroyka-audit-v2-plan-2026-10-20`; baseline `04ec74bf955c29799ab535c043a33c1f9296c309` (fresh GitHub main и local HEAD совпали). [Task](docs/tasks/2026-10-20-audit-v2-plan-integration.md), [handoff](docs/handoff/2026-10-20-audit-v2-plan-integration.md), [интеграция 97 пакетов](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md). Состояние: открыт [Draft PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453); наблюдённый первый HEAD `4f1792223917ce9a49e010dc9ea740e1539cdd59`. Реестр хранит этот source snapshot перед добавлением собственной строки; текущий HEAD всегда получать из GitHub PR. Ни один V2 implementation/runtime/release gate этим не закрывается.
 
 Следующий шаг по этой ветке — review полноты/границ и обычные PR checks; затем Cursor берёт один существующий acceptance gap, первым рекомендован WEB-01 после fresh overlap/repro. CLI refresh в этой среде CHECK_UNAVAILABLE (proxy), source SHA независимо проверен через GitHub; повторить remote preflight в рабочем окружении перед разработкой.
 

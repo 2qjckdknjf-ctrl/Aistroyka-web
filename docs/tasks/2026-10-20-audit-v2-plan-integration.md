@@ -1,7 +1,7 @@
 # Task — включение V2 аудита в существующий план
 
 ## Task name
-Complete audit-to-canonical-roadmap integration, 2026-10-20.
+Complete audit-to-canonical-roadmap integration, 2026-10-20. [Draft PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453) — OPEN / draft.
 
 ## Branch
 `docs/aistroyka-audit-v2-plan-2026-10-20`, isolated worktree from fresh source baseline `04ec74bf955c29799ab535c043a33c1f9296c309`.
@@ -42,7 +42,7 @@ Application source, tenant/auth/middleware, account/billing gates, production/Cl
 
 ## Handoff requirements
 
-[2026-10-20-audit-v2-plan-integration.md](../handoff/2026-10-20-audit-v2-plan-integration.md), STATUS и реестр указывают фактический PR/наблюдённый HEAD. Статус защищённого review/CI/merge указывается отдельно от готовности документации.
+[2026-10-20-audit-v2-plan-integration.md](../handoff/2026-10-20-audit-v2-plan-integration.md), STATUS и реестр указывают фактический PR и наблюдённый первый HEAD `4f1792223917ce9a49e010dc9ea740e1539cdd59`; строка реестра является датированным snapshot, current HEAD обновлять через GitHub перед действием. Статус защищённого review/CI/merge указывается отдельно от готовности документации.
 
 ## Rollback notes
 

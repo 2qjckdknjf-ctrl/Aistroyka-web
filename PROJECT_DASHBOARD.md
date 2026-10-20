@@ -4,7 +4,7 @@
 
 | Очередь | Реальное состояние | Продолжить существующее |
 |---|---|---|
-| V2 аудит → план, 2026-10-20 | 97 subordinate packages PROPOSED; 73 findings, 406 AC, 243 future checks; source baseline 04ec74b | [Единая интеграция](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md); Phase/AIS сохранены, Android deferred; one scoped acceptance gap после fresh PR check |
+| V2 аудит → план, 2026-10-20 | [Draft PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453); 97 subordinate packages PROPOSED; 73 findings, 406 AC, 243 future checks; source baseline 04ec74b | [Единая интеграция](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md); Phase/AIS сохранены, Android deferred; one scoped acceptance gap после fresh PR check |
 | Customer iOS | Target/auth/list/detail/intake код в main | Полный portal + physical device smoke; store readiness отдельно |
 | Construction Graph | Код persistence и live schema есть | Live lineage/review сценарий ещё нужно доказать |
 | Vision | Async/request_key в main; 4-arg RPC применён | Полный upload → job → result сценарий; не переписывать RPC |

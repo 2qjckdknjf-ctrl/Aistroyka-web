@@ -24,7 +24,7 @@ Source baseline: `04ec74bf955c29799ab535c043a33c1f9296c309`. Fresh GitHub compar
 | WEB-30 single validation owner | PASS | PUB-01…08 implementation/effort is not repeated in WEB-30. |
 | Selective CON-04 dependency | PASS | Only reports collection consumers require this pagination/filter/count contract. |
 | IOS-30 scoped gates retained | PASS | Full-program dependency set does not gate every contractor-core fix. |
-| Documentation-only diff | PASS | 29 current files, application/config/migration files changed=[] |
+| Documentation-only diff | PASS | 30 current files, application/config/migration files changed=[] |
 | git diff --check | PASS | No whitespace errors in tracked diff. |
 | Portable Markdown links | PASS | 1837 relative references checked; broken=0, active sandbox links=0. Archived original paths are inert code references. |
 

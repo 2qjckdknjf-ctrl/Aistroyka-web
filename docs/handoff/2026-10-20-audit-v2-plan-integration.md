@@ -8,14 +8,18 @@
 `docs/aistroyka-audit-v2-plan-2026-10-20`; source baseline `04ec74bf955c29799ab535c043a33c1f9296c309`. Isolated clean worktree from that baseline; no direct main changes.
 
 ## Commits
-Публикация Draft PR выполняется после document integrity review; фактические commit/PR будут добавлены после GitHub readback. Это не placeholder выполненного коммита.
+- `4f1792223917ce9a49e010dc9ea740e1539cdd59` — docs(roadmap): integrate complete V2 product audit into existing phases; 29 documentation files, remote blob hashes matched local bytes.
+- [Draft PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453) — OPEN / draft, base main; фактический readback подтвердил первый HEAD выше.
+- Текущая metadata revision связывает PR, task/handoff и одну строку реестра; её актуальный SHA получать из [PR commits](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453/commits). Реестр фиксирует действительно наблюдённый первый HEAD до собственного изменения, а не невозможный self-referential final hash.
+
+Ветка опубликована через GitHub connector; CLI remote в этой среде недоступен. Cloud worktree остаётся исходной локальной рабочей копией, поэтому перед продолжением в Cursor получить remote branch/HEAD и выполнить обычный clean-worktree preflight. Не трактовать название локальной папки как fresh checkout.
 
 ## Changed files
 
 - Canonical roadmap: короткие V2 ссылки внутри каждой Phase, без удаления исходных требований.
 - Existing amendment/current execution state: датированные дополнения, без замены старых delivery фактов.
 - `docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md` и полный appendix: 97 mapping, audit/plan/design/context, snapshots, provenance/validation.
-- START_HERE, PROJECT_CONTEXT, STATUS, PROJECT_DASHBOARD, task/handoff/index: единый путь продолжения. Реестр получает одну строку реального PR после публикации.
+- START_HERE, PROJECT_CONTEXT, STATUS, PROJECT_DASHBOARD, task/handoff/index: единый путь продолжения. Реестр содержит одну строку реального PR #453; остальные существующие строки не переписаны.
 
 ## Validation performed
 
@@ -26,11 +30,11 @@
 | CLI refresh | workspace_preflight.py --refresh | CHECK_UNAVAILABLE; configured proxy unavailable |
 | Documentation integrity | counts/unique IDs/criteria/dependencies/links/frozen hashes | See [VALIDATION](../roadmap/product-experience-audit-2026-10-19/VALIDATION.md) |
 | Application lint/typecheck/tests/build/i18n | not applicable to docs-only diff | NOT_RUN |
-| PR CI / independent review | GitHub protected workflow | Pending publication/readback; not claimed PASS |
+| PR CI / independent review | GitHub protected workflow | Первый CI Check 39456971064 наблюдался IN_PROGRESS на 4f1792223917ce9a49e010dc9ea740e1539cdd59; required checks/review текущего HEAD сверять в PR, PASS не заявлен |
 
 ## What passed
 
-Свежая source baseline сверка и preservation of prior scope. Полные документные результаты перечислены в validation; это не доказательства native/runtime поведения.
+Свежая source baseline сверка, 21 document integrity check и две независимые проверки переноса/mapping — PASS. Единственное замечание о превышении evidence по #446 исправлено. 29 загруженных blob SHA совпали с локальными bytes. Это не GitHub approval и не доказательства native/runtime поведения.
 
 ## What failed
 
