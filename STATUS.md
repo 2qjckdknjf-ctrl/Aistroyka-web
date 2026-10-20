@@ -1,5 +1,13 @@
 # STATUS — AISTROYKA
 
+## Дополнение 2026-10-20 — полный аудит включён в план
+
+**Текущая задача документации:** `docs/aistroyka-audit-v2-plan-2026-10-20`; baseline `04ec74bf955c29799ab535c043a33c1f9296c309` (fresh GitHub main и local HEAD совпали). [Task](docs/tasks/2026-10-20-audit-v2-plan-integration.md), [handoff](docs/handoff/2026-10-20-audit-v2-plan-integration.md), [интеграция 97 пакетов](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md). Состояние: подготовлена документация; Draft PR и текущий HEAD будут указаны в handoff/реестре после публикации. Ни один V2 implementation/runtime/release gate этим не закрывается.
+
+Следующий шаг по этой ветке — review полноты/границ и обычные PR checks; затем Cursor берёт один существующий acceptance gap, первым рекомендован WEB-01 после fresh overlap/repro. CLI refresh в этой среде CHECK_UNAVAILABLE (proxy), source SHA независимо проверен через GitHub; повторить remote preflight в рабочем окружении перед разработкой.
+
+## Ранее открытый runtime-поток и исторические доказательства (срез 2026-10-12)
+
 Факты сверены 2026-10-12. Последний наблюдённый main: `ec0c2c6f333b21a44684ea944fe90d9f973a158d` (#444). Текущий main при продолжении определяется свежим `origin/main` и GitHub. Исторические доказательства оригиналов: #437, 13 живых HTTP-проверок PASS; следующие изменения очереди имеют отдельные отчёты.
 
 Текущий проверенный runtime: staging/apex/www `ec0c2c6` (#444), staging 38203225218 / production 38203511775 SUCCESS. #444 required CI 38202800356 SUCCESS, final HEAD 3e8338c5, точное независимое одобрение и защищённое объединение. #443: четыре live handler/SDK reconciliation проверки PASS; четыре session rows и два PNG удалены.

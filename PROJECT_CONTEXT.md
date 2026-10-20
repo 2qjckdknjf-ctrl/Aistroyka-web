@@ -95,3 +95,10 @@ Observed 2026-10-03: `origin/main` `0e3b1ede…` MATCHES production and staging 
 ## Planning amendment — 2026-09-23
 
 Before new feature work read [Customer/Intake plan](docs/roadmap/AISTROYKA_PLAN_AMENDMENT_2026-09-23.md) and [ROMA assurance plan](docs/roma/ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md). Future backlog; current contractor-ops-only pilot scope and release gates remain unchanged.
+
+
+## Product experience audit integration — 2026-10-20
+
+[V2 integration](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) adds all 97 audit packages as subordinate details/acceptance of the existing Phase 0–13/AIS roadmap. Full findings, architecture/structure proposal, design brief and criteria live in the [plan appendix](docs/roadmap/product-experience-audit-2026-10-19/README.md). Use its explicit 97-row mapping, including 43 previously unmapped native packages. Do not reopen delivered requirements from historical audit statuses.
+
+Fresh source baseline observed through GitHub on 2026-10-20: `04ec74bf955c29799ab535c043a33c1f9296c309`; this is source evidence only. Contractor-ops-only, iOS-primary/Android-deferred, separate Customer/AI/commercial releases, customer-finance isolation, account-first and 7-day zero-drift gates remain unchanged. Read START_HERE/current PR HEAD before implementation; choose one acceptance gap and reuse its existing implementation/owner.

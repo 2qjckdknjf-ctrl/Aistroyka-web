@@ -181,3 +181,10 @@ AIS-MATERIAL-008 Supply Agent использует эти skills после пр
 ## Сверка всех доступных AI разборов 2026-10-13
 
 [Сверка функций и критериев завершения](AI_DIGEST_RECONCILIATION_2026-10-13.md) фиксирует CODE_PRESENT / PR_ONLY / PARTIAL / PLANNED по main и открытым работам. Existing IDs сохраняются; добавлен только AIS-RECON-017 (Tender Reconciliation, alias AIST-P1-09). Owner UI Composer, completeness/takeoff, graph source lifecycle, private retrieval и infrastructure-aware pilot gate встроены в существующую очередь. Contractor pilot/security/release и customer-finance isolation остаются первыми.
+
+
+## UX, структура и надёжность — интеграция полного аудита V2, 2026-10-20
+
+[Единая точка продолжения](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) встраивает 97 пакетов App Design Intelligence/Product Design и MagicPath brief в существующий roadmap. Existing Phase 0–13 и AIS IDs сохранены; для 43 native пакетов добавлена отсутствовавшая точная классификация, остальные соответствия сверены. [Полный crosswalk](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md) отличает прямую детализацию, broad parent и cross-cutting acceptance. Delivered Customer/Graph/intake/publication/daily-log не разрабатываются повторно.
+
+Пилот contractor-ops-only, iOS primary и Android deferred остаются прежними. IOS-30 разделяется по применимым core/Customer/AI release gates; WEB-30 только проверяет PUB-01…08; общие CON-контракты имеют одного владельца. Customer-finance isolation, account-first/billing, protected release chain и 7-day zero-drift не изменяются. Полные 73 findings, 406 AC, 243 future checks и design proposal сохранены; их наличие не является implementation/device/runtime PASS.
