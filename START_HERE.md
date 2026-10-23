@@ -4,6 +4,8 @@
 
 Рабочая точка на этом Mac: `/Users/alex/Projects/AISTROYKA-main-clean`.
 
+0. Для выбора работы используйте [единую очередь на 2026-10-23](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23): она сохраняет Phase/AIS/V2, различает main/PR/live и заменяет дубли ежедневных рекомендаций.
+
 1. Прочитайте [STATUS](STATUS.md), [панель проекта](PROJECT_DASHBOARD.md) и [реестр незавершённой работы](docs/tasks/ACTIVE_WORK_REGISTRY.csv).
 2. Перед началом задачи выполните проверку:
 
