@@ -1,0 +1,173 @@
+{
+  "date": "2026-10-20",
+  "timezone": "Europe/Madrid",
+  "observed_at_utc": "2026-10-20 12:59:46 UTC",
+  "repository": "2qjckdknjf-ctrl/Aistroyka-web",
+  "baseline_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+  "base_tree_sha": "acf64e9613f698e58e6c1da3aa95106aadae2c44",
+  "source_audit_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+  "scope": "Documentation-only integration of the 2026-10-19 V2 audit into the existing canonical roadmap.",
+  "cli_preflight": {
+    "refresh": "CHECK_UNAVAILABLE",
+    "reason": "CLI Git remote unavailable through configured browser proxy",
+    "local": "CURRENT_BASELINE",
+    "api_main_matches_local_head_and_origin_main": true
+  },
+  "open_prs_returned": 80,
+  "pull_requests": [
+    {
+      "number": 446,
+      "title": "fix(ai): bind private report images to exact sources and project scope",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/446",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "fix/deep-audit-remediation-2026-10-13",
+      "head_sha": "23a76cfe4b268eda523165490f16abb2bcd71d9b",
+      "base": "main",
+      "base_sha": "e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc",
+      "filenames": [
+        "STATUS.md",
+        "apps/web/lib/platform/ai/resolve-ai-media-image.report-scope.test.ts",
+        "apps/web/lib/platform/ai/resolve-ai-media-image.test.ts",
+        "apps/web/lib/platform/ai/resolve-ai-media-image.ts",
+        "docs/CURRENT_PROJECT_TRUTH_INDEX.md",
+        "docs/audit/deep-2026-10-13/REPORT.md",
+        "docs/audit/deep-2026-10-13/build-warnings.json",
+        "docs/audit/deep-2026-10-13/database-advisors.json",
+        "docs/audit/deep-2026-10-13/migration-history.json",
+        "docs/audit/deep-2026-10-13/open-prs.json",
+        "docs/audit/deep-2026-10-13/plans.csv",
+        "docs/audit/deep-2026-10-13/requirements.csv",
+        "docs/audit/deep-2026-10-13/runtime.json",
+        "docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md",
+        "docs/tasks/ACTIVE_WORK_REGISTRY.csv"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    },
+    {
+      "number": 447,
+      "title": "fix(db): restrict private helper RPC grants without changing guards",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/447",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "fix/private-function-grants-2026-10-13",
+      "head_sha": "95bbd6ca6664e2c742d0ca9bf69c4b302df9da4f",
+      "base": "main",
+      "base_sha": "e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc",
+      "filenames": [
+        ".github/workflows/ci-check.yml",
+        "apps/web/supabase/migrations/20261013090432_harden_private_helper_execute_grants.sql",
+        "docs/reports/private-helper-grants-2026-10-13/RESULT.md",
+        "scripts/ops/verify_private_helper_grants_postgres.mjs"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    },
+    {
+      "number": 448,
+      "title": "feat(quantities): add exact stage2a manual calculation core",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/448",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "feat/stage2a-quantity-engine-2026-10-13",
+      "head_sha": "f45f875d72f6d120338c4783f29fc550ff86a113",
+      "base": "main",
+      "base_sha": "e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc",
+      "filenames": [
+        "apps/web/lib/domain/quantities/exact-decimal.ts",
+        "apps/web/lib/domain/quantities/planar-area.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.test.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.ts",
+        "docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    },
+    {
+      "number": 449,
+      "title": "feat(quantities): complete stage2a calculation and commercial parity",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/449",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "feat/stage2a-calculation-parity-2026-10-13",
+      "head_sha": "026d9967caf73166af278e13daff4fe9d81b63a2",
+      "base": "feat/stage2a-quantity-engine-2026-10-13",
+      "base_sha": "f45f875d72f6d120338c4783f29fc550ff86a113",
+      "filenames": [
+        "STATUS.md",
+        "apps/web/lib/domain/quantities/commercial.test.ts",
+        "apps/web/lib/domain/quantities/commercial.ts",
+        "apps/web/lib/domain/quantities/exact-decimal.ts",
+        "apps/web/lib/domain/quantities/planar-area.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.test.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.ts",
+        "apps/web/lib/domain/quantities/stage2a-regressions.test.ts",
+        "docs/agent-memory/current-focus.md",
+        "docs/handoff/2026-10-13-stage2a-calculation-parity.md",
+        "docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md",
+        "docs/tasks/2026-10-13-stage2a-calculation-parity.md"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    },
+    {
+      "number": 450,
+      "title": "Roadmap: AI Scout recommendations — 2026-10-15",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/450",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "roadmap/ai-scout-2026-10-15",
+      "head_sha": "903314a3858a82a255fbf25f6ee83acf71eef508",
+      "base": "main",
+      "base_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "filenames": [
+        "docs/roadmap/AI_SCOUT_2026-10-15.md"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    },
+    {
+      "number": 451,
+      "title": "Roadmap: AI Scout decisions — 2026-10-18",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/451",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "roadmap/ai-scout-2026-10-18",
+      "head_sha": "45365ed4700d0555c1ce434f55a262e9a509b908",
+      "base": "main",
+      "base_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "filenames": [
+        "docs/roadmap/AI_SCOUT_2026-10-18.md"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    },
+    {
+      "number": 452,
+      "title": "Roadmap: AI Scout recommendations — 2026-10-20",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/452",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "head": "roadmap/ai-scout-2026-10-20",
+      "head_sha": "d6b6558a1fdbf1036246811fb56e1e001f2e40c5",
+      "base": "main",
+      "base_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "filenames": [
+        "docs/roadmap/AI_SCOUT_2026-10-20.md"
+      ],
+      "diff_quality": "NOT_ASSESSED"
+    }
+  ],
+  "scope_corrections": [
+    "PR #446 is private media resolution/source-project binding, not proof of durable AI completion.",
+    "PR #449 is stacked on #448.",
+    "PR #450/#451/#452 are unmerged proposed planning documents; their completion or vendor claims are not adopted as runtime evidence."
+  ],
+  "invariants": [
+    "Phase 0–13 and existing AIS identifiers preserved.",
+    "iOS primary; Android first pilot deferred; contractor-ops-only pilot preserved.",
+    "No product code, migrations, runtime flags, merge, deploy or store operations in this change."
+  ]
+}
