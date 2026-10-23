@@ -1,11 +1,19 @@
 # ROMA — Implementation Roadmap
 
 **Document ID:** ROMA-ROAD-001  
-**Version:** 1.0  
-**Date:** 2026-07-03  
+**Version:** 1.1 (planning reconciliation)
+**Date:** 2026-10-23 (architecture baseline 2026-07-03)
 **Parent:** `ROMA_ARCHITECTURE.md`
 
 ---
+
+## Текущая очередь и факты — 2026-10-23
+
+Канонический ROMA находится в `2qjckdknjf-ctrl/Aistroyka-web/docs/roma`; новый репозиторий/платформа не создаётся. [Консолидированная execution assurance queue](ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md#каноническая-очередь-roma--2026-10-23) задаёт P0/P1/P2, existing IDs/aliases, роли TBD, зависимости, измеримые AC и вехи R0–R4. Эта queue уточняет этапы ниже и имеет приоритет над историческими датированными TODO.
+
+На `origin/main` `04ec74bf955c29799ab535c043a33c1f9296c309` подтверждено наличие архитектуры и advisory assurance graph с тестами. Галочки Stage0–2C — документальные architecture reviews, не production runtime. Stage2D/adapters/independent monitor/mandatory audit/Dynamic Agent Authority/Credential Broker/security finding lifecycle остаются PARTIAL/PLANNED в соответствующем scope. Product audit best-effort не доказывает полноту security events; свежий runtime/deploy этим docs-only обновлением не проверен.
+
+Ближайший порядок: R1 contracts + independent identities/event completeness + authority/approval → R2 isolated monitor/sink/broker/STOP integration → Growth Supervisor adapter → R3 finding lifecycle/independent regression and common eval corpus → R4 broader adapters. ADR-0007 recommendation-only сохраняется; enforcement требует отдельного рассмотренного ADR и tested integration. Merge/deploy/payment/live trading остаются отдельными human gates.
 
 ## 1. Purpose
 
