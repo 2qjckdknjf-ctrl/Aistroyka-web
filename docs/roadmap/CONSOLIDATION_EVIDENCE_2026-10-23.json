@@ -1,0 +1,380 @@
+{
+  "observed_date": "2026-10-23",
+  "timezone": "Europe/Madrid",
+  "repository": "2qjckdknjf-ctrl/Aistroyka-web",
+  "main_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+  "scope": "read-only GitHub metadata, source files and selected branch documentation; no fresh runtime/device/provider tests",
+  "pull_requests": [
+    {
+      "number": 446,
+      "title": "fix(ai): bind private report images to exact sources and project scope",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "23a76cfe4b268eda523165490f16abb2bcd71d9b",
+      "baseRefOid": "e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc",
+      "headRefName": "fix/deep-audit-remediation-2026-10-13",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/446",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "NEUTRAL"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 15,
+      "changed_path_sample": [
+        "STATUS.md",
+        "apps/web/lib/platform/ai/resolve-ai-media-image.report-scope.test.ts",
+        "apps/web/lib/platform/ai/resolve-ai-media-image.test.ts",
+        "apps/web/lib/platform/ai/resolve-ai-media-image.ts",
+        "docs/CURRENT_PROJECT_TRUTH_INDEX.md",
+        "docs/audit/deep-2026-10-13/REPORT.md",
+        "docs/audit/deep-2026-10-13/build-warnings.json",
+        "docs/audit/deep-2026-10-13/database-advisors.json",
+        "docs/audit/deep-2026-10-13/migration-history.json",
+        "docs/audit/deep-2026-10-13/open-prs.json",
+        "docs/audit/deep-2026-10-13/plans.csv",
+        "docs/audit/deep-2026-10-13/requirements.csv"
+      ],
+      "changed_path_sample_complete": false
+    },
+    {
+      "number": 447,
+      "title": "fix(db): restrict private helper RPC grants without changing guards",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "95bbd6ca6664e2c742d0ca9bf69c4b302df9da4f",
+      "baseRefOid": "e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc",
+      "headRefName": "fix/private-function-grants-2026-10-13",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/447",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "NEUTRAL"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 4,
+      "changed_path_sample": [
+        ".github/workflows/ci-check.yml",
+        "apps/web/supabase/migrations/20261013090432_harden_private_helper_execute_grants.sql",
+        "docs/reports/private-helper-grants-2026-10-13/RESULT.md",
+        "scripts/ops/verify_private_helper_grants_postgres.mjs"
+      ],
+      "changed_path_sample_complete": true
+    },
+    {
+      "number": 448,
+      "title": "feat(quantities): add exact stage2a manual calculation core",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "f45f875d72f6d120338c4783f29fc550ff86a113",
+      "baseRefOid": "e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc",
+      "headRefName": "feat/stage2a-quantity-engine-2026-10-13",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/448",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "NEUTRAL"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 5,
+      "changed_path_sample": [
+        "apps/web/lib/domain/quantities/exact-decimal.ts",
+        "apps/web/lib/domain/quantities/planar-area.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.test.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.ts",
+        "docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md"
+      ],
+      "changed_path_sample_complete": true
+    },
+    {
+      "number": 449,
+      "title": "feat(quantities): complete stage2a calculation and commercial parity",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "026d9967caf73166af278e13daff4fe9d81b63a2",
+      "baseRefOid": "f45f875d72f6d120338c4783f29fc550ff86a113",
+      "headRefName": "feat/stage2a-calculation-parity-2026-10-13",
+      "baseRefName": "feat/stage2a-quantity-engine-2026-10-13",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/449",
+      "checks": [
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "NEUTRAL"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 12,
+      "changed_path_sample": [
+        "STATUS.md",
+        "apps/web/lib/domain/quantities/commercial.test.ts",
+        "apps/web/lib/domain/quantities/commercial.ts",
+        "apps/web/lib/domain/quantities/exact-decimal.ts",
+        "apps/web/lib/domain/quantities/planar-area.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.test.ts",
+        "apps/web/lib/domain/quantities/quantity-engine.ts",
+        "apps/web/lib/domain/quantities/stage2a-regressions.test.ts",
+        "docs/agent-memory/current-focus.md",
+        "docs/handoff/2026-10-13-stage2a-calculation-parity.md",
+        "docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md",
+        "docs/tasks/2026-10-13-stage2a-calculation-parity.md"
+      ],
+      "changed_path_sample_complete": true
+    },
+    {
+      "number": 450,
+      "title": "Roadmap: AI Scout recommendations — 2026-10-15",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "903314a3858a82a255fbf25f6ee83acf71eef508",
+      "baseRefOid": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "headRefName": "roadmap/ai-scout-2026-10-15",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/450",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "NEUTRAL"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 1,
+      "changed_path_sample": [
+        "docs/roadmap/AI_SCOUT_2026-10-15.md"
+      ],
+      "changed_path_sample_complete": true
+    },
+    {
+      "number": 451,
+      "title": "Roadmap: AI Scout decisions — 2026-10-18",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "45365ed4700d0555c1ce434f55a262e9a509b908",
+      "baseRefOid": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "headRefName": "roadmap/ai-scout-2026-10-18",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/451",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "NEUTRAL"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 1,
+      "changed_path_sample": [
+        "docs/roadmap/AI_SCOUT_2026-10-18.md"
+      ],
+      "changed_path_sample_complete": true
+    },
+    {
+      "number": 452,
+      "title": "Roadmap: AI Scout recommendations — 2026-10-20",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "d6b6558a1fdbf1036246811fb56e1e001f2e40c5",
+      "baseRefOid": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "headRefName": "roadmap/ai-scout-2026-10-20",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/452",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Cursor Bugbot",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 1,
+      "changed_path_sample": [
+        "docs/roadmap/AI_SCOUT_2026-10-20.md"
+      ],
+      "changed_path_sample_complete": true
+    },
+    {
+      "number": 453,
+      "title": "docs(roadmap): integrate full AISTROYKA V2 audit into existing plan",
+      "state": "OPEN",
+      "isDraft": true,
+      "headRefOid": "586649ea9774924eb75512aa26d861974d372589",
+      "baseRefOid": "04ec74bf955c29799ab535c043a33c1f9296c309",
+      "headRefName": "docs/aistroyka-audit-v2-plan-2026-10-20",
+      "baseRefName": "main",
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453",
+      "checks": [
+        {
+          "name": "check",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Vercel Preview Comments",
+          "conclusion": "SUCCESS"
+        },
+        {
+          "name": "Workers Builds: aistroyka-web-production",
+          "conclusion": "SUCCESS"
+        }
+      ],
+      "changed_path_count_returned": 30,
+      "changed_path_sample": [
+        "PROJECT_CONTEXT.md",
+        "PROJECT_DASHBOARD.md",
+        "START_HERE.md",
+        "STATUS.md",
+        "docs/handoff/2026-10-20-audit-v2-plan-integration.md",
+        "docs/handoff/HANDOFF_INDEX.md",
+        "docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md",
+        "docs/roadmap/AISTROYKA_PLAN_AMENDMENT_2026-09-23.md",
+        "docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md",
+        "docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md",
+        "docs/roadmap/product-experience-audit-2026-10-19/ARCHIVE_REFERENCES.md",
+        "docs/roadmap/product-experience-audit-2026-10-19/AUDIT_CONTEXT_RU.md"
+      ],
+      "changed_path_sample_complete": false
+    }
+  ],
+  "subsequent_scout_closure_verification": [
+    {
+      "repo": "Aistroyka-web",
+      "number": 450,
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/450",
+      "state": "closed",
+      "merged": false,
+      "closed_at": "2026-10-23T13:06:00Z",
+      "head_sha": "903314a3858a82a255fbf25f6ee83acf71eef508",
+      "branch_preserved": true,
+      "replacement": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455 (product) and https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/454 (ROMA)"
+    },
+    {
+      "repo": "Aistroyka-web",
+      "number": 451,
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/451",
+      "state": "closed",
+      "merged": false,
+      "closed_at": "2026-10-23T13:06:04Z",
+      "head_sha": "45365ed4700d0555c1ce434f55a262e9a509b908",
+      "branch_preserved": true,
+      "replacement": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455 (product) and https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/454 (ROMA)"
+    },
+    {
+      "repo": "Aistroyka-web",
+      "number": 452,
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/452",
+      "state": "closed",
+      "merged": false,
+      "closed_at": "2026-10-23T13:06:09Z",
+      "head_sha": "d6b6558a1fdbf1036246811fb56e1e001f2e40c5",
+      "branch_preserved": true,
+      "replacement": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455 (product) and https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/454 (ROMA)"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # AISTROYKA Сверка функций из AI разборов
 
+> Активные приоритеты, владельцы, dependencies и milestones сверены 2026-10-23 в [канонической очереди](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23). Ниже сохранены source/AC/history; старые state/priority snapshots не создают отдельные tasks.
+
 Дата фиксации: **2026-10-13**. Это сверка и уточнение действующих задач, не второй master plan. Статусы относятся к коду и планам на указанном SHA; production и устройства этим проходом не сертифицированы.
 
 Baseline origin/main: `e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc`. Проверены дерево main, существующий roadmap, открытые issues/PR и относящиеся к функциям реализации/тесты. CODE_PRESENT означает наличие реализации, а не свежий runtime PASS; PR_ONLY означает несведённую работу. При отсутствии полного доказательства статус PARTIAL или NOT_FOUND_IN_CHECKED_SCOPE.
