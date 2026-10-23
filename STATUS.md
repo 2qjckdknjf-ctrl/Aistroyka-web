@@ -2,7 +2,9 @@
 
 ## Актуальная плановая сверка — 2026-10-23
 
-[Единая очередь в каноническом roadmap](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23): P0 boundaries → P1 durable video evidence/Graph/materials → P2 spatial/live expansion. Main `04ec74bf955c29799ab535c043a33c1f9296c309`; refresh preflight CURRENT_BASELINE. Эта docs-ветка продолжает OPEN DRAFT #453, HEAD `586649ea9774924eb75512aa26d861974d372589`; #450/#451/#452 сведены без повторных задач и остаются открытыми. Security #446/#447 и quantity #448→#449 — PR_ONLY, не delivered. [Exact PR snapshot](docs/roadmap/CONSOLIDATION_EVIDENCE_2026-10-23.json).
+[Единая очередь в каноническом roadmap](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23): P0 boundaries → P1 durable video evidence/Graph/materials → P2 spatial/live expansion. Main `04ec74bf955c29799ab535c043a33c1f9296c309`; refresh preflight CURRENT_BASELINE. [Draft #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) продолжает OPEN DRAFT #453, HEAD `586649ea9774924eb75512aa26d861974d372589`; #450/#451/#452 сведены без повторных задач и остаются открытыми. Security #446/#447 и quantity #448→#449 — PR_ONLY, не delivered. [Exact PR snapshot](docs/roadmap/CONSOLIDATION_EVIDENCE_2026-10-23.json).
+
+Registry stores observed #455 HEAD `1399fc3` before this registry-only follow-up; refresh exact remote HEAD before work.
 
 Следующее действие: review плановых PR, назначить owner/reviewer среза, продолжить существующий security/evidence acceptance gap. Live/device/DB/provider проверки 23 октября не запускались; прежний runtime-поток ниже — история, не актуальная команда и не новый PASS. Merge/deploy не разрешены этим обновлением.
 
