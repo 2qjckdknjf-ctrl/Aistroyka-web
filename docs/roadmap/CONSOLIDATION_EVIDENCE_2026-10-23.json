@@ -341,5 +341,40 @@
       ],
       "changed_path_sample_complete": false
     }
+  ],
+  "subsequent_scout_closure_verification": [
+    {
+      "repo": "Aistroyka-web",
+      "number": 450,
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/450",
+      "state": "closed",
+      "merged": false,
+      "closed_at": "2026-10-23T13:06:00Z",
+      "head_sha": "903314a3858a82a255fbf25f6ee83acf71eef508",
+      "branch_preserved": true,
+      "replacement": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455 (product) and https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/454 (ROMA)"
+    },
+    {
+      "repo": "Aistroyka-web",
+      "number": 451,
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/451",
+      "state": "closed",
+      "merged": false,
+      "closed_at": "2026-10-23T13:06:04Z",
+      "head_sha": "45365ed4700d0555c1ce434f55a262e9a509b908",
+      "branch_preserved": true,
+      "replacement": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455 (product) and https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/454 (ROMA)"
+    },
+    {
+      "repo": "Aistroyka-web",
+      "number": 452,
+      "url": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/452",
+      "state": "closed",
+      "merged": false,
+      "closed_at": "2026-10-23T13:06:09Z",
+      "head_sha": "d6b6558a1fdbf1036246811fb56e1e001f2e40c5",
+      "branch_preserved": true,
+      "replacement": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455 (product) and https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/454 (ROMA)"
+    }
   ]
 }
