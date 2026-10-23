@@ -2,6 +2,8 @@
 
 > Историческая сверка. Текущие приоритеты, статусы, aliases и acceptance gates консолидированы в [существующем assurance plan, 2026-10-23](ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md#каноническая-очередь-roma--2026-10-23). Сохраняем эту запись как dated evidence; не создавать повторные задачи из таблиц ниже.
 
+**Уточнение идентификаторов 2026-10-23:** `GROW-AUDIT-007` в этой исторической ROMA сверке — Code/Dependency Graph и staleness. Одноимённая task в Growth имеет другой исходный runtime-audit scope; эти source IDs не взаимозаменяемы. Обязательный security event sink и его полнота имеют отдельный текущий ID `ROMA-AUDIT-001` в [канонической очереди](ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md#каноническая-очередь-roma--2026-10-23); dependency graph остаётся отдельным deliverable.
+
 Дата фиксации: **2026-10-13**. Это сверка и уточнение действующих задач, не второй master plan. Статусы относятся к коду и планам на указанном SHA; production и устройства этим проходом не сертифицированы.
 
 Baseline origin/main: `e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc`. Проверены дерево main, существующий roadmap, открытые issues/PR и относящиеся к функциям реализации/тесты. CODE_PRESENT означает наличие реализации, а не свежий runtime PASS; PR_ONLY означает несведённую работу. При отсутствии полного доказательства статус PARTIAL или NOT_FOUND_IN_CHECKED_SCOPE.
