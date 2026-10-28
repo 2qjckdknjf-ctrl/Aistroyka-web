@@ -29,7 +29,13 @@ export function polygonArea(p: Polygon): Rational {
   const signed = half(edges(p).reduce((sum, e) => add(sum, cross(e.a, e.b)), zero));
   return cmp(signed, zero) < 0 ? sub(zero, signed) : signed;
 }
-export const polygonIdentity = (p: Polygon) => p.map(v => `${key(v.x)},${key(v.y)}`).join(";");
+/** A stable physical contour may start at any vertex and use either winding. */
+export function polygonIdentity(p: Polygon): string {
+  const vertices = p.map(v => `${key(v.x)},${key(v.y)}`);
+  const variants = [vertices, [...vertices].reverse()].flatMap(order =>
+    order.map((_, index) => [...order.slice(index), ...order.slice(0, index)].join(";")));
+  return variants.sort()[0];
+}
 export function toPolygon(shape: Shape): Polygon {
   let p: Polygon;
   if (shape.kind === "rectangle") {

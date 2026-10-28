@@ -23,6 +23,8 @@
 
 [Worker API proof](docs/reports/worker-publication-flow-2026-10-12/RESULT.md), [Async Vision live proof](docs/reports/async-vision-live-2026-10-12/RESULT.md), [Runtime repair](docs/reports/private-original-runtime-2026-10-12/RESULT.md), [native Manager](docs/reports/manager-native-publication-2026-10-12/RESULT.md), [registry](docs/tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). 74 старых смешанных PR требуют semantic review; dirty/ahead/release/cursor источники сохранены. Полная готовность проекта остаётся открытой. [Physical gallery](docs/reports/customer-physical-gallery-2026-10-12/RESULT.md).
 
+Отдельный локальный срез 2026-10-13: C04 computational parity — PR #449 на `feat/stage2a-calculation-parity-2026-10-13` после merge #448. Чистое quantity/commercial ядро и синтетические сценарии готовы к review; targeted tests, lint и TypeScript PASS. Хранение, API и Manager/Worker интеграция остаются A01–A05; публикация и independent real-data C05 не подтверждены. [Контракт и ограничения](docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md), [задача](docs/tasks/2026-10-13-stage2a-calculation-parity.md), [handoff](docs/handoff/2026-10-13-stage2a-calculation-parity.md).
+
 Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
 
 PR #350: [планирование Customer / ROMA](docs/handoff/2026-09-23-roadmap-consolidation.md), сверка 2026-10-13 — [product](docs/roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md) / [ROMA](docs/roma/AI_DIGEST_RECONCILIATION_2026-10-13.md). Planning changes не подтверждают новый runtime/deployment.

@@ -9,7 +9,7 @@ function surface(id: string, shape: Shape | null, zones?: Shape[], deductions: S
   return { id, shape, geometry_known: true, mapping_complete: true, deductions_complete: true,
     selection: zones ? "zones" as const : "whole" as const, zones: zones ?? [], deductions };
 }
-function area(surfaces: ReturnType<typeof surface>[], work_code = "Q-TILE-WALL"): QuantityRequest {
+function area(surfaces: ReturnType<typeof surface>[], work_code = "Q-TILE-WALL"): Extract<QuantityRequest, { kind: "area" }> {
   return { kind: "area", rule_version: "1.0.0", work_code, quantity_kind: "planned", surfaces };
 }
 const quantity = (request: QuantityRequest) => calculateQuantity(request).quantity;
@@ -51,9 +51,9 @@ describe("C02 synthetic quantity gold cases for C04", () => {
   });
   it("QG07 separates work, material need and whole pack purchasing", () => {
     expect(materialRequirement("8.820000", "1", "0.10", "1.44")).toEqual({
-      work_quantity: "8.820000", material_need: "9.702000", pack_count: "7", purchase_quantity: "10.080000",
+      work_quantity: "8.820000", material_need: "9.702000", pack_count: "7", purchase_quantity: "10.080000", issues: [],
     });
-    expect(materialRequirement("8.820000", "1", null, "1.44")).toBeNull();
+    expect(materialRequirement("8.820000", "1", null, "1.44")).toMatchObject({ material_need: null, issues: ["material_parameters_missing"] });
     expect(materialRequirement("8.820000", "1", "0", "1.44")?.material_need).toBe("8.820000");
   });
   it("QG08 aggregates before rounding, retaining small positive quantities", () => {
@@ -127,7 +127,7 @@ describe("exact geometry, bounds and independent arithmetic regressions", () => 
     expect(calculateQuantity({ ...area([surface("a", rect("2", "2"))]), layers: 2 }).quantity).toBeNull();
     expect(calculateQuantity({ ...area([surface("a", rect("2", "2"))]), work_code: "unknown" }).issues).toContain("unsupported_rule");
     expect(calculateQuantity({ kind: "element", work_code: "Q-TRAY-INSTALL", rule_version: "1.0.0", quantity_kind: "planned", mapping_complete: true, elements: [{ id: "tray", state: "planned", count: "0.5" }] }).quantity).toBeNull();
-    expect(() => normalizeLength("4.2", "feet" as any)).toThrow();
+    expect(() => normalizeLength("4.2", "feet")).toThrow();
     expect(() => normalizeLength("1,234,567", "m")).toThrow();
   });
   it("rejects malformed/duplicate polygon vertices and out-of-bound/ambiguous edges", () => {
