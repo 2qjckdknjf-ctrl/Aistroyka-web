@@ -52,6 +52,16 @@ export interface ConstructionGraphSourceRows {
   media: Array<{ id: string; type: string | null }>;
   defects: Array<{ id: string; title: string | null }>;
   documents: Array<{ id: string; title: string | null; status: string | null }>;
+  /**
+   * Human-accepted durable vision results only.
+   * Pending/rejected/insufficient must never be supplied here.
+   */
+  accepted_analyses?: Array<{
+    id: string;
+    media_id: string;
+    stage: string | null;
+    risk_level: string | null;
+  }>;
 }
 
 function nodeId(table: string, id: string): string {
@@ -153,6 +163,7 @@ export function buildConstructionGraphFromSources(
     }
   }
 
+  const mediaIds = new Set(rows.media.map((m) => m.id));
   for (const media of rows.media) {
     const id = nodeId("media", media.id);
     nodes.push({
@@ -171,6 +182,32 @@ export function buildConstructionGraphFromSources(
       from_id: id,
       to_id: projectNode.id,
       provenance: { kind: "sot_fk", table: "media", column: "project_id" },
+    });
+  }
+
+  // Accepted human-reviewed vision results only — never pending/rejected/insufficient.
+  for (const analysis of rows.accepted_analyses ?? []) {
+    if (!mediaIds.has(analysis.media_id)) continue;
+    const id = nodeId("ai_analysis", analysis.id);
+    const mediaNodeId = nodeId("media", analysis.media_id);
+    const stage = analysis.stage?.trim();
+    const risk = analysis.risk_level?.trim();
+    nodes.push({
+      id,
+      family: "evidence",
+      source_table: "ai_analysis",
+      source_id: analysis.id,
+      project_id: projectId,
+      tenant_id: tenantId,
+      label: [stage || "Reviewed analysis", risk ? `risk:${risk}` : null].filter(Boolean).join(" · "),
+      provenance: { kind: "sot_row", table: "ai_analysis", id: analysis.id },
+    });
+    edges.push({
+      id: `evidences:${id}:${mediaNodeId}`,
+      kind: "evidences",
+      from_id: id,
+      to_id: mediaNodeId,
+      provenance: { kind: "sot_fk", table: "ai_analysis", column: "media_id" },
     });
   }
 
