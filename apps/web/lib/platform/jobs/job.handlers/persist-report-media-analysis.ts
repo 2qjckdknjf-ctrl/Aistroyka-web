@@ -58,12 +58,15 @@ export async function persistReportMediaAnalysis(
     .from("ai_analysis")
     .insert({
       media_id: mediaId,
+      tenant_id: input.tenantId,
       platform_job_id: input.platformJobId,
       stage: input.result.stage,
       completion_percent: input.result.completion_percent,
       risk_level: input.result.risk_level,
       detected_issues: input.result.detected_issues,
       recommendations: input.result.recommendations,
+      // Durable results start pending; Graph promotion requires human accept.
+      review_status: "pending",
     })
     .select("id")
     .maybeSingle();

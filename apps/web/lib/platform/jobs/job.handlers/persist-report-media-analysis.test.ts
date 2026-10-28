@@ -46,9 +46,11 @@ describe("persistReportMediaAnalysis", () => {
         insert: (row: Record<string, unknown>) => {
           expect(row).toMatchObject({
             media_id: "m1",
+            tenant_id: "t1",
             platform_job_id: "job-1",
             stage: "foundation",
             risk_level: "low",
+            review_status: "pending",
           });
           return {
             select: () => ({ maybeSingle: insertMaybe }),
