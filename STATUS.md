@@ -4,7 +4,7 @@
 
 Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Merged #446/#447/#457/#448/#449/#458/#453/#455/#459/#454. Hosted SQL applied (grants, `platform_job_id`, human review). Durable result + manager review + accepted Graph lineage + C04 cores в main.
 
-Stage2a A01–A05 + Manager acceptance/cost-bind UI merged (#463–#471); AIS-CLIENT-005A merged; hosted quantity/commercial-bind DDL applied. Async video (#461) в main; live Gemini/Worker fixtures отдельно. Следующее локальное: AIS-MATERIAL-008 draft slice. Legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
+Stage2a A01–A05 + Manager UI (#463–#471) и AIS-MATERIAL-008 draft+UI (#473–#474) merged; hosted quantity/commercial/material DDL applied. Async video (#461) в main; live Gemini/Worker fixtures отдельно. Следующее локальное: AIS-CORRECTION-009 / AIS-MEM-016. Legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
