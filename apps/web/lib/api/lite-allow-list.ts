@@ -20,6 +20,10 @@ function isPathAllowed(pathname: string, method: string): boolean {
   if (m === "GET" && /^\/api\/v1\/reports\/[^/]+$/.test(pathname)) return true;
   // Worker/iOS+Android lite apps list tenant projects (tenant-scoped; same as dashboard read).
   if (pathname === "/api/v1/projects" && method === "GET") return true;
+  // Stage2a A03: Worker reported/measured quantity snapshots (RBAC in route handler).
+  if (/^\/api\/v1\/projects\/[^/]+\/quantities\/snapshots$/.test(pathname)) {
+    if (m === "GET" || m === "POST") return true;
+  }
   if (pathname === "/api/v1/config") return true;
   if (pathname.startsWith("/api/v1/worker")) return true;
   if (pathname.startsWith("/api/v1/sync")) return true;

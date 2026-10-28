@@ -127,4 +127,16 @@ describe("checkLiteAllowList", () => {
   it("ignores non-/api/v1 paths", () => {
     expect(checkLiteAllowList("/api/health", "GET", "ios_lite")).toBeNull();
   });
+
+  it("returns null for lite Stage2a quantity snapshot paths (A03)", () => {
+    expect(
+      checkLiteAllowList("/api/v1/projects/p1/quantities/snapshots", "GET", "ios_worker")
+    ).toBeNull();
+    expect(
+      checkLiteAllowList("/api/v1/projects/p1/quantities/snapshots", "POST", "android_lite")
+    ).toBeNull();
+    expect(
+      checkLiteAllowList("/api/v1/projects/p1/quantities/snapshots/extra", "GET", "ios_lite")
+    ).not.toBeNull();
+  });
 });
