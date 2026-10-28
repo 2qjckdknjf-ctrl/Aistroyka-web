@@ -259,8 +259,5 @@ export function ProjectQuantitiesPanel({
     </div>
   );
 
-  if (isCanon) {
-    return <CanonSurface>{body}</CanonSurface>;
-  }
-  return body;
+  return <CanonSurface isCanon={isCanon}>{body}</CanonSurface>;
 }
