@@ -1,7 +1,32 @@
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: vi.fn(async (_client: unknown, input: { projectIdClaim: string }) => ({ ok: true, imageUrl: "https://storage.test/private-signed?token=synthetic", objectPath: "private/source.png", trustedProjectId: input.projectIdClaim, source: "media" })) }));
+vi.mock("@/lib/config/server", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/config/server")>("@/lib/config/server");
+  return {
+    ...actual,
+    isGeminiConfigured: vi.fn(() => true),
+  };
+});
+vi.mock("@/lib/platform/ai/ai.service", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/platform/ai/ai.service")>(
+    "@/lib/platform/ai/ai.service"
+  );
+  return {
+    ...actual,
+    analyzeVideoDailyWork: vi.fn(async () => ({
+      work_date: "2026-10-28",
+      summary: "Site video daily",
+      activities_observed: ["framing"],
+      completion_estimate_percent: 40,
+      risk_level: "low" as const,
+      issues_and_risks: [],
+      recommendations: ["continue"],
+    })),
+  };
+});
 import { describe, expect, it, vi } from "vitest";
 import { processOneJob } from "./runOneJob";
+import { analyzeVideoDailyWork } from "@/lib/platform/ai/ai.service";
 
 function createMockSupabase(overrides: {
   dequeue?: { data: unknown; error: { message: string } | null };
@@ -57,16 +82,31 @@ function createMockSupabase(overrides: {
 }
 
 describe("processOneJob", () => {
-  it("returns no_url when aiAnalysisUrl is missing", async () => {
-    const supabase = createMockSupabase({});
+  it("returns no_job when aiAnalysisUrl is missing and the queue is empty", async () => {
+    const supabase = createMockSupabase({ dequeue: { data: [], error: null } });
     const out = await processOneJob(supabase, undefined, { tenantId: "tenant-a", callerClient: supabase });
-    expect(out).toEqual({ ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" });
+    expect(out).toEqual({ ok: false, reason: "no_job" });
   });
 
-  it("returns no_url when aiAnalysisUrl is empty string", async () => {
-    const supabase = createMockSupabase({});
+  it("fails a claimed image job when aiAnalysisUrl is missing", async () => {
+    const jobId = "job-no-url";
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
+      media: {
+        data: { file_url: "https://storage/photo.jpg", project_id: "proj-1", type: "image" },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
     const out = await processOneJob(supabase, "   ", { tenantId: "tenant-a", callerClient: supabase });
-    expect(out).toEqual({ ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" });
+    expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "fail_session_analysis_job",
+      expect.objectContaining({
+        p_job_id: jobId,
+        p_error_message: "AI_ANALYSIS_URL is not set",
+      })
+    );
   });
 
   it("returns no_job when candidate read returns no job", async () => {
@@ -118,21 +158,32 @@ describe("processOneJob", () => {
     expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
-  it("returns failed with jobId when type is video", async () => {
+  it("fails video jobs when Gemini is not configured", async () => {
+    const { isGeminiConfigured } = await import("@/lib/config/server");
+    vi.mocked(isGeminiConfigured).mockReturnValueOnce(false);
     const jobId = "job-1";
     const supabase = createMockSupabase({
       dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
       media: {
         data: {
-          file_url: "https://storage/photo.jpg",
+          file_url: "https://storage/clip.mp4",
           project_id: "proj-1",
           type: "video",
         },
         error: null,
       },
     });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", {
+      tenantId: "tenant-a",
+      callerClient: supabase,
+    });
     expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "fail_session_analysis_job",
+      expect.objectContaining({
+        p_error_message: "Gemini is not configured for video analysis",
+      })
+    );
   });
 
   it("returns completed when AI returns valid result and complete_analysis_job succeeds", async () => {
@@ -258,6 +309,33 @@ describe("processOneJob", () => {
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     expect(await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase })).toMatchObject({ status: "failed" });
     expect(fetch).not.toHaveBeenCalled(); expect(supabase.rpc).toHaveBeenCalledWith("fail_session_analysis_job", expect.objectContaining({ p_error_type: retryable ? "provider_unavailable" : "validation_error" }));
+  });
+
+  it("completes video jobs via Gemini daily mapper without AI_ANALYSIS_URL", async () => {
+    const jobId = "job-video";
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-v" }], error: null },
+      media: {
+        data: { file_url: "proj-1/clip.mp4", project_id: "proj-1", type: "video" },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOneJob(supabase, undefined, {
+      tenantId: "tenant-a",
+      callerClient: supabase,
+    });
+    expect(out).toEqual({ ok: true, jobId, status: "completed" });
+    expect(analyzeVideoDailyWork).toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "complete_session_analysis_job",
+      expect.objectContaining({
+        p_job_id: jobId,
+        p_stage: "Site video daily",
+        p_completion_percent: 40,
+        p_risk_level: "low",
+      })
+    );
   });
 
 });

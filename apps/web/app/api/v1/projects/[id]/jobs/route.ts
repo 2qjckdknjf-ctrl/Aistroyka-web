@@ -14,8 +14,8 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/v1/projects/:id/jobs — create/start an analysis_jobs row (QUEUED).
  * Poll GET /api/v1/projects/:id/jobs/:jobId.
- * Video media is still processed by POST /api/v1/ai/analyze-video-daily until the
- * async worker implements video (runOneJob currently fails video as not implemented).
+ * Video media can be processed asynchronously by the session worker via Gemini
+ * (runOneJob). Synchronous POST /api/v1/ai/analyze-video-daily remains available.
  */
 export async function POST(
   request: Request,
