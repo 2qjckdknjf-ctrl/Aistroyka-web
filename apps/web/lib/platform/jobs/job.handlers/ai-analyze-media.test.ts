@@ -30,11 +30,22 @@ vi.mock("@/lib/platform/ai/ai.service", () => {
     }
   }
   return {
-    analyzeImage: vi.fn().mockResolvedValue({}),
+    analyzeImage: vi.fn().mockResolvedValue({
+      stage: "foundation",
+      completion_percent: 10,
+      risk_level: "low",
+      detected_issues: [],
+      recommendations: [],
+    }),
     AIPolicyBlockedError,
     AIVisionFailedError,
   };
 });
+
+vi.mock("./persist-report-media-analysis", () => ({
+  findExistingReportMediaAnalysis: vi.fn().mockResolvedValue(null),
+  persistReportMediaAnalysis: vi.fn().mockResolvedValue({ analysisId: "a1", created: true }),
+}));
 
 const tenantA = "11111111-1111-4111-8111-111111111111";
 const foreignProject = "66666666-6666-4666-8666-666666666666";
@@ -62,8 +73,22 @@ function makeJob(payload: Record<string, unknown>, tenantId = tenantA): Job {
 }
 
 describe("handleAiAnalyzeMedia", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const persist = await import("./persist-report-media-analysis");
+    const ai = await import("@/lib/platform/ai/ai.service");
+    vi.mocked(persist.findExistingReportMediaAnalysis).mockResolvedValue(null);
+    vi.mocked(persist.persistReportMediaAnalysis).mockResolvedValue({
+      analysisId: "a1",
+      created: true,
+    });
+    vi.mocked(ai.analyzeImage).mockResolvedValue({
+      stage: "foundation",
+      completion_percent: 10,
+      risk_level: "low",
+      detected_issues: [],
+      recommendations: [],
+    } as never);
   });
 
   it("throws JobPayloadError when report_id missing", async () => {
@@ -123,6 +148,7 @@ describe("handleAiAnalyzeMedia", () => {
         {} as any,
         makeJob({
           report_id: "r1",
+          media_id: "m1",
           image_url: `${foreignProject}/secret.jpg`,
           project_id: foreignProject,
         })
@@ -135,6 +161,7 @@ describe("handleAiAnalyzeMedia", () => {
   it("passes only trustedProjectId into analyzeImage (never raw payload.project_id)", async () => {
     const { resolveImageUrlDetailed } = await import("./resolve-image-url");
     const ai = await import("@/lib/platform/ai/ai.service");
+    const persist = await import("./persist-report-media-analysis");
     const trusted = "55555555-5555-4555-8555-555555555555";
     vi.mocked(resolveImageUrlDetailed).mockResolvedValue({
       ok: true,
@@ -169,6 +196,41 @@ describe("handleAiAnalyzeMedia", () => {
     );
     const visionArgs = vi.mocked(ai.analyzeImage).mock.calls[0]![2] as { projectId?: string };
     expect(visionArgs.projectId).not.toBe(foreignProject);
+    expect(persist.persistReportMediaAnalysis).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        platformJobId: "job-1",
+        mediaId: "m1",
+        trustedProjectId: trusted,
+      })
+    );
+  });
+
+  it("skips provider when this platform job already has a durable ai_analysis row", async () => {
+    const { resolveImageUrlDetailed } = await import("./resolve-image-url");
+    const ai = await import("@/lib/platform/ai/ai.service");
+    const persist = await import("./persist-report-media-analysis");
+    vi.mocked(persist.findExistingReportMediaAnalysis).mockResolvedValue({ id: "a-existing" });
+
+    await handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1" }));
+
+    expect(resolveImageUrlDetailed).not.toHaveBeenCalled();
+    expect(ai.analyzeImage).not.toHaveBeenCalled();
+    expect(persist.persistReportMediaAnalysis).not.toHaveBeenCalled();
+  });
+
+  it("fails closed before provider when media_id is missing", async () => {
+    const { resolveImageUrlDetailed } = await import("./resolve-image-url");
+    const ai = await import("@/lib/platform/ai/ai.service");
+    await expect(
+      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", upload_session_id: "u1" }))
+    ).rejects.toMatchObject({
+      name: "JobHandlerError",
+      code: "AI_RESULT_MEDIA_ID_REQUIRED",
+      retryable: false,
+    });
+    expect(resolveImageUrlDetailed).not.toHaveBeenCalled();
+    expect(ai.analyzeImage).not.toHaveBeenCalled();
   });
 
   it("throws retryable JobHandlerError when media not ready", async () => {
@@ -181,7 +243,7 @@ describe("handleAiAnalyzeMedia", () => {
     });
 
     await expect(
-      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", upload_session_id: "u1" }))
+      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1", upload_session_id: "u1" }))
     ).rejects.toMatchObject({
       name: "JobHandlerError",
       retryable: true,
@@ -199,7 +261,7 @@ describe("handleAiAnalyzeMedia", () => {
     });
 
     await expect(
-      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", upload_session_id: "u1" }))
+      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1", upload_session_id: "u1" }))
     ).rejects.toMatchObject({
       name: "JobPayloadError",
       code: AI_ERROR_CODES.AI_MEDIA_NOT_FOUND,
@@ -226,7 +288,7 @@ describe("handleAiAnalyzeMedia", () => {
     );
 
     await expect(
-      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", upload_session_id: "u1" }))
+      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1", upload_session_id: "u1" }))
     ).rejects.toMatchObject({
       name: "JobHandlerError",
       retryable: false,
@@ -253,7 +315,7 @@ describe("handleAiAnalyzeMedia", () => {
     );
 
     await expect(
-      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", upload_session_id: "u1" }))
+      handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1", upload_session_id: "u1" }))
     ).rejects.toMatchObject({
       name: "JobHandlerError",
       retryable: true,
@@ -261,9 +323,10 @@ describe("handleAiAnalyzeMedia", () => {
     });
   });
 
-  it("succeeds when resolve + analyzeImage ok (idempotent handler)", async () => {
+  it("succeeds when resolve + analyzeImage + persist ok; retry skips provider after durable write", async () => {
     const { resolveImageUrlDetailed } = await import("./resolve-image-url");
     const ai = await import("@/lib/platform/ai/ai.service");
+    const persist = await import("./persist-report-media-analysis");
     vi.mocked(resolveImageUrlDetailed).mockResolvedValue({
       ok: true,
       imageUrl: "https://signed.example/x",
@@ -278,6 +341,9 @@ describe("handleAiAnalyzeMedia", () => {
       detected_issues: [],
       recommendations: [],
     } as any);
+    vi.mocked(persist.findExistingReportMediaAnalysis)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "a1" });
 
     await expect(
       handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1" }))
@@ -285,6 +351,7 @@ describe("handleAiAnalyzeMedia", () => {
     await expect(
       handleAiAnalyzeMedia({} as any, makeJob({ report_id: "r1", media_id: "m1" }))
     ).resolves.toBeUndefined();
-    expect(ai.analyzeImage).toHaveBeenCalledTimes(2);
+    expect(ai.analyzeImage).toHaveBeenCalledTimes(1);
+    expect(persist.persistReportMediaAnalysis).toHaveBeenCalledTimes(1);
   });
 });
