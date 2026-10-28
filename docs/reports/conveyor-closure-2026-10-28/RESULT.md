@@ -51,4 +51,16 @@ No customer/portal exposure of internal costs/margin/profitability added in this
 | #460 | Conveyor closure docs | `6fc0b6a` |
 | #461 | Async session video executor (Gemini daily → ai_analysis) | `3e6786a` |
 
-Async video executor is now code-complete on main; live Gemini job/result/review fixture remains separate evidence. Next local engineering: reviewed preproject extractor and Stage2a A01–A05 storage/UI. External: live Worker fixture, legal/store/billing.
+Async video executor is now code-complete on main; live Gemini job/result/review fixture remains separate evidence.
+
+## Refresh after Stage2a A01–A05 + 005A (#463–#471)
+
+| PR | Topic |
+|---|---|
+| #463–#465 | A01 storage + A02 Manager panel + A03 worker reported |
+| #466–#468 | AIS-CLIENT-005A extractor + API + Manager review UI |
+| #469 | A04 quantity acceptance |
+| #470 | A05 commercial quantity bindings (+ hosted DDL) |
+| #471 | Manager acceptance + internal cost-bind UI |
+
+Stage2a A01–A05 and reviewed preproject extractor are code-complete on main. Next local engineering: AIS-MATERIAL-008 draft slice. External: live Gemini/Worker fixtures, legal/store/billing.
