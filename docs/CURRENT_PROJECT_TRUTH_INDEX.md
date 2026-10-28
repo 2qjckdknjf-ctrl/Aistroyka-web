@@ -1,6 +1,8 @@
 # AISTROYKA Current Project Truth Index
 
-Наблюдение 2026-10-13: origin/main #445 e0c9f51a; staging/apex/www health e0c9f51, db ok. [Свежий аудит](audit/deep-2026-10-13/REPORT.md) и [таблица 71 требования](audit/deep-2026-10-13/requirements.csv) учитывают latest PR350 b5e84774 и объединённый workflow v2.6. Image source binding исправлен в активной ветке, 2809 tests/lint/Cloudflare build PASS; публикация исправления ещё открыта. Durable report-media result, human review, video/preproject extraction и stage2a storage/calculation остаются незавершёнными. Снимки ниже сохраняют свои даты и объём доказательств.
+Наблюдение 2026-10-28: protected conveyor закрыл #446/#447/#457/#448/#449/#458/#453/#455/#459/#454; hosted grants/`platform_job_id`/human-review applied. Durable report-media + human review + accepted Graph lineage + C04 cores на main. [Closure](reports/conveyor-closure-2026-10-28/RESULT.md). Остаются async video executor, preproject extractor, Stage2a A01–A05, live Worker fixture и OWNER_GATE legal/store/billing. Снимки ниже сохраняют свои даты и объём доказательств.
+
+Наблюдение 2026-10-13: origin/main #445 e0c9f51a; staging/apex/www health e0c9f51, db ok. [Свежий аудит](audit/deep-2026-10-13/REPORT.md) и [таблица 71 требования](audit/deep-2026-10-13/requirements.csv) учитывают latest PR350 b5e84774 и объединённый workflow v2.6. Исторический снимок; не отменяет 2026-10-28.
 
 Наблюдение 2026-10-12: main #440 `0891b08`; свежий origin/main остаётся источником текущего кода. #437 на staging `fac7a17` прошёл 13 реальных проверок PNG/Proof Pack/PDF/revocation, тестовый набор полностью очищен. Production run 38190089187 SUCCESS; apex/www обслуживают `fac7a17`. #433/#434 не являются успешным доказательством оригиналов: их регрессия исправлена #437. [Runtime proof](reports/private-original-runtime-2026-10-12/RESULT.md).
 
