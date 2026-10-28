@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getById as getMediaRow } from "@/lib/domain/media/media.repository";
 import type { TranscriptionSegment } from "@/lib/platform/ai/openai-transcription";
 
 export type CaptionSourceKind = "transcription" | "caption" | "manual";
@@ -28,6 +29,18 @@ function secondsToMs(value: number | null): number | null {
   return Math.round(value * 1000);
 }
 
+function normalizeCaptionLanguage(
+  value: string | null | undefined
+): { ok: true; language: string | null } | { ok: false; error: string } {
+  if (value == null) return { ok: true, language: null };
+  const language = value.trim();
+  if (!language) return { ok: true, language: null };
+  if (language.length < 2 || language.length > 16) {
+    return { ok: false, error: "language must be 2-16 characters" };
+  }
+  return { ok: true, language };
+}
+
 /**
  * Replace caption segments for a media source (idempotent re-index).
  * Does not claim work completion from missing coverage.
@@ -47,6 +60,10 @@ export async function replaceMediaCaptionSegments(
   if (!tenantId || !projectId || !mediaId || !actorUserId) {
     return { ok: false, error: "required ids missing", code: "INVALID_INPUT" };
   }
+  const languageResult = normalizeCaptionLanguage(input.language);
+  if (!languageResult.ok) {
+    return { ok: false, error: languageResult.error, code: "INVALID_INPUT" };
+  }
 
   let segments = input.segments.filter((s) => s.text.trim().length > 0);
   if (segments.length === 0 && input.fullText?.trim()) {
@@ -62,14 +79,9 @@ export async function replaceMediaCaptionSegments(
     return { ok: false, error: "no caption text to index", code: "INVALID_INPUT" };
   }
 
-  const { error: deleteError } = await supabase
-    .from("media_caption_segments")
-    .delete()
-    .eq("tenant_id", tenantId)
-    .eq("media_id", mediaId)
-    .eq("source_kind", sourceKind);
-  if (deleteError) {
-    return { ok: false, error: deleteError.message, code: "DELETE_FAILED" };
+  const media = await getMediaRow(supabase, mediaId, tenantId);
+  if (!media || media.project_id !== projectId) {
+    return { ok: false, error: "media not found", code: "MEDIA_NOT_FOUND" };
   }
 
   const rows = segments.slice(0, 2000).map((segment, index) => {
@@ -83,24 +95,39 @@ export async function replaceMediaCaptionSegments(
           : "unknown";
     return {
       tenant_id: tenantId,
-      project_id: projectId,
-      media_id: mediaId,
+      project_id: media.project_id,
+      media_id: media.id,
       source_kind: sourceKind,
       segment_index: index,
       start_ms: startMs,
       end_ms: endMs,
       text: segment.text.trim().slice(0, 4000),
-      language: input.language?.trim() ? input.language.trim().slice(0, 16) : null,
+      language: languageResult.language,
       clock_uncertainty: clock,
       created_by: actorUserId,
     };
   });
 
-  const { error: insertError } = await supabase.from("media_caption_segments").insert(rows);
-  if (insertError) {
-    return { ok: false, error: insertError.message, code: "INSERT_FAILED" };
+  const { data: inserted, error: replaceError } = await supabase.rpc(
+    "replace_media_caption_segments",
+    {
+      p_tenant_id: tenantId,
+      p_project_id: media.project_id,
+      p_media_id: media.id,
+      p_source_kind: sourceKind,
+      p_created_by: actorUserId,
+      p_rows: rows,
+    }
+  );
+  if (replaceError) {
+    const message = replaceError.message;
+    if (/media not found/i.test(message)) {
+      return { ok: false, error: message, code: "MEDIA_NOT_FOUND" };
+    }
+    return { ok: false, error: message, code: "REPLACE_FAILED" };
   }
-  return { ok: true, inserted: rows.length };
+  const insertedCount = typeof inserted === "number" ? inserted : rows.length;
+  return { ok: true, inserted: insertedCount };
 }
 
 export type SearchCaptionSegmentsInput = {

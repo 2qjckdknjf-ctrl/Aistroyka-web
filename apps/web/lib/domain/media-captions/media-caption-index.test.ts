@@ -26,11 +26,20 @@ describe("AIS-MEM-016 media caption index", () => {
     expect(sql).toContain("is_internal_tenant_writer_for_tenant");
     expect(sql).toContain("on delete cascade");
     expect(sql).toContain("clock_uncertainty");
+    const replaceSql = readFileSync(
+      join(
+        process.cwd(),
+        "supabase/migrations/20261028221000_ais_mem_016_replace_media_caption_segments.sql"
+      ),
+      "utf8"
+    );
+    expect(replaceSql).toContain("replace_media_caption_segments");
+    expect(replaceSql).toContain("media not found");
   });
 
   it("replaceMediaCaptionSegments fails closed without text", async () => {
     const result = await replaceMediaCaptionSegments(
-      { from: vi.fn() } as never,
+      { from: vi.fn(), rpc: vi.fn() } as never,
       {
         tenantId: "t1",
         projectId: "p1",
@@ -42,16 +51,67 @@ describe("AIS-MEM-016 media caption index", () => {
     expect(result).toMatchObject({ ok: false, code: "INVALID_INPUT" });
   });
 
-  it("replaceMediaCaptionSegments deletes then inserts segments", async () => {
-    const delEq3 = vi.fn().mockResolvedValue({ error: null });
-    const delEq2 = vi.fn().mockReturnValue({ eq: delEq3 });
-    const delEq1 = vi.fn().mockReturnValue({ eq: delEq2 });
-    const insert = vi.fn().mockResolvedValue({ error: null });
+  it("replaceMediaCaptionSegments rejects a one-character language before write", async () => {
+    const rpc = vi.fn();
+    const result = await replaceMediaCaptionSegments(
+      { from: vi.fn(), rpc } as never,
+      {
+        tenantId: "t1",
+        projectId: "p1",
+        mediaId: "m1",
+        actorUserId: "u1",
+        language: "e",
+        segments: [{ startSeconds: 0, endSeconds: 1.5, text: "tile floor" }],
+      }
+    );
+    expect(result).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("replaceMediaCaptionSegments rejects media that belongs to another project", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { id: "m1", project_id: "other", tenant_id: "t1", type: "video", file_url: "x" },
+      error: null,
+    });
+    const eq2 = vi.fn().mockReturnValue({ maybeSingle });
+    const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
+    const rpc = vi.fn();
     const supabase = {
       from: vi.fn(() => ({
-        delete: vi.fn(() => ({ eq: delEq1 })),
-        insert,
+        select: vi.fn(() => ({ eq: eq1 })),
       })),
+      rpc,
+    };
+    const result = await replaceMediaCaptionSegments(supabase as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "m1",
+      actorUserId: "u1",
+      segments: [{ startSeconds: 0, endSeconds: 1.5, text: "tile floor" }],
+    });
+    expect(result).toMatchObject({ ok: false, code: "MEDIA_NOT_FOUND" });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("replaceMediaCaptionSegments replaces via a single RPC after binding media", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { id: "m1", project_id: "p1", tenant_id: "t1", type: "video", file_url: "x" },
+      error: null,
+    });
+    const eq2 = vi.fn().mockReturnValue({ maybeSingle });
+    const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
+    const rpc = vi.fn().mockResolvedValue({ data: 1, error: null });
+    const supabase = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({ eq: eq1 })),
+        delete: vi.fn(() => {
+          throw new Error("delete must not run outside the replace RPC");
+        }),
+        insert: vi.fn(() => {
+          throw new Error("insert must not run outside the replace RPC");
+        }),
+      })),
+      rpc,
     };
     const result = await replaceMediaCaptionSegments(supabase as never, {
       tenantId: "t1",
@@ -61,7 +121,14 @@ describe("AIS-MEM-016 media caption index", () => {
       segments: [{ startSeconds: 0, endSeconds: 1.5, text: "tile floor" }],
     });
     expect(result).toEqual({ ok: true, inserted: 1 });
-    expect(insert).toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith(
+      "replace_media_caption_segments",
+      expect.objectContaining({
+        p_tenant_id: "t1",
+        p_project_id: "p1",
+        p_media_id: "m1",
+      })
+    );
   });
 
   it("searchMediaCaptionSegments returns lexical hits", async () => {

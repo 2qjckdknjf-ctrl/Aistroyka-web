@@ -94,7 +94,8 @@ export async function POST(
     fullText,
   });
   if (!result.ok) {
-    const http = result.code === "INVALID_INPUT" ? 400 : 500;
+    const http =
+      result.code === "INVALID_INPUT" ? 400 : result.code === "MEDIA_NOT_FOUND" ? 404 : 500;
     return NextResponse.json({ error: result.error, code: result.code }, { status: http });
   }
 
