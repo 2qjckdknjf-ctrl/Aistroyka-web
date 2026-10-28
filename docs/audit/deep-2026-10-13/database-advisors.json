@@ -1,0 +1,350 @@
+{
+  "observed_at": "2026-10-13",
+  "project_ref": "vthfrxehrursfloevnlp",
+  "result": {
+    "lints": [
+      {
+        "name": "rls_enabled_no_policy",
+        "title": "RLS Enabled No Policy",
+        "level": "INFO",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+        "count": 4,
+        "findings": [
+          {
+            "detail": "Table \\`app_private.reviewed_media_sources\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "reviewed_media_sources",
+              "type": "table",
+              "schema": "app_private"
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Table \\`public.platform_break_glass_grants\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "platform_break_glass_grants",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Table \\`public.platform_owner_audit_log\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "platform_owner_audit_log",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Table \\`public.roma_audit_runs\\` has RLS enabled, but no policies exist",
+            "metadata": {
+              "name": "roma_audit_runs",
+              "type": "table",
+              "schema": "public"
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          }
+        ]
+      },
+      {
+        "name": "anon_security_definer_function_executable",
+        "title": "Public Can Execute SECURITY DEFINER Function",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects `SECURITY DEFINER` functions that are callable without signing in. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if it is not meant to be public.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable",
+        "count": 12,
+        "findings": [
+          {
+            "detail": "Function `public.can_manage_project_membership(p_tenant_id uuid, p_project_id uuid)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/can_manage_project_membership`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "can_manage_project_membership",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid, p_project_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.can_read_project_membership(p_tenant_id uuid, p_project_id uuid)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/can_read_project_membership`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "can_read_project_membership",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid, p_project_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_customer_estimate_decision_via_service()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_customer_estimate_decision_via_service`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_customer_estimate_decision_via_service",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_field_daily_log_identity_immutable()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_field_daily_log_identity_immutable`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_field_daily_log_identity_immutable",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_jobs_authenticated_update_guard()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_jobs_authenticated_update_guard`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_jobs_authenticated_update_guard",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_project_members_privilege_change()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_project_members_privilege_change`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_project_members_privilege_change",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_tenant_members_role_change()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_tenant_members_role_change`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_tenant_members_role_change",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.is_internal_tenant_writer_for_tenant(p_tenant_id uuid)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_internal_tenant_writer_for_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "is_internal_tenant_writer_for_tenant",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.is_tenant_owner_or_admin(p_tenant_id uuid)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_tenant_owner_or_admin`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "is_tenant_owner_or_admin",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.jobs_protect_payload_project_tenant()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/jobs_protect_payload_project_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "jobs_protect_payload_project_tenant",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.media_protect_file_url()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/media_protect_file_url`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "media_protect_file_url",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.project_belongs_to_tenant(p_project_id uuid, p_tenant_id uuid)` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/project_belongs_to_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "project_belongs_to_tenant",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_project_id uuid, p_tenant_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          }
+        ]
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+        "level": "WARN",
+        "facing": "EXTERNAL",
+        "categories": [
+          "SECURITY"
+        ],
+        "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+        "count": 12,
+        "findings": [
+          {
+            "detail": "Function `public.can_manage_project_membership(p_tenant_id uuid, p_project_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/can_manage_project_membership`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "can_manage_project_membership",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid, p_project_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.can_read_project_membership(p_tenant_id uuid, p_project_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/can_read_project_membership`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "can_read_project_membership",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid, p_project_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_customer_estimate_decision_via_service()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_customer_estimate_decision_via_service`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_customer_estimate_decision_via_service",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_field_daily_log_identity_immutable()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_field_daily_log_identity_immutable`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_field_daily_log_identity_immutable",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_jobs_authenticated_update_guard()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_jobs_authenticated_update_guard`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_jobs_authenticated_update_guard",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_project_members_privilege_change()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_project_members_privilege_change`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_project_members_privilege_change",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.enforce_tenant_members_role_change()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/enforce_tenant_members_role_change`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "enforce_tenant_members_role_change",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.is_internal_tenant_writer_for_tenant(p_tenant_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_internal_tenant_writer_for_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "is_internal_tenant_writer_for_tenant",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.is_tenant_owner_or_admin(p_tenant_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/is_tenant_owner_or_admin`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "is_tenant_owner_or_admin",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_tenant_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.jobs_protect_payload_project_tenant()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/jobs_protect_payload_project_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "jobs_protect_payload_project_tenant",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.media_protect_file_url()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/media_protect_file_url`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "media_protect_file_url",
+              "schema": "public",
+              "language": "plpgsql",
+              "arguments": "",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          },
+          {
+            "detail": "Function `public.project_belongs_to_tenant(p_project_id uuid, p_tenant_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/project_belongs_to_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+            "metadata": {
+              "name": "project_belongs_to_tenant",
+              "schema": "public",
+              "language": "sql",
+              "arguments": "p_project_id uuid, p_tenant_id uuid",
+              "security_definer": true
+            },
+            "observed_at": "2026-10-13T08:57:57.917Z"
+          }
+        ]
+      }
+    ]
+  }
+}
