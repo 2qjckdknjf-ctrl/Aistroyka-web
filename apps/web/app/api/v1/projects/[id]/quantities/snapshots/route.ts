@@ -9,12 +9,13 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getById as getProjectRow } from "@/lib/domain/projects/project.repository";
-import { canManageTasks, canReadTasks } from "@/lib/domain/tasks/task.policy";
+import { canReadTasks } from "@/lib/domain/tasks/task.policy";
 import {
   getProjectQuantitySnapshot,
   listProjectQuantitySnapshots,
   persistQuantitySnapshot,
 } from "@/lib/domain/quantities/quantity-storage.service";
+import { canWriteQuantitySnapshot } from "@/lib/domain/quantities/quantity-write-policy";
 import { emitAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
@@ -136,11 +137,6 @@ export async function POST(
     throw e;
   }
 
-  // Manager/admin create snapshots; members write via future Worker adapter (A03).
-  if (!canManageTasks(ctx)) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
-
   let body: Record<string, unknown> = {};
   try {
     body = (await request.json()) as Record<string, unknown>;
@@ -163,6 +159,20 @@ export async function POST(
       { error: "request QuantityRequest required" },
       { status: 400 }
     );
+  }
+
+  const quantityKind =
+    quantityRequest !== null &&
+    typeof quantityRequest === "object" &&
+    !Array.isArray(quantityRequest) &&
+    "quantity_kind" in quantityRequest
+      ? (quantityRequest as { quantity_kind?: unknown }).quantity_kind
+      : undefined;
+
+  // A03: managers any kind; members only reported/measured field captures.
+  const writeAccess = canWriteQuantitySnapshot(ctx, quantityKind);
+  if (!writeAccess.ok) {
+    return NextResponse.json({ error: writeAccess.error }, { status: 403 });
   }
 
   const supabase = await createClientFromRequest(request);
@@ -217,7 +227,8 @@ export async function POST(
       quantity: result.calculation?.quantity ?? null,
       unit: result.calculation?.unit ?? null,
       issues: result.calculation?.issues ?? [],
-      source: "manager",
+      source: ctx.role === "member" ? "worker" : "manager",
+      quantity_kind: quantityKind ?? null,
     },
   });
 
