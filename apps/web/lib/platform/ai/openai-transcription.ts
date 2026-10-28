@@ -26,15 +26,43 @@ export interface TranscribeOpenAiAudioInput {
   maxRetries: number;
 }
 
+export type TranscriptionSegment = {
+  startSeconds: number | null;
+  endSeconds: number | null;
+  text: string;
+};
+
 export interface TranscribeOpenAiAudioResult {
   text: string;
   durationSeconds: number | null;
   durationMs: number;
+  /** Present when verbose_json includes Whisper segments. */
+  segments: TranscriptionSegment[];
 }
 
 interface VerboseTranscriptionJson {
   text?: string;
   duration?: number;
+  segments?: Array<{ start?: number; end?: number; text?: string }>;
+}
+
+export function parseVerboseTranscriptionSegments(
+  segments: VerboseTranscriptionJson["segments"]
+): TranscriptionSegment[] {
+  if (!Array.isArray(segments)) return [];
+  const out: TranscriptionSegment[] = [];
+  for (const item of segments.slice(0, 2000)) {
+    if (!item || typeof item !== "object") continue;
+    const text = typeof item.text === "string" ? item.text.trim() : "";
+    if (!text) continue;
+    out.push({
+      startSeconds:
+        typeof item.start === "number" && Number.isFinite(item.start) ? item.start : null,
+      endSeconds: typeof item.end === "number" && Number.isFinite(item.end) ? item.end : null,
+      text: text.slice(0, 4000),
+    });
+  }
+  return out;
 }
 
 export async function transcribeOpenAiAudio(
@@ -83,6 +111,7 @@ export async function transcribeOpenAiAudio(
   const text = typeof parsed.text === "string" ? parsed.text.trim() : "";
   const durationSeconds =
     typeof parsed.duration === "number" && Number.isFinite(parsed.duration) ? parsed.duration : null;
+  const segments = parseVerboseTranscriptionSegments(parsed.segments);
 
-  return { text, durationSeconds, durationMs };
+  return { text, durationSeconds, durationMs, segments };
 }
