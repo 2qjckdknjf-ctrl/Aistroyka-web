@@ -13,6 +13,7 @@ type DefectRow = ConstructionGraphSourceRows["defects"][number];
 type DocumentRow = ConstructionGraphSourceRows["documents"][number];
 type DayRow = { id: string };
 type ReportRow = ConstructionGraphSourceRows["reports"][number];
+type AcceptedAnalysisRow = NonNullable<ConstructionGraphSourceRows["accepted_analyses"]>[number];
 
 type GraphSourceTable =
   | "worker_tasks"
@@ -126,7 +127,12 @@ export async function queryProjectConstructionGraph(
   const reportsResult = await loadProjectReports(supabase, taskIds, dayIds);
   if (reportsResult.error) return { graph: null, error: reportsResult.error };
 
-  const truncated = pages.some((p) => p.truncated) || reportsResult.truncated;
+  const mediaIds = mediaPage.rows.map((m) => m.id);
+  const acceptedAnalysesResult = await loadAcceptedAnalyses(supabase, tenantId, mediaIds);
+  if (acceptedAnalysesResult.error) return { graph: null, error: acceptedAnalysesResult.error };
+
+  const truncated =
+    pages.some((p) => p.truncated) || reportsResult.truncated || acceptedAnalysesResult.truncated;
 
   const graph = buildConstructionGraphFromSources(tenantId, projectId, {
     project: { id: String(project.id), name: optionalString(project.name) },
@@ -135,6 +141,7 @@ export async function queryProjectConstructionGraph(
     media: mediaPage.rows,
     defects: defectsPage.rows,
     documents: documentsPage.rows,
+    accepted_analyses: acceptedAnalysesResult.rows,
   });
   graph.truncated = truncated;
   if (!truncated) {
@@ -160,6 +167,45 @@ async function fetchOrderedPage<T>(
     .limit(CONSTRUCTION_GRAPH_SOURCE_PAGE + 1);
   if (error) return { rows: [], truncated: false, error: error.message };
   const parsed = parseObjectPage(data as unknown, parseRow);
+  if ("error" in parsed) return { rows: [], truncated: false, error: parsed.error };
+  const truncated = parsed.rows.length > CONSTRUCTION_GRAPH_SOURCE_PAGE;
+  return {
+    rows: truncated ? parsed.rows.slice(0, CONSTRUCTION_GRAPH_SOURCE_PAGE) : parsed.rows,
+    truncated,
+    error: "",
+  };
+}
+
+function parseAcceptedAnalysisRow(row: Record<string, unknown>): AcceptedAnalysisRow | null {
+  const id = requiredId(row.id);
+  const mediaId = requiredId(row.media_id);
+  if (!id || !mediaId) return null;
+  // Defense in depth: repository query already filters review_status=accepted.
+  if (row.review_status !== "accepted") return null;
+  return {
+    id,
+    media_id: mediaId,
+    stage: optionalString(row.stage),
+    risk_level: optionalString(row.risk_level),
+  };
+}
+
+async function loadAcceptedAnalyses(
+  supabase: SupabaseClient,
+  tenantId: string,
+  mediaIds: string[]
+): Promise<{ rows: AcceptedAnalysisRow[]; truncated: boolean; error: string }> {
+  if (mediaIds.length === 0) return { rows: [], truncated: false, error: "" };
+  const { data, error } = await supabase
+    .from("ai_analysis")
+    .select("id, media_id, stage, risk_level, review_status")
+    .eq("tenant_id", tenantId)
+    .eq("review_status", "accepted")
+    .in("media_id", mediaIds)
+    .order("id")
+    .limit(CONSTRUCTION_GRAPH_SOURCE_PAGE + 1);
+  if (error) return { rows: [], truncated: false, error: error.message };
+  const parsed = parseObjectPage(data as unknown, parseAcceptedAnalysisRow);
   if ("error" in parsed) return { rows: [], truncated: false, error: parsed.error };
   const truncated = parsed.rows.length > CONSTRUCTION_GRAPH_SOURCE_PAGE;
   return {
