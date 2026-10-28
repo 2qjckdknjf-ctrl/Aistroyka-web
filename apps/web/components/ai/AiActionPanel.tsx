@@ -16,8 +16,10 @@ import { LowConfidenceNotice } from "./LowConfidenceNotice";
 import { CopyRequestIdButton } from "./CopyRequestIdButton";
 import { CopilotChatPanel } from "@/lib/features/ai/components/CopilotChatPanel";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { ProjectAgentPanel } from "@/components/ai/ProjectAgentPanel";
+import { AGENTIC_FOUNDATION_FLAG_KEY } from "@/lib/agentic/types";
 
-type TabId = "summary" | "explain_risk" | "copilot";
+type TabId = "summary" | "explain_risk" | "copilot" | "project_ai";
 
 type ResultState = {
   text: string;
@@ -66,6 +68,7 @@ export function AiActionPanel({
   const tDetail = useTranslations("dashboardDetail");
   const effectiveLocale = locale != null ? locale : localeFromHook;
   const [tab, setTab] = useState<TabId>("summary");
+  const [agentEnabled, setAgentEnabled] = useState(false);
   const [copilotQuestion, setCopilotQuestion] = useState("");
   const [result, setResult] = useState<ResultState | null>(null);
   const [error, setError] = useState<EngineError | null>(null);
@@ -74,6 +77,22 @@ export function AiActionPanel({
   const abortRef = useRef<AbortController | null>(null);
 
   const ctx = decisionContext ?? DEFAULT_CONTEXT;
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/v1/config", { credentials: "include" })
+      .then((r) => r.json())
+      .then((payload: { flags?: Record<string, { enabled?: boolean }> }) => {
+        if (cancelled) return;
+        setAgentEnabled(payload.flags?.[AGENTIC_FOUNDATION_FLAG_KEY]?.enabled === true);
+      })
+      .catch(() => {
+        if (!cancelled) setAgentEnabled(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const getAuthToken = useCallback(async () => {
     const supabase = createClient();
@@ -102,6 +121,15 @@ export function AiActionPanel({
       };
       if (t === "summary") return runExecutiveSummary(ctx, options);
       if (t === "explain_risk") return runExplainRisk(ctx, q.trim() || undefined, options);
+      if (t === "project_ai") {
+        throw normalizeToQueryError({
+          kind: "unknown",
+          status: 0,
+          requestId: "",
+          message: tDetail("agentAsk"),
+          retryable: false,
+        });
+      }
       const question = q.trim();
       if (!question) {
         throw normalizeToQueryError({
@@ -160,6 +188,7 @@ export function AiActionPanel({
   }, []);
 
   const run = useCallback(() => {
+    if (tab === "project_ai") return;
     if (tab === "copilot" && !copilotQuestion.trim()) {
       setError({
         kind: "unknown",
@@ -192,7 +221,8 @@ export function AiActionPanel({
 
       {/* Tabs */}
       <div className="mb-4 flex gap-2 border-b border-aistroyka-border-subtle" role="tablist">
-        {(["summary", "explain_risk", "copilot"] as const).map((t) => (
+        {(["summary", "explain_risk", "copilot", ...(agentEnabled ? (["project_ai"] as const) : [])] as TabId[]).map(
+          (t) => (
           <button
             key={t}
             type="button"
@@ -202,7 +232,9 @@ export function AiActionPanel({
                 ? tDetail("executiveSummary")
                 : t === "explain_risk"
                   ? tDetail("explainRisk")
-                  : tDetail("copilotChat")
+                  : t === "project_ai"
+                    ? tDetail("projectAgent")
+                    : tDetail("copilotChat")
             }
             aria-selected={tab === t}
             onClick={() => setTab(t)}
@@ -212,12 +244,21 @@ export function AiActionPanel({
                 : "text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
             }`}
           >
-            {t === "summary" ? tDetail("summary") : t === "explain_risk" ? tDetail("explainRisk") : tDetail("copilot")}
+            {t === "summary"
+              ? tDetail("summary")
+              : t === "explain_risk"
+                ? tDetail("explainRisk")
+                : t === "project_ai"
+                  ? tDetail("projectAgent")
+                  : tDetail("copilot")}
           </button>
-        ))}
+        )
+        )}
       </div>
 
-      {tab === "copilot" && projectId ? (
+      {tab === "project_ai" && projectId ? (
+        <ProjectAgentPanel projectId={projectId} />
+      ) : tab === "copilot" && projectId ? (
         <CopilotChatPanel
           projectId={projectId}
           tenantId={tenantId}
