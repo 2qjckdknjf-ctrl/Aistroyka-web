@@ -1,5 +1,13 @@
 # STATUS — AISTROYKA
 
+## Актуальная плановая сверка — 2026-10-23
+
+[Единая очередь в каноническом roadmap](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23): P0 boundaries → P1 durable video evidence/Graph/materials → P2 spatial/live expansion. Main `04ec74bf955c29799ab535c043a33c1f9296c309`; refresh preflight CURRENT_BASELINE. [Draft #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) продолжает OPEN DRAFT #453, HEAD `586649ea9774924eb75512aa26d861974d372589`; #450/#451/#452 сведены без повторных задач и закрыты без merge как superseded; исходные ветки/HEAD сохранены. Security #446/#447 и quantity #448→#449 — PR_ONLY, не delivered. [Exact PR snapshot](docs/roadmap/CONSOLIDATION_EVIDENCE_2026-10-23.json).
+
+Registry stores observed #455 HEAD `1399fc3` before this registry-only follow-up; refresh exact remote HEAD before work.
+
+Следующее действие: review плановых PR, назначить owner/reviewer среза, продолжить существующий security/evidence acceptance gap. Live/device/DB/provider проверки 23 октября не запускались; прежний runtime-поток ниже — история, не актуальная команда и не новый PASS. Merge/deploy не разрешены этим обновлением.
+
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
 **Текущая задача документации:** `docs/aistroyka-audit-v2-plan-2026-10-20`. [Task](docs/tasks/2026-10-20-audit-v2-plan-integration.md), [handoff](docs/handoff/2026-10-20-audit-v2-plan-integration.md), [интеграция 97 пакетов](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md). Состояние: открыт [PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453) (docs-only); текущий HEAD всегда получать из GitHub PR. Ни один V2 implementation/runtime/release gate этим не закрывается. Следующий docs слой — [PR #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) (Oct-23 evidence/materials queue), stacked on #453.
