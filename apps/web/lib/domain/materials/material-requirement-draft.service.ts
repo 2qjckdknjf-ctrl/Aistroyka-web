@@ -112,6 +112,21 @@ export async function createMaterialRequirementDraft(
     normalizeOptionalDecimal(input.packCoverage)
   );
 
+  // Fatal calculator issues must not occupy the unique (tenant, project, acceptance) slot.
+  // Missing optional params remain persistable as incomplete drafts.
+  if (
+    calc.issues.includes("invalid_input") ||
+    calc.issues.includes("quantity_precision_loss") ||
+    calc.issues.includes("quantity_out_of_range") ||
+    calc.issues.includes("below_storage_resolution")
+  ) {
+    return {
+      ok: false,
+      error: "material requirement calculation rejected",
+      code: "INVALID_INPUT",
+    };
+  }
+
   const { data, error } = await supabase
     .from("material_requirement_drafts")
     .insert({
@@ -196,6 +211,14 @@ export async function addMaterialSupplierQuoteDraft(
     stockStatus !== "lead_time"
   ) {
     return { ok: false, error: "invalid stock_status", code: "INVALID_INPUT" };
+  }
+  if (
+    input.leadTimeDays !== null &&
+    (!Number.isInteger(input.leadTimeDays) ||
+      input.leadTimeDays < 0 ||
+      input.leadTimeDays > 2147483647)
+  ) {
+    return { ok: false, error: "invalid lead_time_days", code: "INVALID_INPUT" };
   }
 
   const { data: parent, error: parentError } = await supabase
