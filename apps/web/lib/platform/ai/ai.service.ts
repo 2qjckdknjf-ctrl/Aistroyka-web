@@ -11,6 +11,7 @@ import { runPolicy } from "@/lib/platform/ai-governance/policy.service";
 import { maxVideoBytesForSubscriptionTier } from "@/lib/platform/ai-governance/policy.rules";
 import { invokeVisionWithRouter } from "@/lib/platform/ai/providers/provider.router";
 import { invokeGeminiDailyWorkVideoAnalysis } from "@/lib/platform/ai/providers/gemini-daily-work-video";
+import { ProviderRequestError } from "@/lib/platform/ai/providers/provider.errors";
 import { FetchBinaryCapError, fetchBinaryWithByteCap } from "@/lib/platform/ai/fetch-binary-capped";
 import { recordUsage } from "@/lib/platform/ai-usage/ai-usage.service";
 import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
@@ -48,9 +49,12 @@ export class AIVisionFailedError extends Error {
 }
 
 export class AIVideoDailyFailedError extends Error {
-  constructor(message: string = "Video daily analysis failed") {
+  readonly httpStatus: number | null;
+
+  constructor(message: string = "Video daily analysis failed", httpStatus?: number | null) {
     super(message);
     this.name = "AIVideoDailyFailedError";
+    this.httpStatus = httpStatus ?? null;
   }
 }
 
@@ -330,7 +334,9 @@ export async function analyzeVideoDailyWork(
       maxOutputTokens: 2048,
     });
   } catch (e) {
-    throw new AIVideoDailyFailedError(e instanceof Error ? e.message : "Video analysis failed");
+    const httpStatus =
+      e instanceof ProviderRequestError && typeof e.statusCode === "number" ? e.statusCode : null;
+    throw new AIVideoDailyFailedError(e instanceof Error ? e.message : "Video analysis failed", httpStatus);
   }
 
   if (!visionResult) {

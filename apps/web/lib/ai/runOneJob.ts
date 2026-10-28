@@ -11,6 +11,11 @@ import {
   AIPolicyBlockedError,
   AIVideoDailyFailedError,
 } from "@/lib/platform/ai/ai.service";
+import {
+  checkBudgetAlert,
+  checkQuota,
+  estimateGeminiVideoDailyQuotaReserveUsd,
+} from "@/lib/platform/ai-usage/ai-usage.service";
 import { getServerConfig, isGeminiConfigured } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
@@ -158,6 +163,36 @@ async function markJobFailed(
   return typeof data === "number" ? data : 0;
 }
 
+function httpStatusFromMessage(message: string): number | null {
+  const match = message.match(/\b([45]\d{2})\b/);
+  if (!match) return null;
+  const status = Number(match[1]);
+  return Number.isFinite(status) ? status : null;
+}
+
+function classifyJobFailure(err: unknown): { errorType: string; retryable: boolean; message: string } {
+  if (err instanceof VisionProviderError) {
+    return { errorType: err.errorType, retryable: err.retryable, message: err.message };
+  }
+  if (err instanceof AIPolicyBlockedError) {
+    return { errorType: "validation_error", retryable: false, message: err.message };
+  }
+  if (err instanceof AIVideoDailyFailedError) {
+    const httpStatus = err.httpStatus ?? httpStatusFromMessage(err.message);
+    if (typeof httpStatus === "number") {
+      const classified = classifyVisionFailure({
+        message: `AI analysis failed: ${httpStatus}`,
+        httpStatus,
+      });
+      return { ...classified, message: `AI analysis failed: ${httpStatus}` };
+    }
+    const classified = classifyVisionFailure(err.message);
+    return { ...classified, message: err.message };
+  }
+  const message = err instanceof Error ? err.message : "Analysis failed";
+  return { ...classifyVisionFailure(message), message };
+}
+
 /**
  * Process one job: dequeue → claim → AI → complete (or mark failed).
  * Caller-visible candidates and tenant-scoped atomic claims; completion/failure use service RPCs.
@@ -166,7 +201,14 @@ async function markJobFailed(
 export async function processOneJob(
   supabase: SupabaseClient,
   aiAnalysisUrl: string | undefined,
-  options: { tenantId: string; callerClient: SupabaseClient; traceId?: string; aiRequestHeaders?: HeadersInit }
+  options: {
+    tenantId: string;
+    callerClient: SupabaseClient;
+    traceId?: string;
+    aiRequestHeaders?: HeadersInit;
+    subscriptionTier?: string | null;
+    userId?: string | null;
+  }
 ): Promise<ProcessOneJobResult> {
   const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
   // Image jobs still need AI_ANALYSIS_URL; video jobs use Gemini and are checked after media type.
@@ -267,9 +309,21 @@ export async function processOneJob(
 
     let result: AnalysisResult;
     if (isVideo) {
+      const subscriptionTier = options.subscriptionTier ?? "free";
+      const estimatedCost = estimateGeminiVideoDailyQuotaReserveUsd(subscriptionTier);
+      const quotaMsg = await checkQuota(supabase, tenantId, estimatedCost);
+      if (quotaMsg) {
+        throw new VisionProviderError({
+          message: quotaMsg,
+          httpStatus: 402,
+          errorType: "invalid_request",
+          retryable: false,
+        });
+      }
+      await checkBudgetAlert(supabase, tenantId, estimatedCost);
       const daily = await analyzeVideoDailyWork(
         supabase,
-        { tenantId, userId: null, traceId },
+        { tenantId, userId: options.userId ?? null, subscriptionTier, traceId },
         { videoUrl: source.imageUrl, projectId, mediaId }
       );
       result = mapDailyVideoToAnalysisResult(daily);
@@ -306,16 +360,15 @@ export async function processOneJob(
     });
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
-    const classified =
-      err instanceof VisionProviderError
-        ? { errorType: err.errorType, retryable: err.retryable }
-        : err instanceof AIPolicyBlockedError
-          ? { errorType: "validation_error" as const, retryable: false }
-          : err instanceof AIVideoDailyFailedError
-            ? classifyVisionFailure(err.message)
-            : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
-    const message = err instanceof Error ? err.message : "Analysis failed";
-    const attempts = await markJobFailed(supabase, jobId, tenantId, job.execution_token, message, classified.errorType);
+    const classified = classifyJobFailure(err);
+    const attempts = await markJobFailed(
+      supabase,
+      jobId,
+      tenantId,
+      job.execution_token,
+      classified.message,
+      classified.errorType
+    );
     logJobLifecycle("job_failed", {
       job_id: jobId,
       duration_ms: Date.now() - startMs,

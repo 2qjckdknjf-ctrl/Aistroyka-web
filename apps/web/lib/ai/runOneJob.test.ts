@@ -24,9 +24,15 @@ vi.mock("@/lib/platform/ai/ai.service", async () => {
     })),
   };
 });
+vi.mock("@/lib/platform/ai-usage/ai-usage.service", () => ({
+  checkQuota: vi.fn(async () => null),
+  checkBudgetAlert: vi.fn(async () => undefined),
+  estimateGeminiVideoDailyQuotaReserveUsd: vi.fn(() => 0.75),
+}));
 import { describe, expect, it, vi } from "vitest";
 import { processOneJob } from "./runOneJob";
-import { analyzeVideoDailyWork } from "@/lib/platform/ai/ai.service";
+import { analyzeVideoDailyWork, AIVideoDailyFailedError } from "@/lib/platform/ai/ai.service";
+import { checkQuota, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
 
 function createMockSupabase(overrides: {
   dequeue?: { data: unknown; error: { message: string } | null };
@@ -324,9 +330,25 @@ describe("processOneJob", () => {
     const out = await processOneJob(supabase, undefined, {
       tenantId: "tenant-a",
       callerClient: supabase,
+      subscriptionTier: "pro",
+      userId: "user-a",
     });
     expect(out).toEqual({ ok: true, jobId, status: "completed" });
-    expect(analyzeVideoDailyWork).toHaveBeenCalled();
+    expect(checkQuota).toHaveBeenCalledWith(supabase, "tenant-a", 0.75);
+    expect(checkBudgetAlert).toHaveBeenCalledWith(supabase, "tenant-a", 0.75);
+    expect(analyzeVideoDailyWork).toHaveBeenCalledWith(
+      supabase,
+      expect.objectContaining({
+        tenantId: "tenant-a",
+        userId: "user-a",
+        subscriptionTier: "pro",
+      }),
+      expect.objectContaining({
+        videoUrl: "https://storage.test/private-signed?token=synthetic",
+        projectId: "proj-1",
+        mediaId: "media-v",
+      })
+    );
     expect(supabase.rpc).toHaveBeenCalledWith(
       "complete_session_analysis_job",
       expect.objectContaining({
@@ -334,6 +356,93 @@ describe("processOneJob", () => {
         p_stage: "Site video daily",
         p_completion_percent: 40,
         p_risk_level: "low",
+      })
+    );
+  });
+
+  it("fails video jobs over budget without calling Gemini", async () => {
+    vi.mocked(analyzeVideoDailyWork).mockClear();
+    vi.mocked(checkQuota).mockResolvedValueOnce(
+      "AI budget exceeded for this period. Upgrade or wait for next period."
+    );
+    const jobId = "job-video-quota";
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-v" }], error: null },
+      media: {
+        data: { file_url: "proj-1/clip.mp4", project_id: "proj-1", type: "video" },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOneJob(supabase, undefined, {
+      tenantId: "tenant-a",
+      callerClient: supabase,
+      subscriptionTier: "enterprise",
+    });
+    expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    expect(analyzeVideoDailyWork).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "fail_session_analysis_job",
+      expect.objectContaining({
+        p_job_id: jobId,
+        p_error_type: "invalid_request",
+        p_error_message: "AI budget exceeded for this period. Upgrade or wait for next period.",
+      })
+    );
+  });
+
+  it("classifies Gemini HTTP 500 as retryable without storing the provider body", async () => {
+    vi.mocked(analyzeVideoDailyWork).mockRejectedValueOnce(
+      new AIVideoDailyFailedError("RESOURCE_EXHAUSTED: quota details must not leak", 500)
+    );
+    const jobId = "job-video-500";
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-v" }], error: null },
+      media: {
+        data: { file_url: "proj-1/clip.mp4", project_id: "proj-1", type: "video" },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOneJob(supabase, undefined, {
+      tenantId: "tenant-a",
+      callerClient: supabase,
+    });
+    expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "fail_session_analysis_job",
+      expect.objectContaining({
+        p_job_id: jobId,
+        p_error_type: "provider_unavailable",
+        p_error_message: "AI analysis failed: 500",
+      })
+    );
+  });
+
+  it("classifies Gemini 429 from the generateContent message as retryable", async () => {
+    vi.mocked(analyzeVideoDailyWork).mockRejectedValueOnce(
+      new AIVideoDailyFailedError("Gemini generateContent 429")
+    );
+    const jobId = "job-video-429";
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-v" }], error: null },
+      media: {
+        data: { file_url: "proj-1/clip.mp4", project_id: "proj-1", type: "video" },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOneJob(supabase, undefined, {
+      tenantId: "tenant-a",
+      callerClient: supabase,
+    });
+    expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "fail_session_analysis_job",
+      expect.objectContaining({
+        p_job_id: jobId,
+        p_error_type: "provider_unavailable",
+        p_error_message: "AI analysis failed: 429",
       })
     );
   });

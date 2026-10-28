@@ -68,7 +68,8 @@ export async function POST(request: Request) {
     }
   }
   const result = await processOneJob(admin, aiUrl, { traceId,
-    tenantId: ctx.tenantId, callerClient: supabase, aiRequestHeaders });
+    tenantId: ctx.tenantId, userId: ctx.userId, subscriptionTier: ctx.subscriptionTier,
+    callerClient: supabase, aiRequestHeaders });
 
   if (!result.ok) {
     if (result.reason === "no_url") {

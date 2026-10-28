@@ -6,7 +6,7 @@ vi.mock("@/lib/tenant", async (original) => ({ ...await original<typeof import("
 vi.mock("@/lib/supabase/server", () => ({ createClientFromRequest: vi.fn(async () => mocks.client) }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn(() => ({})) }));
 vi.mock("@/lib/ai/runOneJob", () => ({ processOneJob: mocks.process }));
-const valid = { tenantId: "tenant-a", userId: "user-a", role: "member" };
+const valid = { tenantId: "tenant-a", userId: "user-a", role: "member", subscriptionTier: "pro" };
 describe.each([["legacy", POST], ["canonical", canonicalPost]] as const)("%s worker authorization", (_name, handler) => {
   beforeEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); mocks.tenant.mockResolvedValue(valid); mocks.process.mockResolvedValue({ ok: false, reason: "no_job" }); });
   it.each([null, "user-without-tenant"])("denies missing membership (%s)", async (userId) => {
@@ -28,7 +28,8 @@ describe.each([["legacy", POST], ["canonical", canonicalPost]] as const)("%s wor
     vi.stubEnv("AI_ANALYSIS_URL", "https://safe.test" + path);
     await handler(new Request("https://safe.test/api/analysis/process", { method: "POST", headers: { Authorization: "Bearer test-only", Cookie: "session=test-only" } }));
     const options = mocks.process.mock.calls[0][2];
-    expect(options.tenantId).toBe("tenant-a"); expect(options.callerClient).toBe(mocks.client);
+    expect(options.tenantId).toBe("tenant-a"); expect(options.userId).toBe("user-a");
+    expect(options.subscriptionTier).toBe("pro"); expect(options.callerClient).toBe(mocks.client);
     expect(options.aiRequestHeaders.get("authorization")).toBe("Bearer test-only");
     expect(options.aiRequestHeaders.get("cookie")).toBe("session=test-only");
   });
