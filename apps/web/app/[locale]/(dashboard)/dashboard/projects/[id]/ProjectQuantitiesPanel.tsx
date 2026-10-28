@@ -210,6 +210,67 @@ async function postCommercialBind(input: {
   return { id: json.data.id };
 }
 
+async function postMaterialRequirementDraft(input: {
+  projectId: string;
+  acceptanceId: string;
+  workQuantity: string;
+  consumption: string;
+  waste: string;
+  packCoverage: string;
+}): Promise<{ id: string; material_need: string | null; pack_count: string | null; issues: string[] }> {
+  const res = await fetch(
+    `/api/v1/projects/${input.projectId}/quantities/acceptances/${input.acceptanceId}/material-requirement-draft`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        work_quantity: input.workQuantity,
+        consumption: input.consumption,
+        waste: input.waste,
+        pack_coverage: input.packCoverage,
+      }),
+    }
+  );
+  const json = (await res.json()) as {
+    error?: string;
+    code?: string;
+    data?: { id: string; material_need: string | null; pack_count: string | null; issues: string[] };
+  };
+  if (!res.ok || !json.data?.id) {
+    throw new Error(json.code ?? json.error ?? "MATERIAL_DRAFT_FAILED");
+  }
+  return json.data;
+}
+
+async function postMaterialQuoteDraft(input: {
+  projectId: string;
+  draftId: string;
+  supplierName: string;
+  unitPriceMinor: string;
+  quoteDatedAt: string;
+}): Promise<{ id: string }> {
+  const res = await fetch(
+    `/api/v1/projects/${input.projectId}/materials/requirement-drafts/${input.draftId}/quotes`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        supplier_name: input.supplierName,
+        unit_price_minor: input.unitPriceMinor,
+        quote_dated_at: input.quoteDatedAt,
+        stock_status: "unknown",
+      }),
+    }
+  );
+  const json = (await res.json()) as { error?: string; code?: string; data?: { id: string } };
+  if (!res.ok || !json.data?.id) {
+    throw new Error(json.code ?? json.error ?? "MATERIAL_QUOTE_FAILED");
+  }
+  return { id: json.data.id };
+}
+
 export function ProjectQuantitiesPanel({
   projectId,
   skin = "default",
@@ -229,6 +290,18 @@ export function ProjectQuantitiesPanel({
   const [acceptance, setAcceptance] = useState<AcceptanceState | null>(null);
   const [costNumeratorMinor, setCostNumeratorMinor] = useState("1999");
   const [bindingId, setBindingId] = useState<string | null>(null);
+  const [consumption, setConsumption] = useState("1");
+  const [waste, setWaste] = useState("0.10");
+  const [packCoverage, setPackCoverage] = useState("1.44");
+  const [materialDraft, setMaterialDraft] = useState<{
+    id: string;
+    material_need: string | null;
+    pack_count: string | null;
+    issues: string[];
+  } | null>(null);
+  const [supplierName, setSupplierName] = useState("");
+  const [quotePriceMinor, setQuotePriceMinor] = useState("2500");
+  const [quoteId, setQuoteId] = useState<string | null>(null);
 
   const { data, isPending, isError } = useQuery({
     queryKey: ["project-quantities", projectId],
@@ -254,6 +327,8 @@ export function ProjectQuantitiesPanel({
       );
       setAcceptance(null);
       setBindingId(null);
+      setMaterialDraft(null);
+      setQuoteId(null);
       queryClient.invalidateQueries({ queryKey: ["project-quantities", projectId] });
     },
   });
@@ -270,6 +345,45 @@ export function ProjectQuantitiesPanel({
     onSuccess: (result) => {
       setAcceptance(result);
       setBindingId(null);
+      setMaterialDraft(null);
+      setQuoteId(null);
+    },
+  });
+
+  const materialDraftMutation = useMutation({
+    mutationFn: () => {
+      if (!acceptance?.id || !lastResult?.quantity) throw new Error("NO_ACCEPTANCE");
+      const qty = toCommercialQuantity(lastResult.quantity);
+      if (!qty) throw new Error("NO_QUANTITY");
+      return postMaterialRequirementDraft({
+        projectId,
+        acceptanceId: acceptance.id,
+        workQuantity: qty,
+        consumption,
+        waste,
+        packCoverage,
+      });
+    },
+    onSuccess: (result) => {
+      setMaterialDraft(result);
+      setQuoteId(null);
+    },
+  });
+
+  const materialQuoteMutation = useMutation({
+    mutationFn: () => {
+      if (!materialDraft?.id) throw new Error("NO_DRAFT");
+      const today = new Date().toISOString().slice(0, 10);
+      return postMaterialQuoteDraft({
+        projectId,
+        draftId: materialDraft.id,
+        supplierName,
+        unitPriceMinor: quotePriceMinor,
+        quoteDatedAt: today,
+      });
+    },
+    onSuccess: (result) => {
+      setQuoteId(result.id);
     },
   });
 
@@ -456,6 +570,91 @@ export function ProjectQuantitiesPanel({
             <p className="text-aistroyka-text-secondary">
               {t("quantitiesBindRecorded")}
             </p>
+          ) : null}
+
+          {acceptance?.commercially_bindable && !materialDraft ? (
+            <form
+              className="grid gap-2 sm:grid-cols-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                materialDraftMutation.mutate();
+              }}
+            >
+              <p className="sm:col-span-3 text-xs text-aistroyka-text-secondary">
+                {t("quantitiesMaterialDraftHint")}
+              </p>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-aistroyka-text-secondary">{t("quantitiesConsumption")}</span>
+                <Input value={consumption} onChange={(e) => setConsumption(e.target.value)} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-aistroyka-text-secondary">{t("quantitiesWaste")}</span>
+                <Input value={waste} onChange={(e) => setWaste(e.target.value)} />
+              </label>
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-aistroyka-text-secondary">{t("quantitiesPackCoverage")}</span>
+                <Input value={packCoverage} onChange={(e) => setPackCoverage(e.target.value)} />
+              </label>
+              <div className="sm:col-span-3">
+                <Button type="submit" disabled={materialDraftMutation.isPending}>
+                  {materialDraftMutation.isPending
+                    ? t("quantitiesMaterialDraftSaving")
+                    : t("quantitiesMaterialDraftCreate")}
+                </Button>
+              </div>
+              {materialDraftMutation.isError ? (
+                <p className="sm:col-span-3 text-sm text-red-400" role="alert">
+                  {t("quantitiesMaterialDraftFailed")}
+                </p>
+              ) : null}
+            </form>
+          ) : null}
+          {materialDraft ? (
+            <div className="space-y-2">
+              <p className="text-aistroyka-text-secondary">
+                {t("quantitiesMaterialDraftRecorded", {
+                  need: materialDraft.material_need ?? "—",
+                  packs: materialDraft.pack_count ?? "—",
+                })}
+              </p>
+              {!quoteId ? (
+                <form
+                  className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    materialQuoteMutation.mutate();
+                  }}
+                >
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-aistroyka-text-secondary">{t("quantitiesSupplierName")}</span>
+                    <Input value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-aistroyka-text-secondary">{t("quantitiesQuotePriceMinor")}</span>
+                    <Input
+                      value={quotePriceMinor}
+                      onChange={(e) => setQuotePriceMinor(e.target.value)}
+                      inputMode="numeric"
+                    />
+                  </label>
+                  <Button type="submit" disabled={materialQuoteMutation.isPending || !supplierName.trim()}>
+                    {materialQuoteMutation.isPending
+                      ? t("quantitiesQuoteSaving")
+                      : t("quantitiesQuoteAdd")}
+                  </Button>
+                  <p className="sm:col-span-3 text-xs text-aistroyka-text-secondary">
+                    {t("quantitiesQuoteHint")}
+                  </p>
+                  {materialQuoteMutation.isError ? (
+                    <p className="sm:col-span-3 text-sm text-red-400" role="alert">
+                      {t("quantitiesQuoteFailed")}
+                    </p>
+                  ) : null}
+                </form>
+              ) : (
+                <p className="text-aistroyka-text-secondary">{t("quantitiesQuoteRecorded")}</p>
+              )}
+            </div>
           ) : null}
         </div>
       ) : null}
