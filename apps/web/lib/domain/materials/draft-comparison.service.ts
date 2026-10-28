@@ -79,6 +79,11 @@ export async function createMaterialSupplyDraftComparison(
     return { ok: false, error: "requirement has no billable quantity", code: "INVALID_INPUT" };
   }
 
+  const requestedOfferIds = input.offerIds == null ? null : [...new Set(input.offerIds)];
+  if (requestedOfferIds !== null && requestedOfferIds.length === 0) {
+    return { ok: false, error: "offer_ids must contain at least one id", code: "INVALID_INPUT" };
+  }
+
   let quoteQuery = supabase
     .from("material_supplier_quote_drafts")
     .select(
@@ -88,8 +93,8 @@ export async function createMaterialSupplyDraftComparison(
     .eq("project_id", projectId)
     .eq("material_requirement_draft_id", draftId);
 
-  if (input.offerIds && input.offerIds.length > 0) {
-    quoteQuery = quoteQuery.in("id", input.offerIds);
+  if (requestedOfferIds !== null) {
+    quoteQuery = quoteQuery.in("id", requestedOfferIds);
   }
 
   const { data: quotes, error: quoteError } = await quoteQuery;
@@ -108,6 +113,17 @@ export async function createMaterialSupplyDraftComparison(
       provenance_note: asString(row.provenance_note),
     }))
     .filter((offer) => offer.id && offer.supplier_name);
+
+  if (requestedOfferIds !== null) {
+    const foundIds = new Set(offers.map((offer) => offer.id));
+    if (requestedOfferIds.some((id) => !foundIds.has(id))) {
+      return {
+        ok: false,
+        error: "one or more offer ids were not found for this draft",
+        code: "NOT_FOUND",
+      };
+    }
+  }
 
   if (offers.length < 2) {
     return {

@@ -45,9 +45,23 @@ export async function POST(
   }
 
   const offerIdsRaw = body.offer_ids ?? body.offerIds;
-  const offerIds = Array.isArray(offerIdsRaw)
-    ? offerIdsRaw.filter((item): item is string => typeof item === "string" && item.length > 0)
-    : null;
+  let offerIds: string[] | null = null;
+  if (offerIdsRaw != null) {
+    const parsedOfferIds = Array.isArray(offerIdsRaw)
+      ? offerIdsRaw.filter((item): item is string => typeof item === "string" && item.length > 0)
+      : [];
+    if (
+      !Array.isArray(offerIdsRaw) ||
+      parsedOfferIds.length === 0 ||
+      parsedOfferIds.length !== offerIdsRaw.length
+    ) {
+      return NextResponse.json(
+        { error: "offer_ids must be a non-empty array of ids", code: "INVALID_INPUT" },
+        { status: 400 }
+      );
+    }
+    offerIds = parsedOfferIds;
+  }
 
   const supabase = await createClientFromRequest(request);
   const membership = await supabase.rpc("is_internal_tenant_writer_for_tenant", {
