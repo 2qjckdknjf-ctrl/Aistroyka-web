@@ -42,3 +42,13 @@ No customer/portal exposure of internal costs/margin/profitability added in this
 ## Verdict
 
 **YES** for the local Oct-23 conveyor items that were mergeable without owner/external gates: security PRs, durable evidence, human review, accepted Graph lineage, C04 cores, and docs #453/#455/#454. Full product 100% readiness remains open pending the blockers above.
+
+
+## Refresh after #460/#461
+
+| PR | Topic | Merge |
+|---|---|---|
+| #460 | Conveyor closure docs | `6fc0b6a` |
+| #461 | Async session video executor (Gemini daily → ai_analysis) | `3e6786a` |
+
+Async video executor is now code-complete on main; live Gemini job/result/review fixture remains separate evidence. Next local engineering: reviewed preproject extractor and Stage2a A01–A05 storage/UI. External: live Worker fixture, legal/store/billing.
