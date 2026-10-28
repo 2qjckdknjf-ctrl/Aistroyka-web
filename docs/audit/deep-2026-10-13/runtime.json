@@ -1,0 +1,50 @@
+[
+  {
+    "host": "staging.aistroyka.ai",
+    "response": {
+      "ok": true,
+      "db": "ok",
+      "aiConfigured": true,
+      "openaiConfigured": true,
+      "supabaseReachable": true,
+      "serviceRoleConfigured": true,
+      "env": "staging",
+      "buildStamp": {
+        "sha7": "e0c9f51",
+        "buildTime": "2026-10-12 05:32"
+      }
+    }
+  },
+  {
+    "host": "aistroyka.ai",
+    "response": {
+      "ok": true,
+      "db": "ok",
+      "aiConfigured": true,
+      "openaiConfigured": true,
+      "supabaseReachable": true,
+      "serviceRoleConfigured": true,
+      "env": "production",
+      "buildStamp": {
+        "sha7": "e0c9f51",
+        "buildTime": "2026-10-12 08:33"
+      }
+    }
+  },
+  {
+    "host": "www.aistroyka.ai",
+    "response": {
+      "ok": true,
+      "db": "ok",
+      "aiConfigured": true,
+      "openaiConfigured": true,
+      "supabaseReachable": true,
+      "serviceRoleConfigured": true,
+      "env": "production",
+      "buildStamp": {
+        "sha7": "e0c9f51",
+        "buildTime": "2026-10-12 08:33"
+      }
+    }
+  }
+]
