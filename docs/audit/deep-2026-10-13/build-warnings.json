@@ -1,0 +1,197 @@
+{
+  "observed_date": "2026-10-13",
+  "baseline": "e0c9f51a",
+  "count": 47,
+  "file_count": 34,
+  "classification": "PREEXISTING_WARNING_TAIL_NOT_FATAL_BUILD_ERRORS",
+  "warnings": [
+    {
+      "file": "app/[locale]/(dashboard)/admin/ai/AdminAiOverviewClient.tsx",
+      "warning": "30:9  Warning: The 'tenants' logical expression could make the dependencies of useEffect Hook (at line 36) change on every render. To fix this, wrap the initialization of 'tenants' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/admin/ai/guide/AIGuideAnalyticsClient.tsx",
+      "warning": "129:6  Warning: React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/admin/ai/security/AdminAiSecurityClient.tsx",
+      "warning": "21:9  Warning: The 'tenants' logical expression could make the dependencies of useEffect Hook (at line 25) change on every render. To fix this, wrap the initialization of 'tenants' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/admin/jobs/AdminJobsClient.tsx",
+      "warning": "58:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/admin/leads/AdminLeadsClient.tsx",
+      "warning": "55:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/admin/leads/[id]/AdminLeadDetailClient.tsx",
+      "warning": "54:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/admin/push/AdminPushOutboxClient.tsx",
+      "warning": "65:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/UploadsDashboardClient.tsx",
+      "warning": "125:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/daily-reports/DashboardReportsClient.tsx",
+      "warning": "129:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/devices/DashboardDevicesClient.tsx",
+      "warning": "82:6  Warning: React Hook useEffect has missing dependencies: 'limit', 'offset', and 'tDetail'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/governance/GovernanceCasesClient.tsx",
+      "warning": "108:9  Warning: The 'rows' logical expression could make the dependencies of useMemo Hook (at line 114) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'rows' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
+      "warning": "1375:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/support/SupportClient.tsx",
+      "warning": "61:6  Warning: React Hook useEffect has a missing dependency: 'loadTickets'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/tasks/[id]/DashboardTaskDetailClient.tsx",
+      "warning": "82:6  Warning: React Hook useEffect has a missing dependency: 'fetchTask'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(dashboard)/dashboard/uploads/DashboardUploadsClient.tsx",
+      "warning": "112:6  Warning: React Hook useEffect has missing dependencies: 'limit' and 'offset'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "app/[locale]/(public)/ai-demo/AiDemoSimulator.tsx",
+      "warning": "58:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/canon/DashboardCanonHome.tsx",
+      "warning": "83:6  Warning: React Hook useMemo has a missing dependency: 'portfolioQuery'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/DashboardProjectsCanonGrid.tsx",
+      "warning": "43:9  Warning: The 'projects' logical expression could make the dependencies of useMemo Hook (at line 62) change on every render. To fix this, wrap the initialization of 'projects' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/DashboardProjectsCanonGrid.tsx",
+      "warning": "43:9  Warning: The 'projects' logical expression could make the dependencies of useMemo Hook (at line 93) change on every render. To fix this, wrap the initialization of 'projects' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/DashboardProjectsCanonGrid.tsx",
+      "warning": "50:6  Warning: React Hook useMemo has a missing dependency: 'portfolioQuery'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/DashboardTeamCanonPage.tsx",
+      "warning": "47:9  Warning: The 'workers' logical expression could make the dependencies of useMemo Hook (at line 65) change on every render. To fix this, wrap the initialization of 'workers' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectCommandCenterOverview.tsx",
+      "warning": "299:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 74) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 75) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 76) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 77) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 80) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 86) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ProjectScheduleCanonPanel.tsx",
+      "warning": "73:9  Warning: The 'milestones' logical expression could make the dependencies of useMemo Hook (at line 88) change on every render. To fix this, wrap the initialization of 'milestones' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/canon/ReportReviewCanonView.tsx",
+      "warning": "258:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/canon/ReportReviewCanonView.tsx",
+      "warning": "271:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/canon/ReportReviewCanonView.tsx",
+      "warning": "282:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/platform-admin/PlatformAdminConsoleClient.tsx",
+      "warning": "117:6  Warning: React Hook useEffect has a missing dependency: 'loadAll'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/platform-admin/PlatformLeadDetailClient.tsx",
+      "warning": "54:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/platform-admin/PlatformLeadsClient.tsx",
+      "warning": "55:6  Warning: React Hook useEffect has a missing dependency: 'tDetail'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "components/public/PublicFooter.tsx",
+      "warning": "38:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/PublicHeader.tsx",
+      "warning": "47:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/v41/AiAnalytics.tsx",
+      "warning": "20:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/v41/HomeHero.tsx",
+      "warning": "29:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/v41/HomeHero.tsx",
+      "warning": "84:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/v41/ProductStory.tsx",
+      "warning": "35:11  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/v43/ProductWindow.tsx",
+      "warning": "12:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "components/public/v43/ProductWindow.tsx",
+      "warning": "28:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element"
+    },
+    {
+      "file": "lib/features/ai/api/useCopilotThread.ts",
+      "warning": "54:9  Warning: The 'threads' logical expression could make the dependencies of useEffect Hook (at line 59) change on every render. To fix this, wrap the initialization of 'threads' in its own useMemo() Hook.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "lib/features/ai/components/CopilotChatPanel.tsx",
+      "warning": "125:6  Warning: React Hook useCallback has an unnecessary dependency: 'tenantId'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "lib/features/ai/useAIState.ts",
+      "warning": "146:6  Warning: React Hook useEffect has a missing dependency: 'projectIds'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps"
+    },
+    {
+      "file": "lib/features/ai/useAIState.ts",
+      "warning": "146:7  Warning: React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.  react-hooks/exhaustive-deps"
+    }
+  ]
+}

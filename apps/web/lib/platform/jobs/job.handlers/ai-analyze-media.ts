@@ -9,10 +9,17 @@ import { JobPayloadError, JobHandlerError } from "../job.errors";
 import type { Job, JobPayloadAiAnalyzeMedia } from "../job.types";
 import { resolveImageUrlDetailed } from "./resolve-image-url";
 import { getTierForTenant } from "@/lib/platform/subscription/subscription.service";
+import {
+  findExistingReportMediaAnalysis,
+  persistReportMediaAnalysis,
+} from "./persist-report-media-analysis";
 
 /**
- * Handler for ai_analyze_media: resolve image URL, run vision via AIService (Policy → Router → usage).
- * Idempotent: same job run twice is safe (vision result is not duplicated into analysis tables here).
+ * Handler for ai_analyze_media: resolve image URL, run vision via AIService (Policy → Router → usage),
+ * then persist a durable ai_analysis row bound to media_id + platform job id.
+ *
+ * Idempotent: if this platform job already wrote ai_analysis, the provider is not called again.
+ * Upload-session-only attachments without media_id fail closed after vision until promotion exists.
  *
  * Security: `payload.project_id` is an untrusted claim only. It is never passed into signing
  * as authorization. Trusted project is derived server-side (report → task/day → projects).
@@ -44,6 +51,20 @@ export async function handleAiAnalyzeMedia(
       ? raw.project_id.trim()
       : null;
 
+  const already = await findExistingReportMediaAnalysis(supabase, job.id);
+  if (already) return;
+
+  const mediaId = typeof payload.media_id === "string" ? payload.media_id.trim() : "";
+  if (!mediaId) {
+    // Fail before provider spend. Upload-session-only attachments need promotion
+    // to media_id before durable evidence can be claimed (hard audit contract).
+    throw new JobHandlerError(
+      "Durable report-media result requires media_id; promote the upload session before evidence claims",
+      false,
+      "AI_RESULT_MEDIA_ID_REQUIRED"
+    );
+  }
+
   const resolved = await resolveImageUrlDetailed(supabase, payload, {
     tenantId: job.tenant_id,
     projectIdClaim,
@@ -59,7 +80,7 @@ export async function handleAiAnalyzeMedia(
 
   const tier = await getTierForTenant(supabase, job.tenant_id);
   try {
-    await analyzeImage(
+    const result = await analyzeImage(
       supabase,
       {
         tenantId: job.tenant_id,
@@ -69,13 +90,24 @@ export async function handleAiAnalyzeMedia(
       },
       {
         imageUrl: resolved.imageUrl,
-        mediaId: payload.media_id ?? null,
+        mediaId,
         reportId: payload.report_id,
         // Only server-proven project id — never raw payload.project_id.
         projectId: resolved.trustedProjectId,
       },
     );
+    await persistReportMediaAnalysis(supabase, {
+      tenantId: job.tenant_id,
+      platformJobId: job.id,
+      reportId: payload.report_id,
+      mediaId,
+      trustedProjectId: resolved.trustedProjectId,
+      result,
+    });
   } catch (e) {
+    if (e instanceof JobHandlerError || e instanceof JobPayloadError) {
+      throw e;
+    }
     if (e instanceof AIPolicyBlockedError) {
       throw new JobHandlerError(
         "AI policy blocked",
