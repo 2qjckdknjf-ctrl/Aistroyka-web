@@ -23,6 +23,7 @@ import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
 import { ProjectScheduleCanonPanel } from "@/components/canon/ProjectScheduleCanonPanel";
 import { ProjectDocumentsCanonPanel } from "@/components/canon/ProjectDocumentsCanonPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
+import { ProjectQuantitiesPanel } from "./ProjectQuantitiesPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { DefectsProjectTab } from "./DefectsProjectTab";
@@ -337,6 +338,9 @@ export function DashboardProjectDetailClient({
         </TabPanel>
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
           <ProjectEstimatePanel projectId={projectId} skin="canon" />
+        </TabPanel>
+        <TabPanel id="panel-quantities" selected={activeTab === "quantities"} aria-labelledby="tab-quantities">
+          <ProjectQuantitiesPanel projectId={projectId} skin="canon" />
         </TabPanel>
       </div>
 

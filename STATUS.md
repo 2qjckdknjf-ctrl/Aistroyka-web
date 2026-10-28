@@ -4,7 +4,7 @@
 
 Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Merged #446/#447/#457/#448/#449/#458/#453/#455/#459/#454. Hosted SQL applied (grants, `platform_job_id`, human review). Durable result + manager review + accepted Graph lineage + C04 cores в main.
 
-Следующее инженерное: reviewed preproject extractor, Stage2a A01–A05. Async video executor (#461) в main; live Gemini fixture отдельно. Live Worker fixture / legal / store / billing 7-day — `BLOCKED_EXTERNAL`/`OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
+Следующее инженерное: reviewed preproject extractor, Stage2a A03–A05 (A01 storage + A02 Manager panel shipped 2026-10-28). Async video executor (#461) в main; live Gemini fixture отдельно. Live Worker fixture / legal / store / billing 7-day — `BLOCKED_EXTERNAL`/`OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
