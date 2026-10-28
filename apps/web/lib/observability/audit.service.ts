@@ -10,6 +10,7 @@ export type AuditAction =
   | "report_review"
   | "media_finalize"
   | "ai_analysis_complete"
+  | "ai_analysis_human_review"
   | "ai_copilot_stream_complete"
   | "ai_copilot_stream_error"
   | "ai_copilot_non_stream_complete"
