@@ -27,6 +27,8 @@ describe("resolveProjectDetailTab", () => {
     expect(resolveProjectDetailTab("uploads")).toBe("uploads");
     expect(resolveProjectDetailTab("ai")).toBe("ai");
     expect(resolveProjectDetailTab("costs")).toBe("costs");
+    expect(resolveProjectDetailTab("estimate")).toBe("estimate");
+    expect(resolveProjectDetailTab("quantities")).toBe("quantities");
   });
 
   it("falls back to overview for missing or unknown tabs", () => {
