@@ -6,15 +6,20 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
-import { getServerConfig } from "@/lib/config/server";
+import {
+  analyzeVideoDailyWork,
+  AIPolicyBlockedError,
+  AIVideoDailyFailedError,
+} from "@/lib/platform/ai/ai.service";
+import { getServerConfig, isGeminiConfigured } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
+import { mapDailyVideoToAnalysisResult } from "./map-daily-video-to-analysis";
 import {
   classifyVisionFailure,
   VisionProviderError,
 } from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
-const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
 const AI_RETRY_DELAY_MS = 2000;
 
 export type ProcessOneJobResult =
@@ -164,9 +169,7 @@ export async function processOneJob(
   options: { tenantId: string; callerClient: SupabaseClient; traceId?: string; aiRequestHeaders?: HeadersInit }
 ): Promise<ProcessOneJobResult> {
   const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
-  if (!aiAnalysisUrl?.trim()) {
-    return { ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" };
-  }
+  // Image jobs still need AI_ANALYSIS_URL; video jobs use Gemini and are checked after media type.
 
   // Keep worker_id nullable to stay compatible with live DBs that may enforce
   // a FK to a workers table not seeded by web-session users.
@@ -226,9 +229,28 @@ export async function processOneJob(
 
   const projectId = media.project_id as string;
   const type = (media.type as string) || "image";
+  const isVideo = type === "video";
 
-  if (type === "video") {
-    await markJobFailed(supabase, jobId, tenantId, job.execution_token, VIDEO_NOT_IMPLEMENTED, "validation_error");
+  if (!isVideo && !aiAnalysisUrl?.trim()) {
+    await markJobFailed(
+      supabase,
+      jobId,
+      tenantId,
+      job.execution_token,
+      "AI_ANALYSIS_URL is not set",
+      "validation_error"
+    );
+    return { ok: true, jobId, status: "failed" };
+  }
+  if (isVideo && !isGeminiConfigured()) {
+    await markJobFailed(
+      supabase,
+      jobId,
+      tenantId,
+      job.execution_token,
+      "Gemini is not configured for video analysis",
+      "validation_error"
+    );
     return { ok: true, jobId, status: "failed" };
   }
 
@@ -242,11 +264,26 @@ export async function processOneJob(
       throw new VisionProviderError({ message: retryable ? "Private media source temporarily unavailable" : "Private media source denied",
         errorType: retryable ? "provider_unavailable" : "validation_error", retryable });
     }
-    const result = await callAiAnalysis(aiAnalysisUrl, {
-      media_id: mediaId,
-      image_url: source.imageUrl,
-      project_id: projectId,
-    }, options.aiRequestHeaders);
+
+    let result: AnalysisResult;
+    if (isVideo) {
+      const daily = await analyzeVideoDailyWork(
+        supabase,
+        { tenantId, userId: null, traceId },
+        { videoUrl: source.imageUrl, projectId, mediaId }
+      );
+      result = mapDailyVideoToAnalysisResult(daily);
+    } else {
+      result = await callAiAnalysis(
+        aiAnalysisUrl!,
+        {
+          media_id: mediaId,
+          image_url: source.imageUrl,
+          project_id: projectId,
+        },
+        options.aiRequestHeaders
+      );
+    }
 
     const { error: completeError } = await supabase.rpc("complete_session_analysis_job", {
       p_job_id: jobId,
@@ -272,7 +309,11 @@ export async function processOneJob(
     const classified =
       err instanceof VisionProviderError
         ? { errorType: err.errorType, retryable: err.retryable }
-        : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
+        : err instanceof AIPolicyBlockedError
+          ? { errorType: "validation_error" as const, retryable: false }
+          : err instanceof AIVideoDailyFailedError
+            ? classifyVisionFailure(err.message)
+            : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
     const message = err instanceof Error ? err.message : "Analysis failed";
     const attempts = await markJobFailed(supabase, jobId, tenantId, job.execution_token, message, classified.errorType);
     logJobLifecycle("job_failed", {
