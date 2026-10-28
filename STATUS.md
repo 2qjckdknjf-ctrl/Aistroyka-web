@@ -1,5 +1,11 @@
 # STATUS — AISTROYKA
 
+Факты сверены 2026-10-13. Свежий main `e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc` (#445); staging/apex/www отвечают health SHA `e0c9f51`. Полный исходный набор 2798 tests PASS, после source-scope исправления 2809 tests PASS; lint/i18n и Cloudflare build PASS.
+
+Активная разработка: `fix/deep-audit-remediation-2026-10-13`, AISTROYKA-main-clean. [Глубокий аудит и очередь](docs/audit/deep-2026-10-13/REPORT.md), [71 требование](docs/audit/deep-2026-10-13/requirements.csv), [версии планов](docs/audit/deep-2026-10-13/plans.csv). Последние требования PR #350 прочитаны на HEAD b5e84774 от 13 октября; roadmap PR остаётся открытым. Source binding подготовлен в PR #446, required CI PASS; grant hardening PR #447 имеет 27 PGlite/27 native SQL checks PASS; первый C04 core — PR #448, 2822 tests/lint/typecheck PASS. Три текущих iOS simulator Debug сборки PASS. Эти PR пока не merged; новый SQL не applied. Далее отдельный grant hardening, durable report-media result/retry/review → Graph/video → reviewed preproject extraction и этап 2а. Legal/store/billing/time gates сохраняются. До каждого apply нужны свежие history/receipts; read-only history сейчас содержит 200 записей.
+
+## Исторический операционный снимок 12 октября
+
 Факты сверены 2026-10-12. Последний наблюдённый main: `ec0c2c6f333b21a44684ea944fe90d9f973a158d` (#444). Текущий main при продолжении определяется свежим `origin/main` и GitHub. Исторические доказательства оригиналов: #437, 13 живых HTTP-проверок PASS; следующие изменения очереди имеют отдельные отчёты.
 
 Текущий проверенный runtime: staging/apex/www `ec0c2c6` (#444), staging 38203225218 / production 38203511775 SUCCESS. #444 required CI 38202800356 SUCCESS, final HEAD 3e8338c5, точное независимое одобрение и защищённое объединение. #443: четыре live handler/SDK reconciliation проверки PASS; четыре session rows и два PNG удалены.
@@ -17,4 +23,8 @@
 
 [Worker API proof](docs/reports/worker-publication-flow-2026-10-12/RESULT.md), [Async Vision live proof](docs/reports/async-vision-live-2026-10-12/RESULT.md), [Runtime repair](docs/reports/private-original-runtime-2026-10-12/RESULT.md), [native Manager](docs/reports/manager-native-publication-2026-10-12/RESULT.md), [registry](docs/tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). 74 старых смешанных PR требуют semantic review; dirty/ahead/release/cursor источники сохранены. Полная готовность проекта остаётся открытой. [Physical gallery](docs/reports/customer-physical-gallery-2026-10-12/RESULT.md).
 
-Отдельный локальный срез 2026-10-13: C04 computational parity продолжает Draft PR #448 HEAD f45f875d в изолированной ветке feat/stage2a-calculation-parity-2026-10-13. Чистое quantity/commercial ядро и 74 синтетических сценария готовы к review; targeted tests, lint и TypeScript PASS. Хранение, API и Manager/Worker интеграция остаются A01–A05; публикация и independent real-data C05 не подтверждены. [Контракт и ограничения](docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md), [задача](docs/tasks/2026-10-13-stage2a-calculation-parity.md), [handoff](docs/handoff/2026-10-13-stage2a-calculation-parity.md).
+Отдельный локальный срез 2026-10-13: C04 computational parity — PR #449 на `feat/stage2a-calculation-parity-2026-10-13` после merge #448. Чистое quantity/commercial ядро и синтетические сценарии готовы к review; targeted tests, lint и TypeScript PASS. Хранение, API и Manager/Worker интеграция остаются A01–A05; публикация и independent real-data C05 не подтверждены. [Контракт и ограничения](docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md), [задача](docs/tasks/2026-10-13-stage2a-calculation-parity.md), [handoff](docs/handoff/2026-10-13-stage2a-calculation-parity.md).
+
+Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
+
+PR #350: [планирование Customer / ROMA](docs/handoff/2026-09-23-roadmap-consolidation.md), сверка 2026-10-13 — [product](docs/roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md) / [ROMA](docs/roma/AI_DIGEST_RECONCILIATION_2026-10-13.md). Planning changes не подтверждают новый runtime/deployment.
