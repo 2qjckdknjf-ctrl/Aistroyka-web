@@ -2,7 +2,7 @@
  * POST /api/v1/ai/analysis/:id/review
  * Manager/admin human verdict on a durable vision result.
  * Contractor-internal only. Never a customer/portal surface.
- * Only accepted statuses are Graph-eligible; this route does not mutate Graph overlays.
+ * Accepted/edited are Graph-eligible; this route does not mutate Graph overlays.
  */
 
 import { NextResponse } from "next/server";
@@ -50,7 +50,7 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          "status must be accepted, rejected, or insufficient_evidence",
+          "status must be accepted, edited, rejected, or insufficient_evidence",
       },
       { status: 400 }
     );
@@ -63,6 +63,18 @@ export async function POST(
         ? body.comment
         : null;
 
+  const correctedRaw = body.corrected_payload ?? body.correctedPayload ?? null;
+  const correctedPayload =
+    correctedRaw !== null && typeof correctedRaw === "object" && !Array.isArray(correctedRaw)
+      ? (correctedRaw as {
+          stage?: string | null;
+          completion_percent?: number | null;
+          risk_level?: string | null;
+          detected_issues?: string[] | null;
+          recommendations?: string[] | null;
+        })
+      : null;
+
   const admin = getAdminClient();
   if (!admin) {
     return NextResponse.json({ error: "Admin client unavailable" }, { status: 503 });
@@ -74,6 +86,7 @@ export async function POST(
     reviewerUserId: ctx.userId!,
     status,
     note,
+    correctedPayload,
   });
 
   if (!result.ok) {
@@ -92,6 +105,7 @@ export async function POST(
     details: {
       status: result.reviewStatus,
       graph_eligible: result.graphEligible,
+      correction_id: result.correctionId,
       note: note && String(note).trim() ? String(note).trim().slice(0, 2000) : null,
       source: "manager",
     },
@@ -105,6 +119,7 @@ export async function POST(
         graph_eligible: result.graphEligible,
         reviewed_at: result.reviewedAt,
         reviewed_by: result.reviewedBy,
+        correction_id: result.correctionId,
       },
     },
     { status: 200 }

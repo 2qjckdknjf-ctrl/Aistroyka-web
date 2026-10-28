@@ -180,8 +180,8 @@ function parseAcceptedAnalysisRow(row: Record<string, unknown>): AcceptedAnalysi
   const id = requiredId(row.id);
   const mediaId = requiredId(row.media_id);
   if (!id || !mediaId) return null;
-  // Defense in depth: repository query already filters review_status=accepted.
-  if (row.review_status !== "accepted") return null;
+  // Defense in depth: repository query already filters accepted/edited.
+  if (row.review_status !== "accepted" && row.review_status !== "edited") return null;
   return {
     id,
     media_id: mediaId,
@@ -200,7 +200,7 @@ async function loadAcceptedAnalyses(
     .from("ai_analysis")
     .select("id, media_id, stage, risk_level, review_status")
     .eq("tenant_id", tenantId)
-    .eq("review_status", "accepted")
+    .in("review_status", ["accepted", "edited"])
     .in("media_id", mediaIds)
     .order("id")
     .limit(CONSTRUCTION_GRAPH_SOURCE_PAGE + 1);
