@@ -28,7 +28,12 @@ vi.mock("@/lib/domain/tasks/task.policy", () => ({
 vi.mock("@/lib/domain/ai-analysis/review.service", () => ({
   reviewAiAnalysis: (...args: unknown[]) => reviewAiAnalysis(...args),
   validateReviewVerdict: (value: unknown) => {
-    if (value === "accepted" || value === "rejected" || value === "insufficient_evidence") {
+    if (
+      value === "accepted" ||
+      value === "edited" ||
+      value === "rejected" ||
+      value === "insufficient_evidence"
+    ) {
       return value;
     }
     return null;

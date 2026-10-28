@@ -131,7 +131,7 @@ describe("queryProjectConstructionGraph", () => {
     expect(graph?.nodes.filter((n) => n.family === "task")).toHaveLength(CONSTRUCTION_GRAPH_SOURCE_PAGE);
   });
 
-  it("includes only accepted ai_analysis linked to project media", async () => {
+  it("includes accepted/edited ai_analysis linked to project media", async () => {
     const supabase = {
       from: vi.fn((table: string) => {
         if (table === "projects") {
@@ -165,9 +165,9 @@ describe("queryProjectConstructionGraph", () => {
             error: null,
           });
           const order = vi.fn().mockReturnValue({ limit });
-          const inn = vi.fn().mockReturnValue({ order });
-          const eqStatus = vi.fn().mockReturnValue({ in: inn });
-          const eqTenant = vi.fn().mockReturnValue({ eq: eqStatus });
+          const inMedia = vi.fn().mockReturnValue({ order });
+          const inStatus = vi.fn().mockReturnValue({ in: inMedia });
+          const eqTenant = vi.fn().mockReturnValue({ in: inStatus });
           return {
             select: vi.fn().mockReturnValue({ eq: eqTenant }),
           };
