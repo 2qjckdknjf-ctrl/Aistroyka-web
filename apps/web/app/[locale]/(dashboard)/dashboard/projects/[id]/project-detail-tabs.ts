@@ -12,6 +12,7 @@ export const PROJECT_COMMAND_TAB_ORDER = [
   "costs",
   "estimate",
   "quantities",
+  "preproject",
   "handover",
   "review-pack",
   "intelligence",
