@@ -1,12 +1,10 @@
 # STATUS — AISTROYKA
 
-## Актуальная плановая сверка — 2026-10-23
+## Актуальная плановая сверка — 2026-10-28
 
-[Единая очередь в каноническом roadmap](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23): P0 boundaries → P1 durable video evidence/Graph/materials → P2 spatial/live expansion. Main `04ec74bf955c29799ab535c043a33c1f9296c309`; refresh preflight CURRENT_BASELINE. [Draft #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) продолжает OPEN DRAFT #453, HEAD `586649ea9774924eb75512aa26d861974d372589`; #450/#451/#452 сведены без повторных задач и закрыты без merge как superseded; исходные ветки/HEAD сохранены. Security #446/#447 и quantity #448→#449 — PR_ONLY, не delivered. [Exact PR snapshot](docs/roadmap/CONSOLIDATION_EVIDENCE_2026-10-23.json).
+Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Merged #446/#447/#457/#448/#449/#458/#453/#455/#459/#454. Hosted SQL applied (grants, `platform_job_id`, human review). Durable result + manager review + accepted Graph lineage + C04 cores в main.
 
-Registry stores observed #455 HEAD `1399fc3` before this registry-only follow-up; refresh exact remote HEAD before work.
-
-Следующее действие: review плановых PR, назначить owner/reviewer среза, продолжить существующий security/evidence acceptance gap. Live/device/DB/provider проверки 23 октября не запускались; прежний runtime-поток ниже — история, не актуальная команда и не новый PASS. Merge/deploy не разрешены этим обновлением.
+Следующее инженерное: async video в `runOneJob`, reviewed preproject extractor, Stage2a A01–A05. Live Worker fixture / legal / store / billing 7-day — `BLOCKED_EXTERNAL`/`OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
