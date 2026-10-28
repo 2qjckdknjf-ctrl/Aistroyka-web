@@ -22,3 +22,7 @@
 | План | Ручной intake, async request_key, Graph persistence и Customer уже существуют | Source-linked Vision/Graph → reviewed preproject extractor; Android D2/live camera после зависимостей. Legal/store/billing 7-day gates требуют реальных внешних/временных доказательств |
 
 [Worker API proof](docs/reports/worker-publication-flow-2026-10-12/RESULT.md), [Async Vision live proof](docs/reports/async-vision-live-2026-10-12/RESULT.md), [Runtime repair](docs/reports/private-original-runtime-2026-10-12/RESULT.md), [native Manager](docs/reports/manager-native-publication-2026-10-12/RESULT.md), [registry](docs/tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). 74 старых смешанных PR требуют semantic review; dirty/ahead/release/cursor источники сохранены. Полная готовность проекта остаётся открытой. [Physical gallery](docs/reports/customer-physical-gallery-2026-10-12/RESULT.md).
+
+Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
+
+PR #350: [планирование Customer / ROMA](docs/handoff/2026-09-23-roadmap-consolidation.md), сверка 2026-10-13 — [product](docs/roadmap/AI_DIGEST_RECONCILIATION_2026-10-13.md) / [ROMA](docs/roma/AI_DIGEST_RECONCILIATION_2026-10-13.md). Planning changes не подтверждают новый runtime/deployment.
