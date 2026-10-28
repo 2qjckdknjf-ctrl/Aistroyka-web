@@ -1,9 +1,10 @@
 "use client";
 
 /**
- * Stage2a A02 — Manager quantity panel.
- * Lists immutable InputSnapshots and creates a simple rectangle planned area request.
- * Never displays unit prices, costs, margin, or commercial totals (A05 / costs tab).
+ * Stage2a A02/A04/A05 — Manager quantity panel.
+ * Lists immutable InputSnapshots, records human acceptance (A04), and may bind
+ * contractor-internal cost-input commercial lines (A05). Never shows margin,
+ * profitability, or portal-facing commercial artifacts.
  */
 
 import { useState } from "react";
@@ -44,6 +45,20 @@ type CalculationSummary = {
   issues: string[];
   created_at: string;
 };
+
+type AcceptanceState = {
+  id: string;
+  decision: string;
+  commercially_bindable: boolean;
+};
+
+/** commercial.stage2a.v1 requires six fractional digits. */
+function toCommercialQuantity(value: string): string | null {
+  const trimmed = value.trim();
+  if (!/^(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(trimmed)) return null;
+  const [whole, frac = ""] = trimmed.split(".");
+  return `${whole}.${frac.padEnd(6, "0").slice(0, 6)}`;
+}
 
 async function fetchSnapshots(projectId: string): Promise<SnapshotRow[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/quantities/snapshots?limit=50`, {
@@ -113,6 +128,88 @@ async function createRectangleSnapshot(input: {
   return json.data;
 }
 
+async function postAcceptance(input: {
+  projectId: string;
+  calculationId: string;
+  decision: "accepted" | "rejected" | "insufficient_basis";
+}): Promise<AcceptanceState> {
+  const res = await fetch(
+    `/api/v1/projects/${input.projectId}/quantities/calculations/${input.calculationId}/acceptance`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: input.decision }),
+    }
+  );
+  const json = (await res.json()) as {
+    error?: string;
+    code?: string;
+    data?: AcceptanceState;
+  };
+  if (!res.ok || !json.data) {
+    throw new Error(json.code ?? json.error ?? "ACCEPTANCE_FAILED");
+  }
+  return json.data;
+}
+
+async function postCommercialBind(input: {
+  projectId: string;
+  acceptanceId: string;
+  quantity: string;
+  unit: "m2" | "m" | "ea";
+  quantityBasis: "physical_net" | "system_area" | "joint_length" | "element_count";
+  workSpecHash: string;
+  numeratorMinor: string;
+}): Promise<{ id: string }> {
+  const context = {
+    work_spec_hash: input.workSpecHash,
+    unit: input.unit,
+    purpose: "work" as const,
+    quantity_basis: input.quantityBasis,
+    component_id: null,
+  };
+  const commercial = {
+    currency: "EUR",
+    quantity: { value: input.quantity, context },
+    price: {
+      price_use: "cost_input",
+      context,
+      rate: {
+        numerator_minor: input.numeratorMinor.trim(),
+        denominator_quantity: "1.000000",
+        unit: input.unit,
+        currency: "EUR",
+        tax_treatment: "excluded",
+      },
+    },
+    minimum_billable_quantity: null,
+    fixed_charges: [],
+    markup_bps: "0",
+    discount: { kind: "none" },
+    tax_bps: "0",
+  };
+
+  const res = await fetch(
+    `/api/v1/projects/${input.projectId}/quantities/acceptances/${input.acceptanceId}/commercial-bind`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commercial }),
+    }
+  );
+  const json = (await res.json()) as {
+    error?: string;
+    code?: string;
+    data?: { id: string };
+  };
+  if (!res.ok || !json.data?.id) {
+    throw new Error(json.code ?? json.error ?? "COMMERCIAL_BIND_FAILED");
+  }
+  return { id: json.data.id };
+}
+
 export function ProjectQuantitiesPanel({
   projectId,
   skin = "default",
@@ -128,6 +225,10 @@ export function ProjectQuantitiesPanel({
   const [width, setWidth] = useState("4.2");
   const [height, setHeight] = useState("2.1");
   const [lastResult, setLastResult] = useState<CalculationSummary | null>(null);
+  const [workSpecHash, setWorkSpecHash] = useState<string | null>(null);
+  const [acceptance, setAcceptance] = useState<AcceptanceState | null>(null);
+  const [costNumeratorMinor, setCostNumeratorMinor] = useState("1999");
+  const [bindingId, setBindingId] = useState<string | null>(null);
 
   const { data, isPending, isError } = useQuery({
     queryKey: ["project-quantities", projectId],
@@ -146,7 +247,62 @@ export function ProjectQuantitiesPanel({
       }),
     onSuccess: (result) => {
       setLastResult(result.calculation);
+      setWorkSpecHash(
+        /^[a-f0-9]{64}$/.test(result.snapshot.request_hash)
+          ? result.snapshot.request_hash
+          : null
+      );
+      setAcceptance(null);
+      setBindingId(null);
       queryClient.invalidateQueries({ queryKey: ["project-quantities", projectId] });
+    },
+  });
+
+  const acceptMutation = useMutation({
+    mutationFn: (decision: "accepted" | "rejected" | "insufficient_basis") => {
+      if (!lastResult?.id) throw new Error("NO_CALCULATION");
+      return postAcceptance({
+        projectId,
+        calculationId: lastResult.id,
+        decision,
+      });
+    },
+    onSuccess: (result) => {
+      setAcceptance(result);
+      setBindingId(null);
+    },
+  });
+
+  const bindMutation = useMutation({
+    mutationFn: () => {
+      if (!acceptance?.id || !lastResult || !workSpecHash) throw new Error("NO_ACCEPTANCE");
+      const unit = (lastResult.unit === "m" || lastResult.unit === "ea" ? lastResult.unit : "m2") as
+        | "m2"
+        | "m"
+        | "ea";
+      const quantityBasis = (
+        lastResult.quantity_basis === "system_area" ||
+        lastResult.quantity_basis === "joint_length" ||
+        lastResult.quantity_basis === "element_count"
+          ? lastResult.quantity_basis
+          : "physical_net"
+      ) as "physical_net" | "system_area" | "joint_length" | "element_count";
+      const quantity = lastResult.quantity
+        ? toCommercialQuantity(lastResult.quantity)
+        : null;
+      if (!quantity) throw new Error("NO_QUANTITY");
+      return postCommercialBind({
+        projectId,
+        acceptanceId: acceptance.id,
+        quantity,
+        unit,
+        quantityBasis,
+        workSpecHash,
+        numeratorMinor: costNumeratorMinor,
+      });
+    },
+    onSuccess: (result) => {
+      setBindingId(result.id);
     },
   });
 
@@ -210,16 +366,97 @@ export function ProjectQuantitiesPanel({
       ) : null}
 
       {lastResult ? (
-        <div className="rounded-md border border-aistroyka-border p-3 text-sm">
-          <p className="font-medium text-aistroyka-text-primary">{t("quantitiesLastResult")}</p>
-          <p className="mt-1 text-aistroyka-text-secondary">
-            {lastResult.quantity != null
-              ? `${lastResult.quantity} ${lastResult.unit ?? ""}`.trim()
-              : t("quantitiesNoQuantity")}
-            {lastResult.issues.length > 0
-              ? ` · ${t("quantitiesIssues")}: ${lastResult.issues.join(", ")}`
-              : ""}
-          </p>
+        <div className="space-y-3 rounded-md border border-aistroyka-border p-3 text-sm">
+          <div>
+            <p className="font-medium text-aistroyka-text-primary">{t("quantitiesLastResult")}</p>
+            <p className="mt-1 text-aistroyka-text-secondary">
+              {lastResult.quantity != null
+                ? `${lastResult.quantity} ${lastResult.unit ?? ""}`.trim()
+                : t("quantitiesNoQuantity")}
+              {lastResult.issues.length > 0
+                ? ` · ${t("quantitiesIssues")}: ${lastResult.issues.join(", ")}`
+                : ""}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={acceptMutation.isPending || !!acceptance}
+              onClick={() => acceptMutation.mutate("accepted")}
+            >
+              {t("quantitiesAccept")}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={acceptMutation.isPending || !!acceptance}
+              onClick={() => acceptMutation.mutate("rejected")}
+            >
+              {t("quantitiesReject")}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={acceptMutation.isPending || !!acceptance}
+              onClick={() => acceptMutation.mutate("insufficient_basis")}
+            >
+              {t("quantitiesInsufficient")}
+            </Button>
+          </div>
+          {acceptMutation.isError ? (
+            <p className="text-sm text-red-400" role="alert">
+              {t("quantitiesAcceptFailed")}
+            </p>
+          ) : null}
+          {acceptance ? (
+            <p className="text-aistroyka-text-secondary">
+              {t("quantitiesAcceptanceRecorded", { decision: acceptance.decision })}
+              {acceptance.commercially_bindable
+                ? ` · ${t("quantitiesCommerciallyBindable")}`
+                : ` · ${t("quantitiesNotCommerciallyBindable")}`}
+            </p>
+          ) : null}
+
+          {acceptance?.commercially_bindable && !bindingId ? (
+            <form
+              className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end"
+              onSubmit={(event) => {
+                event.preventDefault();
+                bindMutation.mutate();
+              }}
+            >
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-aistroyka-text-secondary">
+                  {t("quantitiesCostNumeratorMinor")}
+                </span>
+                <Input
+                  value={costNumeratorMinor}
+                  onChange={(e) => setCostNumeratorMinor(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="off"
+                />
+              </label>
+              <Button type="submit" disabled={bindMutation.isPending || !workSpecHash}>
+                {bindMutation.isPending
+                  ? t("quantitiesBinding")
+                  : t("quantitiesBindCommercial")}
+              </Button>
+              <p className="sm:col-span-2 text-xs text-aistroyka-text-secondary">
+                {t("quantitiesBindHint")}
+              </p>
+              {bindMutation.isError ? (
+                <p className="sm:col-span-2 text-sm text-red-400" role="alert">
+                  {t("quantitiesBindFailed")}
+                </p>
+              ) : null}
+            </form>
+          ) : null}
+          {bindingId ? (
+            <p className="text-aistroyka-text-secondary">
+              {t("quantitiesBindRecorded")}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
