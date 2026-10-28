@@ -1,5 +1,9 @@
 # AISTROYKA — план/факт,2026-10-11
 
+> Сверка 2026-10-28: protected merges #446/#447/#457/#448/#449/#458/#453; [актуальная очередь](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23). Hosted grants/platform_job_id/human-review applied. Исторические доказательства ниже сохраняют собственные SHA и не подтверждавают текущий runtime сами по себе.
+
+Свежая сверка 2026-10-13: [аудит](../audit/deep-2026-10-13/REPORT.md), [71 требование](../audit/deep-2026-10-13/requirements.csv). Main/runtime e0c9f51 на тот момент; latest PR350 b5e84774 и workflow v2.6 учтены. Исторические строки ниже не становятся новыми сертификатами готовности.
+
 Сверка 2026-10-12: наблюдённый main #440 `0891b08`; текущий код всегда проверяется свежим origin/main. #429/#431/#432 доставлены. #433/#434 дали регрессию оригиналов в Worker; #437 исправил redirect:error и прошёл 13 реальных staging PNG/Proof Pack/PDF/revocation проверок на `fac7a17` с точной очисткой. Production 38190089187 SUCCESS, apex/www `fac7a17`. #435 native Manager защищённо объединён на 4d3ddf75 после CI/three-app smoke SUCCESS, live UI 1/1 и readback PASS; runtime проверяется отдельно. #438 исправил transport; живой job завершён, один результат связан с media/job/tenant; strict provider gate exit 0, fallback 0. Durable audit #439 подтверждён живым событием на b47742e, staging/production SUCCESS. Worker → Manager → отдельный Customer API flow PASS; #440 fresh fallback 13/13 и assigned manager 15/15 PASS с очисткой. Durable report-media result отсутствует в текущем/сохранённом #244 handler — следующий срез по [hard audit](../audit/2026-10-12-report-media-result-hard-audit.md). Physical gallery: Debug build PASS, два UI initialization timeout, 0 tests; camera/native Worker UX отдельно. Не повторять уже включённые модули из-за старого TODO. [STATUS](../../STATUS.md), [runtime proof](../reports/private-original-runtime-2026-10-12/RESULT.md), [native proof](../reports/manager-native-publication-2026-10-12/RESULT.md). Исторические строки ниже сохраняют собственный объём доказательств.
 
 | Контур | Факт | Следующая работа |
@@ -21,3 +25,8 @@
 74 retained older open PRs still require semantic reconciliation. #200 closed as superseded; #195/#196/#206 contain mixed leftovers and are not wholly replaced by these repairs. Saved release/cursor/dirty/ahead work is preserved. An unmerged release flag repair was recovered in #424; #196's proposed storage filter was audited and strengthened rather than blindly merged.
 
 Continue Owner/evidence and source-linked Vision/Graph contracts, then the reviewed preproject extractor. Reuse current modules and inspect current PRs/local salvage before new work. Contractor-ops-only pilot stays in scope. Legal/store/distribution/billing 7-day shadow and growth-rate gates require actual external/time evidence; autonomy does not fabricate it. Security advisors retain prior helper notices; full-project completion remains open.
+
+
+## Уточнение плана — 2026-10-20
+
+[Полный V2 аудит](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) добавлен как 97 детализаций/приёмочных пакетов существующих требований. Исторические факты и таблица выше не переписаны. Источники 20 октября сверены на `04ec74bf955c29799ab535c043a33c1f9296c309`; новые runtime/device проверки этим не выполнены. Customer/AI/commercial gates отдельны, Android deferred, delivered modules не переоткрываются.

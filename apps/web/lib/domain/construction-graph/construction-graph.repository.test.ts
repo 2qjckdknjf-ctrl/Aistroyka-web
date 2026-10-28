@@ -131,6 +131,73 @@ describe("queryProjectConstructionGraph", () => {
     expect(graph?.nodes.filter((n) => n.family === "task")).toHaveLength(CONSTRUCTION_GRAPH_SOURCE_PAGE);
   });
 
+  it("includes only accepted ai_analysis linked to project media", async () => {
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "projects") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: { id: "p1", name: "Villa" }, error: null }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "construction_graph_nodes") {
+          return {
+            upsert: () => ({ select: async () => ({ data: [], error: { message: "does not exist" } }) }),
+          };
+        }
+        if (table === "media") return pageResult([{ id: "m1", type: "image" }]);
+        if (table === "ai_analysis") {
+          const limit = vi.fn().mockResolvedValue({
+            data: [
+              {
+                id: "a1",
+                media_id: "m1",
+                stage: "foundation",
+                risk_level: "low",
+                review_status: "accepted",
+              },
+            ],
+            error: null,
+          });
+          const order = vi.fn().mockReturnValue({ limit });
+          const inn = vi.fn().mockReturnValue({ order });
+          const eqStatus = vi.fn().mockReturnValue({ in: inn });
+          const eqTenant = vi.fn().mockReturnValue({ eq: eqStatus });
+          return {
+            select: vi.fn().mockReturnValue({ eq: eqTenant }),
+          };
+        }
+        if (table === "worker_reports") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockReturnValue({
+                order: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+          };
+        }
+        return pageResult([]);
+      }),
+    };
+    const { graph, error } = await queryProjectConstructionGraph(supabase as never, "ten", "p1");
+    expect(error).toBe("");
+    expect(graph?.nodes.some((n) => n.source_table === "ai_analysis" && n.source_id === "a1")).toBe(
+      true
+    );
+    expect(
+      graph?.edges.some(
+        (e) => e.from_id === "ai_analysis:a1" && e.to_id === "media:m1" && e.kind === "evidences"
+      )
+    ).toBe(true);
+  });
+
   it("does not turn a malformed source page into graph nodes", async () => {
     const supabase = {
       from: vi.fn((table: string) => {

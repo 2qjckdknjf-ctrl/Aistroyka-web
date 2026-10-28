@@ -1,5 +1,21 @@
 # STATUS — AISTROYKA
 
+## Актуальная плановая сверка — 2026-10-23
+
+[Единая очередь в каноническом roadmap](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23): P0 boundaries → P1 durable video evidence/Graph/materials → P2 spatial/live expansion. Main `04ec74bf955c29799ab535c043a33c1f9296c309`; refresh preflight CURRENT_BASELINE. [Draft #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) продолжает OPEN DRAFT #453, HEAD `586649ea9774924eb75512aa26d861974d372589`; #450/#451/#452 сведены без повторных задач и закрыты без merge как superseded; исходные ветки/HEAD сохранены. Security #446/#447 и quantity #448→#449 — PR_ONLY, не delivered. [Exact PR snapshot](docs/roadmap/CONSOLIDATION_EVIDENCE_2026-10-23.json).
+
+Registry stores observed #455 HEAD `1399fc3` before this registry-only follow-up; refresh exact remote HEAD before work.
+
+Следующее действие: review плановых PR, назначить owner/reviewer среза, продолжить существующий security/evidence acceptance gap. Live/device/DB/provider проверки 23 октября не запускались; прежний runtime-поток ниже — история, не актуальная команда и не новый PASS. Merge/deploy не разрешены этим обновлением.
+
+## Дополнение 2026-10-20 — полный аудит включён в план
+
+**Текущая задача документации:** `docs/aistroyka-audit-v2-plan-2026-10-20`. [Task](docs/tasks/2026-10-20-audit-v2-plan-integration.md), [handoff](docs/handoff/2026-10-20-audit-v2-plan-integration.md), [интеграция 97 пакетов](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md). Состояние: открыт [PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453) (docs-only); текущий HEAD всегда получать из GitHub PR. Ни один V2 implementation/runtime/release gate этим не закрывается. Следующий docs слой — [PR #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) (Oct-23 evidence/materials queue), stacked on #453.
+
+Факты сверены 2026-10-28 после protected merges: #446/#447/#457/#448/#449/#458. Hosted SQL applied for private-helper grants, `ai_analysis.platform_job_id`, и human-review columns. Durable report-media persist + manager review gate в main; Graph lineage/video/live Worker fixture остаются следующими. Legal/store/billing/time gates сохраняются.
+
+## Исторический операционный снимок 12 октября
+
 Факты сверены 2026-10-12. Последний наблюдённый main: `ec0c2c6f333b21a44684ea944fe90d9f973a158d` (#444). Текущий main при продолжении определяется свежим `origin/main` и GitHub. Исторические доказательства оригиналов: #437, 13 живых HTTP-проверок PASS; следующие изменения очереди имеют отдельные отчёты.
 
 Текущий проверенный runtime: staging/apex/www `ec0c2c6` (#444), staging 38203225218 / production 38203511775 SUCCESS. #444 required CI 38202800356 SUCCESS, final HEAD 3e8338c5, точное независимое одобрение и защищённое объединение. #443: четыре live handler/SDK reconciliation проверки PASS; четыре session rows и два PNG удалены.
@@ -16,6 +32,8 @@
 | План | Ручной intake, async request_key, Graph persistence и Customer уже существуют | Source-linked Vision/Graph → reviewed preproject extractor; Android D2/live camera после зависимостей. Legal/store/billing 7-day gates требуют реальных внешних/временных доказательств |
 
 [Worker API proof](docs/reports/worker-publication-flow-2026-10-12/RESULT.md), [Async Vision live proof](docs/reports/async-vision-live-2026-10-12/RESULT.md), [Runtime repair](docs/reports/private-original-runtime-2026-10-12/RESULT.md), [native Manager](docs/reports/manager-native-publication-2026-10-12/RESULT.md), [registry](docs/tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). 74 старых смешанных PR требуют semantic review; dirty/ahead/release/cursor источники сохранены. Полная готовность проекта остаётся открытой. [Physical gallery](docs/reports/customer-physical-gallery-2026-10-12/RESULT.md).
+
+Отдельный локальный срез 2026-10-13: C04 computational parity — PR #449 на `feat/stage2a-calculation-parity-2026-10-13` после merge #448. Чистое quantity/commercial ядро и синтетические сценарии готовы к review; targeted tests, lint и TypeScript PASS. Хранение, API и Manager/Worker интеграция остаются A01–A05; публикация и independent real-data C05 не подтверждены. [Контракт и ограничения](docs/roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md), [задача](docs/tasks/2026-10-13-stage2a-calculation-parity.md), [handoff](docs/handoff/2026-10-13-stage2a-calculation-parity.md).
 
 Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
 

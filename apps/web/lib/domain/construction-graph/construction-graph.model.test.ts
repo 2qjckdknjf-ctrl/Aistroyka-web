@@ -35,4 +35,31 @@ describe("buildConstructionGraphFromSources", () => {
     expect(graph.edges.some((e) => e.to_id === "worker_tasks:missing-task")).toBe(false);
     expect(graph.edges.some((e) => e.kind === "reported_on" && e.to_id === "projects:p")).toBe(true);
   });
+
+  it("links accepted ai_analysis to media and skips orphan media ids", () => {
+    const graph = buildConstructionGraphFromSources("t", "p", {
+      project: { id: "p", name: "P" },
+      tasks: [],
+      reports: [],
+      media: [{ id: "media-1", type: "image" }],
+      defects: [],
+      documents: [],
+      accepted_analyses: [
+        { id: "a1", media_id: "media-1", stage: "foundation", risk_level: "low" },
+        { id: "a-orphan", media_id: "missing-media", stage: "roof", risk_level: "high" },
+      ],
+    });
+    expect(graph.nodes.some((n) => n.source_table === "ai_analysis" && n.source_id === "a1")).toBe(
+      true
+    );
+    expect(graph.nodes.some((n) => n.source_id === "a-orphan")).toBe(false);
+    expect(
+      graph.edges.some(
+        (e) =>
+          e.kind === "evidences" &&
+          e.from_id === "ai_analysis:a1" &&
+          e.to_id === "media:media-1"
+      )
+    ).toBe(true);
+  });
 });
