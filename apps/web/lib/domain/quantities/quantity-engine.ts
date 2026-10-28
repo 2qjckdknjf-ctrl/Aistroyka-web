@@ -51,6 +51,23 @@ const countSchema = z.object({
 }).strict();
 const requestSchema = z.discriminatedUnion("kind", [areaSchema, jointSchema, countSchema]);
 export type QuantityRequest = z.infer<typeof requestSchema>;
+
+/** Validate a QuantityRequest without calculating. Used by A01 storage adapters. */
+export function parseQuantityRequest(
+  raw: unknown
+): { ok: true; data: QuantityRequest } | { ok: false; issues: ["invalid_input"] } {
+  const parsed = requestSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, issues: ["invalid_input"] };
+  return { ok: true, data: parsed.data };
+}
+
+/** Pilot catalogue entry for a work code, or null when unsupported. */
+export function catalogueEntryFor(
+  workCode: string
+): readonly [unit: "m2" | "m" | "ea", quantity_basis: string, rule_id: string] | null {
+  if (!Object.prototype.hasOwnProperty.call(PILOT_CATALOGUE, workCode)) return null;
+  return PILOT_CATALOGUE[workCode as WorkCode];
+}
 type Issue = "invalid_input" | "unsupported_rule" | "incomplete_basis" | "unresolved_mapping"
   | "invalid_geometry" | "outside_parent" | "complexity_limit" | "below_storage_resolution" | "quantity_out_of_range";
 class InputError extends Error { constructor(public readonly code: Issue) { super(code); } }

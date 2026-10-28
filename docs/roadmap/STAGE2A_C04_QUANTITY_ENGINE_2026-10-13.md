@@ -33,7 +33,7 @@
 
 ## Дальнейшая реализация
 
-1. A01 и C03 adapter должны проверять tenant/project/files/назначение Worker, immutable InputSnapshot/WorkSpecification revision и calibration/единицы. Внешнее verified остаётся claim; legacy scalar не превращается в замер автоматически.
+1. A01 и C03 adapter должны проверять tenant/project/files/назначение Worker, immutable InputSnapshot/WorkSpecification revision и calibration/единицы. Внешнее verified остаётся claim; legacy scalar не превращается в замер автоматически. **A01 storage slice 2026-10-28:** см. [STAGE2A_A01_QUANTITY_STORAGE_2026-10-28.md](./STAGE2A_A01_QUANTITY_STORAGE_2026-10-28.md) — таблицы + manager API без цен; C03/UI ещё открыты.
 2. A02/A03 вызывают этот исполнитель по разрешённым inputs. Привязка к task/report и разделение planned/reported/measured остаются серверными правилами. accepted/system_complete создаются отдельной приёмкой с lineage.
 3. A04 сохраняет отдельное человеческое решение и повторно проверяет актуальность основания. A05 добавляет quantity/price revision refs в коммерческие строки без изменения ранее согласованной стоимости.
 4. Чистые вычисления C04 согласованы с текущим Obra срезом и проходят parity сценарии. Product adapters, устранение trusted price fallback в O04 и применение нового каталога вместо legacy template factors должны закрываться отдельными интеграционными задачами. Confirmed-room-dimensions guard уже реализован в свежем Obra PR #63 HEAD 05e4bbee: 24 hermetic cases PASS, обе capture ветки используют helper. Не повторять прежний C01 unit/default defect.
