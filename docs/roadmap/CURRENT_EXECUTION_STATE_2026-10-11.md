@@ -23,3 +23,8 @@
 74 retained older open PRs still require semantic reconciliation. #200 closed as superseded; #195/#196/#206 contain mixed leftovers and are not wholly replaced by these repairs. Saved release/cursor/dirty/ahead work is preserved. An unmerged release flag repair was recovered in #424; #196's proposed storage filter was audited and strengthened rather than blindly merged.
 
 Continue Owner/evidence and source-linked Vision/Graph contracts, then the reviewed preproject extractor. Reuse current modules and inspect current PRs/local salvage before new work. Contractor-ops-only pilot stays in scope. Legal/store/distribution/billing 7-day shadow and growth-rate gates require actual external/time evidence; autonomy does not fabricate it. Security advisors retain prior helper notices; full-project completion remains open.
+
+
+## Уточнение плана — 2026-10-20
+
+[Полный V2 аудит](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) добавлен как 97 детализаций/приёмочных пакетов существующих требований. Исторические факты и таблица выше не переписаны. Источники 20 октября сверены на `04ec74bf955c29799ab535c043a33c1f9296c309`; новые runtime/device проверки этим не выполнены. Customer/AI/commercial gates отдельны, Android deferred, delivered modules не переоткрываются.

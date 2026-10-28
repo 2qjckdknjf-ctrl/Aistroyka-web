@@ -1,8 +1,10 @@
 # STATUS — AISTROYKA
 
-Факты сверены 2026-10-13. Свежий main `e0c9f51a1a8d7b582ed2bc354e09ecbe8cb10bcc` (#445); staging/apex/www отвечают health SHA `e0c9f51`. Полный исходный набор 2798 tests PASS, после source-scope исправления 2809 tests PASS; lint/i18n и Cloudflare build PASS.
+## Дополнение 2026-10-20 — полный аудит включён в план
 
-Активная разработка: `fix/deep-audit-remediation-2026-10-13`, AISTROYKA-main-clean. [Глубокий аудит и очередь](docs/audit/deep-2026-10-13/REPORT.md), [71 требование](docs/audit/deep-2026-10-13/requirements.csv), [версии планов](docs/audit/deep-2026-10-13/plans.csv). Последние требования PR #350 прочитаны на HEAD b5e84774 от 13 октября; roadmap PR остаётся открытым. Source binding подготовлен в PR #446, required CI PASS; grant hardening PR #447 имеет 27 PGlite/27 native SQL checks PASS; первый C04 core — PR #448, 2822 tests/lint/typecheck PASS. Три текущих iOS simulator Debug сборки PASS. Эти PR пока не merged; новый SQL не applied. Далее отдельный grant hardening, durable report-media result/retry/review → Graph/video → reviewed preproject extraction и этап 2а. Legal/store/billing/time gates сохраняются. До каждого apply нужны свежие history/receipts; read-only history сейчас содержит 200 записей.
+**Текущая задача документации:** `docs/aistroyka-audit-v2-plan-2026-10-20`. [Task](docs/tasks/2026-10-20-audit-v2-plan-integration.md), [handoff](docs/handoff/2026-10-20-audit-v2-plan-integration.md), [интеграция 97 пакетов](docs/roadmap/AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md). Состояние: открыт [PR #453](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/453) (docs-only); текущий HEAD всегда получать из GitHub PR. Ни один V2 implementation/runtime/release gate этим не закрывается. Следующий docs слой — [PR #455](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/455) (Oct-23 evidence/materials queue), stacked on #453.
+
+Факты сверены 2026-10-28 после protected merges: #446/#447/#457/#448/#449/#458. Hosted SQL applied for private-helper grants, `ai_analysis.platform_job_id`, и human-review columns. Durable report-media persist + manager review gate в main; Graph lineage/video/live Worker fixture остаются следующими. Legal/store/billing/time gates сохраняются.
 
 ## Исторический операционный снимок 12 октября
 

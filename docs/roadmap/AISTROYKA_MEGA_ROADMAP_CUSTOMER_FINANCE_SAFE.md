@@ -260,6 +260,9 @@ This roadmap assumes these foundations exist and must be hardened, connected, an
 
 # PHASE 0 — LIVE TRUTH VERIFICATION
 
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-IOS-01](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-01), [V2-WEB-22](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-22), [V2-CON-02](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-con-02), [V2-WEB-29](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-29). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
+
 ## Goal
 
 Prove that production, staging, GitHub main and live Supabase are aligned.
@@ -336,6 +339,9 @@ docs/security/CUSTOMER_FINANCE_ISOLATION_PREAUDIT.md
 ---
 
 # PHASE 1 — MANAGER DAILY CONTROL CENTER
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-ARCH-01](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-01), [V2-ARCH-04](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-04), [V2-WEB-01](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-01), [V2-ARCH-02](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-02), [V2-ARCH-06](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-06), [V2-CON-04](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-con-04), [V2-WEB-05](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-05), [V2-IOS-10](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-10), [V2-IOS-15](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-15), [V2-AND-09](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-09), [V2-IOS-17](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-17), [V2-IOS-18](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-18), [V2-IOS-20](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-20), [V2-IOS-21](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-21), [V2-IOS-23](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-23), [V2-WEB-02](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-02), [V2-WEB-03](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-03), [V2-WEB-04](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-04), [V2-WEB-06](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-06), [V2-WEB-07](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-07), [V2-WEB-08](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-08), [V2-WEB-15](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-15), [V2-WEB-26](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-26), [V2-WEB-33](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-33), [V2-ARCH-03](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-03), [V2-WEB-13](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-13), [V2-WEB-14](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-14), [V2-WEB-18](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-18), [V2-WEB-27](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-27), [V2-WEB-28](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-28), [V2-WEB-32](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-32). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -468,6 +474,9 @@ docs/product/PHASE1_MANAGER_ACTION_ITEM_STANDARD.md
 ---
 
 # PHASE 2 — OWNER / CUSTOMER PORTAL
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-IOS-24](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-24), [V2-IOS-26](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-26), [V2-IOS-27](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-27), [V2-WEB-10](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-10), [V2-WEB-23](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-23). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -628,6 +637,9 @@ docs/security/PHASE2_CUSTOMER_FINANCE_ISOLATION_REPORT.md
 
 # PHASE 3 — DECISION REQUESTS
 
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-IOS-25](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-25), [V2-WEB-09](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-09), [V2-WEB-24](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-24). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
+
 ## Goal
 
 Move customer decisions out of WhatsApp and phone calls into structured product workflow.
@@ -779,6 +791,9 @@ docs/product/PHASE3_DECISION_REQUESTS_SECURITY_AUDIT.md
 ---
 
 # PHASE 4 — CUSTOMER ESTIMATES / COMMERCIAL APPROVALS
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-WEB-17](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-17). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -955,6 +970,9 @@ docs/security/PHASE4_ESTIMATE_FINANCE_ISOLATION_AUDIT.md
 
 # PHASE 5 — CHANGE ORDERS / ДОПРАБОТЫ
 
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Самостоятельные V2 пакеты в эту Phase не добавлены; её существующие требования и gates сохраняются. Связанные проверки перечислены в полной карте. Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
+
 ## Goal
 
 Create controlled extra work process.
@@ -1076,6 +1094,9 @@ docs/security/PHASE5_CHANGE_ORDER_FINANCE_ISOLATION_AUDIT.md
 
 # PHASE 6 — PROOF PACK / BEFORE-AFTER EVIDENCE
 
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-CON-03](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-con-03), [V2-AND-03](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-03), [V2-AND-04](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-04), [V2-AND-07](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-07), [V2-IOS-04](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-04), [V2-IOS-05](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-05), [V2-IOS-06](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-06), [V2-IOS-13](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-13), [V2-IOS-14](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-14), [V2-AND-08](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-08), [V2-IOS-19](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-19), [V2-WEB-12](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-12), [V2-WEB-16](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-16), [V2-WEB-25](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-25). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
+
 ## Goal
 
 Create the most viral product feature:
@@ -1162,6 +1183,9 @@ docs/product/PHASE6_PROOF_PACK_REPORT.md
 ---
 
 # PHASE 7 — AI DAILY DIGEST
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-ARCH-05](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-05), [V2-IOS-22](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-22), [V2-WEB-11](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-11). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -1280,6 +1304,9 @@ docs/security/PHASE7_DIGEST_FINANCE_ISOLATION_AUDIT.md
 
 # PHASE 8 — PUNCH LIST / DEFECTS
 
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Самостоятельные V2 пакеты в эту Phase не добавлены; её существующие требования и gates сохраняются. Связанные проверки перечислены в полной карте. Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
+
 ## Goal
 
 Support final defect tracking and acceptance.
@@ -1363,6 +1390,9 @@ docs/product/PHASE8_PUNCH_LIST_REPORT.md
 ---
 
 # PHASE 9 — HANDOVER PACK
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-WEB-31](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-31). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Implementation note (repo, Phase 9 v1)
 
@@ -1467,6 +1497,9 @@ docs/security/PHASE9_HANDOVER_FINANCE_ISOLATION_AUDIT.md
 
 # PHASE 10 — TELEGRAM BOT LAYER
 
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Самостоятельные V2 пакеты в эту Phase не добавлены; её существующие требования и gates сохраняются. Связанные проверки перечислены в полной карте. Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
+
 ## Goal
 
 Use Telegram as a communication and quick-action layer, not as the only auth system.
@@ -1523,6 +1556,9 @@ docs/product/PHASE10_TELEGRAM_REPORT.md
 ---
 
 # PHASE 11 — CONTRACTOR DIRECTORY
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Самостоятельные V2 пакеты в эту Phase не добавлены; её существующие требования и gates сохраняются. Связанные проверки перечислены в полной карте. Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -1597,6 +1633,9 @@ docs/product/PHASE11_CONTRACTOR_DIRECTORY_REPORT.md
 ---
 
 # PHASE 12 — MONETIZATION / PACKAGING
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-PUB-01](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-01), [V2-PUB-02](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-02), [V2-PUB-03](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-03), [V2-PUB-04](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-04), [V2-PUB-05](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-05), [V2-PUB-06](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-06), [V2-PUB-07](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-07), [V2-PUB-08](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-pub-08), [V2-WEB-21](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-21), [V2-WEB-30](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-30). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -1674,6 +1713,9 @@ docs/product/PHASE12_ROADMAP_CLOSURE.md
 ---
 
 # PHASE 13 — FINAL PRODUCTION HARDENING
+
+> **Уточнение аудита V2 — 20.10.2026.** [Правила включения 97 пакетов](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) и [полная карта](product-experience-audit-2026-10-19/CANONICAL_MAPPING_RU.md). Основная привязка к этой Phase: [V2-ARCH-07](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-07), [V2-ARCH-09](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-09), [V2-AND-01](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-01), [V2-AND-02](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-02), [V2-CON-01](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-con-01), [V2-IOS-02](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-02), [V2-IOS-03](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-03), [V2-AND-05](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-05), [V2-AND-06](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-06), [V2-IOS-07](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-07), [V2-IOS-08](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-08), [V2-IOS-09](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-09), [V2-IOS-11](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-11), [V2-IOS-12](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-12), [V2-IOS-16](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-16), [V2-AND-10](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-10), [V2-AND-11](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-11), [V2-AND-12](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-12), [V2-ARCH-08](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-arch-08), [V2-IOS-28](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-28), [V2-IOS-29](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-29), [V2-WEB-19](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-19), [V2-WEB-20](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-web-20), [V2-AND-13](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-and-13), [V2-IOS-30](product-experience-audit-2026-10-19/MEGA_PLAN_RU.md#v2-ios-30). Это детализация/приёмка, не переоткрытие всей фазы и не изменение pilot/release scope.
+
 
 ## Goal
 
@@ -1848,3 +1890,8 @@ Build the trust loop first.
 ## Amendment — 2026-09-23 (reconciled 2026-10-03)
 
 [Customer iOS, async/live intake, evidence and Graph backlog](AISTROYKA_PLAN_AMENDMENT_2026-09-23.md). This extends existing phases. It does not reopen completed phases or expand the active contractor-ops-only production pilot without a separate verified release slice.
+
+
+## Дополнение — полный аудит продукта V2, 2026-10-20
+
+[Интеграция V2](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) включает все 97 пакетов, 73 находки, 406 критериев, 243 будущих проверки и дизайн-задание MagicPath в существующие Phase 0–13/AIS IDs. Полные карточки/архитектура/исходные snapshot находятся [в приложении к плану](product-experience-audit-2026-10-19/README.md). Первичная навигация по пакетам добавлена внутри каждой Phase. Исполнение — по свежему source/PR gap, с отдельными contractor-core, Customer, AI, commercial и deferred Android scopes; документация не закрывает runtime/release gates.
