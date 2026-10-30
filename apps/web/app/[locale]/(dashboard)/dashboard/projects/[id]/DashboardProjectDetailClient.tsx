@@ -26,6 +26,7 @@ import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectQuantitiesPanel } from "./ProjectQuantitiesPanel";
 import { ProjectPreprojectExtractionPanel } from "./ProjectPreprojectExtractionPanel";
 import { ProjectReconciliationFindingsPanel } from "./ProjectReconciliationFindingsPanel";
+import { ProjectTradeCompletenessPanel } from "./ProjectTradeCompletenessPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { DefectsProjectTab } from "./DefectsProjectTab";
@@ -353,6 +354,13 @@ export function DashboardProjectDetailClient({
           aria-labelledby="tab-reconciliation"
         >
           <ProjectReconciliationFindingsPanel projectId={projectId} skin="canon" />
+        </TabPanel>
+        <TabPanel
+          id="panel-completeness"
+          selected={activeTab === "completeness"}
+          aria-labelledby="tab-completeness"
+        >
+          <ProjectTradeCompletenessPanel projectId={projectId} skin="canon" />
         </TabPanel>
       </div>
 

@@ -14,6 +14,7 @@ export const PROJECT_COMMAND_TAB_ORDER = [
   "quantities",
   "preproject",
   "reconciliation",
+  "completeness",
   "handover",
   "review-pack",
   "intelligence",

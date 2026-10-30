@@ -397,7 +397,8 @@
     "portfolioReasonFollowUp": "Conviene un seguimiento.",
     "budgetWithinPlan": "Dentro del presupuesto previsto",
     "portalRecentActivity": "Actividad reciente",
-    "projectTabReconciliation": "Conciliación"
+    "projectTabReconciliation": "Conciliación",
+    "projectTabCompleteness": "Completitud"
   },
   "nav": {
     "dashboard": "Panel",
@@ -4006,7 +4007,28 @@
     "reconEmpty": "Aún no hay hallazgos",
     "reconEmptyHint": "Registre un desajuste de cantidad para revisión humana.",
     "reconAccept": "Aceptar",
-    "reconReject": "Rechazar"
+    "reconReject": "Rechazar",
+    "completenessTitle": "Completitud de oficio",
+    "completenessSubtitle": "Lista de evidencia para una plantilla aprobada. Lo faltante genera preguntas — nunca certificación de calidad.",
+    "completenessLoadFailed": "Error al cargar plantillas.",
+    "completenessEmpty": "Sin plantillas de completitud",
+    "completenessEmptyHint": "Aquí aparecerán plantillas de oficio aprobadas.",
+    "completenessRequirements": "{count} requisitos de evidencia",
+    "completenessInventory": "Evidencia presente en este paquete",
+    "completenessEvaluate": "Evaluar lista",
+    "completenessEvaluating": "Evaluando…",
+    "completenessEvalFailed": "No se pudo evaluar la completitud.",
+    "completenessVerdict": "Veredicto",
+    "completenessNoPass": "La completitud no es PASS de calidad o seguridad.",
+    "completenessKind_contract_scope": "Alcance contractual / orden",
+    "completenessKind_work_specification": "Especificación de obra",
+    "completenessKind_measured_quantity": "Cantidad medida",
+    "completenessKind_substrate_prep_record": "Preparación de soporte",
+    "completenessKind_layer_thickness_record": "Espesor / cobertura",
+    "completenessKind_calibrated_photo": "Foto de campo",
+    "completenessKind_material_datasheet": "Ficha de material",
+    "completenessKind_inspection_checklist": "Lista de inspección",
+    "completenessKind_signoff_document": "Firma del revisor"
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",
