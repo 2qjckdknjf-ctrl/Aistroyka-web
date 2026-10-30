@@ -397,7 +397,8 @@
     "portfolioReasonFollowUp": "Нужно некоторое сопровождение.",
     "budgetWithinPlan": "В пределах плана",
     "portalRecentActivity": "Недавние события",
-    "projectTabReconciliation": "Сверка"
+    "projectTabReconciliation": "Сверка",
+    "projectTabCompleteness": "Полнота"
   },
   "nav": {
     "dashboard": "Кабинет",
@@ -4031,7 +4032,28 @@
     "reconEmpty": "Пока нет findings сверки",
     "reconEmptyHint": "Зафиксируйте расхождение объёма для проверки.",
     "reconAccept": "Принять",
-    "reconReject": "Отклонить"
+    "reconReject": "Отклонить",
+    "completenessTitle": "Полнота работ",
+    "completenessSubtitle": "Чеклист доказательств по утверждённому шаблону. Пропуски → вопросы, не сертификация качества.",
+    "completenessLoadFailed": "Не удалось загрузить шаблоны.",
+    "completenessEmpty": "Нет шаблонов полноты",
+    "completenessEmptyHint": "Здесь появятся утверждённые шаблоны видов работ.",
+    "completenessRequirements": "Требований к доказательствам: {count}",
+    "completenessInventory": "Какие доказательства есть по пакету",
+    "completenessEvaluate": "Проверить чеклист",
+    "completenessEvaluating": "Проверка…",
+    "completenessEvalFailed": "Не удалось оценить полноту.",
+    "completenessVerdict": "Вердикт",
+    "completenessNoPass": "Полнота не означает PASS по качеству или безопасности.",
+    "completenessKind_contract_scope": "Договор / наряд",
+    "completenessKind_work_specification": "Спецификация работ",
+    "completenessKind_measured_quantity": "Измеренное количество",
+    "completenessKind_substrate_prep_record": "Подготовка основания",
+    "completenessKind_layer_thickness_record": "Толщина / расход слоя",
+    "completenessKind_calibrated_photo": "Полевое фото",
+    "completenessKind_material_datasheet": "Паспорт материала",
+    "completenessKind_inspection_checklist": "Чеклист инспекции",
+    "completenessKind_signoff_document": "Подпись проверяющего"
   },
   "governancePage": {
     "listSubtitle": "Кросс-проектное управление и эскалации по активным проектам.",

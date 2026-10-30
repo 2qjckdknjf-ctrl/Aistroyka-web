@@ -397,7 +397,8 @@
     "portfolioReasonFollowUp": "Some follow-up is recommended.",
     "budgetWithinPlan": "Within the planned budget",
     "portalRecentActivity": "Recent activity",
-    "projectTabReconciliation": "Reconciliation"
+    "projectTabReconciliation": "Reconciliation",
+    "projectTabCompleteness": "Completeness"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -4031,7 +4032,28 @@
     "reconEmpty": "No reconciliation findings yet",
     "reconEmptyHint": "Log a quantity mismatch for human review.",
     "reconAccept": "Accept",
-    "reconReject": "Reject"
+    "reconReject": "Reject",
+    "completenessTitle": "Trade completeness",
+    "completenessSubtitle": "Checklist evidence for one approved trade template. Missing items become questions — never a workmanship certification.",
+    "completenessLoadFailed": "Failed to load templates.",
+    "completenessEmpty": "No completeness templates",
+    "completenessEmptyHint": "Approved trade templates will appear here.",
+    "completenessRequirements": "{count} evidence requirements",
+    "completenessInventory": "Evidence present on this package",
+    "completenessEvaluate": "Evaluate checklist",
+    "completenessEvaluating": "Evaluating…",
+    "completenessEvalFailed": "Could not evaluate completeness.",
+    "completenessVerdict": "Verdict",
+    "completenessNoPass": "Completeness is not workmanship or safety PASS.",
+    "completenessKind_contract_scope": "Contract / work-order scope",
+    "completenessKind_work_specification": "Work specification",
+    "completenessKind_measured_quantity": "Measured quantity",
+    "completenessKind_substrate_prep_record": "Substrate prep record",
+    "completenessKind_layer_thickness_record": "Layer thickness / coverage",
+    "completenessKind_calibrated_photo": "Field photo",
+    "completenessKind_material_datasheet": "Material datasheet",
+    "completenessKind_inspection_checklist": "Inspection checklist",
+    "completenessKind_signoff_document": "Reviewer sign-off"
   },
   "governancePage": {
     "listSubtitle": "Cross-project governance and escalation across active projects.",

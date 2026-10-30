@@ -31,6 +31,7 @@ describe("resolveProjectDetailTab", () => {
     expect(resolveProjectDetailTab("quantities")).toBe("quantities");
     expect(resolveProjectDetailTab("preproject")).toBe("preproject");
     expect(resolveProjectDetailTab("reconciliation")).toBe("reconciliation");
+    expect(resolveProjectDetailTab("completeness")).toBe("completeness");
   });
 
   it("falls back to overview for missing or unknown tabs", () => {

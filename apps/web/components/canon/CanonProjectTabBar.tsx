@@ -38,6 +38,11 @@ export function getCanonProjectTabItems(projectId: string): CanonProjectTabItem[
       labelKey: "projectTabReconciliation",
       commandTab: "reconciliation",
     },
+    {
+      id: "completeness",
+      labelKey: "projectTabCompleteness",
+      commandTab: "completeness",
+    },
     { id: "workers", labelKey: "projectTabTeam", commandTab: "workers" },
     { id: "contractors", labelKey: "projectTabContractors", commandTab: "contractors" },
     { id: "uploads", labelKey: "projectTabSite", commandTab: "uploads" },

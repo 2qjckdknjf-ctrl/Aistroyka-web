@@ -397,7 +397,8 @@
     "portfolioReasonFollowUp": "È utile un seguito.",
     "budgetWithinPlan": "Dentro del budget previsto",
     "portalRecentActivity": "Attività recente",
-    "projectTabReconciliation": "Riconciliazione"
+    "projectTabReconciliation": "Riconciliazione",
+    "projectTabCompleteness": "Completezza"
   },
   "nav": {
     "dashboard": "Cabinet",
@@ -4006,7 +4007,28 @@
     "reconEmpty": "Nessun finding di riconciliazione",
     "reconEmptyHint": "Registra uno scostamento di quantità per revisione umana.",
     "reconAccept": "Accetta",
-    "reconReject": "Rifiuta"
+    "reconReject": "Rifiuta",
+    "completenessTitle": "Completezza lavorazione",
+    "completenessSubtitle": "Checklist evidenze per un template approvato. Mancanze → domande, non certificazione di qualità.",
+    "completenessLoadFailed": "Caricamento template non riuscito.",
+    "completenessEmpty": "Nessun template di completezza",
+    "completenessEmptyHint": "Qui compariranno i template di lavorazione approvati.",
+    "completenessRequirements": "{count} requisiti di evidenza",
+    "completenessInventory": "Evidenze presenti sul pacchetto",
+    "completenessEvaluate": "Valuta checklist",
+    "completenessEvaluating": "Valutazione…",
+    "completenessEvalFailed": "Impossibile valutare la completezza.",
+    "completenessVerdict": "Verdetto",
+    "completenessNoPass": "La completezza non è PASS di qualità o sicurezza.",
+    "completenessKind_contract_scope": "Scope contratto / ordine",
+    "completenessKind_work_specification": "Specifica di lavoro",
+    "completenessKind_measured_quantity": "Quantità misurata",
+    "completenessKind_substrate_prep_record": "Preparazione supporto",
+    "completenessKind_layer_thickness_record": "Spessore / copertura",
+    "completenessKind_calibrated_photo": "Foto di cantiere",
+    "completenessKind_material_datasheet": "Scheda materiale",
+    "completenessKind_inspection_checklist": "Checklist ispezione",
+    "completenessKind_signoff_document": "Firma revisore"
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",
