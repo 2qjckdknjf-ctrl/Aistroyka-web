@@ -1,10 +1,10 @@
 # STATUS — AISTROYKA
 
-## Актуальная плановая сверка — 2026-10-28
+## Актуальная плановая сверка — 2026-10-30
 
-Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Merged #446/#447/#457/#448/#449/#458/#453/#455/#459/#454. Hosted SQL applied (grants, `platform_job_id`, human review). Durable result + manager review + accepted Graph lineage + C04 cores в main.
+Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Main tip после #480–#483: `ff7d0894`. Hosted SQL applied (grants, quantity/material/corrections/captions, completeness evaluations, intake_draft unique, tender findings).
 
-Stage2a A01–A05 + Manager UI (#463–#471) и AIS-MATERIAL-008 draft+UI (#473–#474) merged; hosted quantity/commercial/material DDL applied. Async video (#461) в main; live Gemini/Worker fixtures отдельно. AIS-CORRECTION-009 (#476) + hosted corrections DDL applied. AIS-MEM-016 (#478) merged. AIS-STREAM-010 (#480) Whisper finals → MEM-016 index. AIS-RULE-015 first slice (#481): waterproofing completeness template + evaluate API. AIS-CLIENT-005A idempotency (#482). AIS-RECON-017 first slice: Finding Ledger (quantity/scope mismatch → NEEDS_REVIEW; no estimate mutation). Legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
+Stage2a A01–A05 + MATERIAL-008 + CORRECTION-009 + MEM-016 + STREAM-010 (#480) + RULE-015 (#481) + CLIENT-005A idempotency (#482) + RECON-017 Finding Ledger (#483) на main. Closures: [STREAM-010](docs/reports/ais-stream-010-closure-2026-10-30/RESULT.md), [RULE-015](docs/reports/ais-rule-015-closure-2026-10-30/RESULT.md), [005A](docs/reports/ais-client-005a-idempotency-closure-2026-10-30/RESULT.md), [RECON-017](docs/reports/ais-recon-017-closure-2026-10-30/RESULT.md). Следующее локальное: Manager UI для completeness/recon, Graph invalidate-on-revoke. Live Gemini/Worker fixtures и legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
