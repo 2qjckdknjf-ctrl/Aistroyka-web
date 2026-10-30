@@ -33,6 +33,11 @@ export function getCanonProjectTabItems(projectId: string): CanonProjectTabItem[
     { id: "estimate", labelKey: "projectTabEstimate", commandTab: "estimate" },
     { id: "quantities", labelKey: "projectTabQuantities", commandTab: "quantities" },
     { id: "preproject", labelKey: "projectTabPreproject", commandTab: "preproject" },
+    {
+      id: "reconciliation",
+      labelKey: "projectTabReconciliation",
+      commandTab: "reconciliation",
+    },
     { id: "workers", labelKey: "projectTabTeam", commandTab: "workers" },
     { id: "contractors", labelKey: "projectTabContractors", commandTab: "contractors" },
     { id: "uploads", labelKey: "projectTabSite", commandTab: "uploads" },

@@ -396,7 +396,8 @@
     "portfolioReasonCritical": "Più segnali di rischio: apri il riepilogo del progetto.",
     "portfolioReasonFollowUp": "È utile un seguito.",
     "budgetWithinPlan": "Dentro del budget previsto",
-    "portalRecentActivity": "Attività recente"
+    "portalRecentActivity": "Attività recente",
+    "projectTabReconciliation": "Riconciliazione"
   },
   "nav": {
     "dashboard": "Cabinet",
@@ -3986,7 +3987,26 @@
     "reportPublicationPublishPhoto": "Pubblica foto {number}",
     "reportPublicationWithdraw": "Ritira",
     "reportPublicationPublish": "Pubblica",
-    "reportPublicationPaused": "Pubblicazione sospesa"
+    "reportPublicationPaused": "Pubblicazione sospesa",
+    "reconTitle": "Riconciliazione gara",
+    "reconSubtitle": "Registra scostamenti di quantità/ambito per revisione. Non modifica i preventivi né espone costi interni.",
+    "reconTitleField": "Titolo finding",
+    "reconSummary": "Sintesi",
+    "reconSummaryPlaceholder": "es. takeoff 145 m² vs preventivo 167 m²",
+    "reconExpected": "Quantità attesa",
+    "reconObserved": "Quantità osservata",
+    "reconUnit": "Unità",
+    "reconSourceRef": "Rif. documento fonte",
+    "reconSourceRevision": "Revisione fonte",
+    "reconCreate": "Crea finding",
+    "reconCreating": "Creazione…",
+    "reconCreateFailed": "Impossibile creare il finding.",
+    "reconList": "Finding",
+    "reconLoadFailed": "Caricamento finding non riuscito.",
+    "reconEmpty": "Nessun finding di riconciliazione",
+    "reconEmptyHint": "Registra uno scostamento di quantità per revisione umana.",
+    "reconAccept": "Accetta",
+    "reconReject": "Rifiuta"
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",

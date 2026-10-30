@@ -396,7 +396,8 @@
     "portfolioReasonCritical": "Several risk signals — review the project summary.",
     "portfolioReasonFollowUp": "Some follow-up is recommended.",
     "budgetWithinPlan": "Within the planned budget",
-    "portalRecentActivity": "Recent activity"
+    "portalRecentActivity": "Recent activity",
+    "projectTabReconciliation": "Reconciliation"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -4011,7 +4012,26 @@
     "reportPublicationPublishPhoto": "Publish photo {number}",
     "reportPublicationWithdraw": "Withdraw",
     "reportPublicationPublish": "Publish",
-    "reportPublicationPaused": "Publication paused"
+    "reportPublicationPaused": "Publication paused",
+    "reconTitle": "Tender reconciliation",
+    "reconSubtitle": "Record quantity/scope mismatches for estimator review. Does not change estimates or expose internal costs.",
+    "reconTitleField": "Finding title",
+    "reconSummary": "Summary",
+    "reconSummaryPlaceholder": "e.g. Drawing takeoff 145 m² vs estimate 167 m²",
+    "reconExpected": "Expected quantity",
+    "reconObserved": "Observed quantity",
+    "reconUnit": "Unit",
+    "reconSourceRef": "Source document ref",
+    "reconSourceRevision": "Source revision",
+    "reconCreate": "Create finding",
+    "reconCreating": "Creating…",
+    "reconCreateFailed": "Could not create finding.",
+    "reconList": "Findings",
+    "reconLoadFailed": "Failed to load findings.",
+    "reconEmpty": "No reconciliation findings yet",
+    "reconEmptyHint": "Log a quantity mismatch for human review.",
+    "reconAccept": "Accept",
+    "reconReject": "Reject"
   },
   "governancePage": {
     "listSubtitle": "Cross-project governance and escalation across active projects.",

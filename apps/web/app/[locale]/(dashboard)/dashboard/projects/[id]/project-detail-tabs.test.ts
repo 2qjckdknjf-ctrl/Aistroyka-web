@@ -30,6 +30,7 @@ describe("resolveProjectDetailTab", () => {
     expect(resolveProjectDetailTab("estimate")).toBe("estimate");
     expect(resolveProjectDetailTab("quantities")).toBe("quantities");
     expect(resolveProjectDetailTab("preproject")).toBe("preproject");
+    expect(resolveProjectDetailTab("reconciliation")).toBe("reconciliation");
   });
 
   it("falls back to overview for missing or unknown tabs", () => {
