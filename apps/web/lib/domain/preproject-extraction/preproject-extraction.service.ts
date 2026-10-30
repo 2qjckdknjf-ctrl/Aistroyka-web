@@ -4,6 +4,7 @@ import {
   extractHeuristicObservations,
   type HeuristicObservationDraft,
 } from "./heuristic-extractor";
+import { resolveIntakeDraftForExtraction } from "./intake-draft-binding";
 
 export type PreprojectReviewStatus = "pending" | "accepted" | "rejected" | "edited";
 
@@ -123,6 +124,27 @@ export async function createHeuristicExtractionRun(
   }
 
   const intakeDraftId = input.intakeDraftId?.trim() || null;
+  const projectId = input.projectId?.trim() || null;
+
+  // AIS-CLIENT-005A: bind intake_draft_id to a real tenant draft (project match or unassigned).
+  if (intakeDraftId) {
+    if (!projectId) {
+      return {
+        ok: false,
+        error: "projectId required when intakeDraftId is set",
+        code: "INVALID_INPUT",
+      };
+    }
+    const resolved = await resolveIntakeDraftForExtraction(supabase, {
+      tenantId,
+      projectId,
+      intakeDraftId,
+    });
+    if (!resolved.ok) {
+      return { ok: false, error: resolved.error, code: resolved.code };
+    }
+  }
+
   // AIS-CLIENT-005A: repeated confirmation for the same intake draft must not duplicate entities.
   if (intakeDraftId) {
     const { data: existing, error: existingError } = await supabase
@@ -153,7 +175,7 @@ export async function createHeuristicExtractionRun(
     .from("preproject_extraction_runs")
     .insert({
       tenant_id: tenantId,
-      project_id: input.projectId?.trim() || null,
+      project_id: projectId,
       intake_draft_id: intakeDraftId,
       status: "pending_review",
       source_kind: "text_heuristic",

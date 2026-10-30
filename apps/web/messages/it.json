@@ -4028,7 +4028,9 @@
     "completenessKind_calibrated_photo": "Foto di cantiere",
     "completenessKind_material_datasheet": "Scheda materiale",
     "completenessKind_inspection_checklist": "Checklist ispezione",
-    "completenessKind_signoff_document": "Firma revisore"
+    "completenessKind_signoff_document": "Firma revisore",
+    "preprojectIntakeDraft": "Bozza intake (opzionale)",
+    "preprojectIntakeNone": "Solo testo — senza bozza"
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",

@@ -4053,7 +4053,9 @@
     "completenessKind_calibrated_photo": "Field photo",
     "completenessKind_material_datasheet": "Material datasheet",
     "completenessKind_inspection_checklist": "Inspection checklist",
-    "completenessKind_signoff_document": "Reviewer sign-off"
+    "completenessKind_signoff_document": "Reviewer sign-off",
+    "preprojectIntakeDraft": "Intake draft (optional)",
+    "preprojectIntakeNone": "Free text only — no intake draft"
   },
   "governancePage": {
     "listSubtitle": "Cross-project governance and escalation across active projects.",

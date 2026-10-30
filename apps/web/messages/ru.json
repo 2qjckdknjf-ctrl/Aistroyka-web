@@ -4053,7 +4053,9 @@
     "completenessKind_calibrated_photo": "Полевое фото",
     "completenessKind_material_datasheet": "Паспорт материала",
     "completenessKind_inspection_checklist": "Чеклист инспекции",
-    "completenessKind_signoff_document": "Подпись проверяющего"
+    "completenessKind_signoff_document": "Подпись проверяющего",
+    "preprojectIntakeDraft": "Черновик intake (опционально)",
+    "preprojectIntakeNone": "Только текст — без intake"
   },
   "governancePage": {
     "listSubtitle": "Кросс-проектное управление и эскалации по активным проектам.",
