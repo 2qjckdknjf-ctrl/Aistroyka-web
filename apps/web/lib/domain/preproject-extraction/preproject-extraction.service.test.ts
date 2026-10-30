@@ -29,13 +29,17 @@ function chainMock(result: { data: unknown; error: unknown }) {
   return builder;
 }
 
+const TENANT = "11111111-1111-4111-8111-111111111111";
+const PROJECT = "22222222-2222-4222-8222-222222222222";
+const DRAFT = "33333333-3333-4333-8333-333333333333";
+
 describe("AIS-CLIENT-005A createHeuristicExtractionRun idempotency", () => {
   it("reuses existing run for the same intake_draft_id without inserting", async () => {
     const existingRun = {
       id: "run-1",
-      tenant_id: "tenant-1",
-      project_id: "project-1",
-      intake_draft_id: "draft-1",
+      tenant_id: TENANT,
+      project_id: PROJECT,
+      intake_draft_id: DRAFT,
       status: "pending_review",
       source_kind: "text_heuristic",
       source_ref: "text_heuristic.v1",
@@ -58,12 +62,31 @@ describe("AIS-CLIENT-005A createHeuristicExtractionRun idempotency", () => {
       },
     ];
 
-    let fromCalls = 0;
     const insertSpy = vi.fn();
     const supabase = {
       from: vi.fn((table: string) => {
-        fromCalls += 1;
-        if (table === "preproject_extraction_runs" && fromCalls === 1) {
+        if (table === "customer_intake_drafts") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: {
+                      id: DRAFT,
+                      title: "Kitchen",
+                      description: "painting",
+                      status: "submitted",
+                      project_id: PROJECT,
+                      updated_at: "2026-10-30T00:00:00.000Z",
+                    },
+                    error: null,
+                  }),
+                })),
+              })),
+            })),
+          };
+        }
+        if (table === "preproject_extraction_runs") {
           const builder = chainMock({ data: existingRun, error: null });
           builder.insert = insertSpy;
           return builder;
@@ -84,10 +107,10 @@ describe("AIS-CLIENT-005A createHeuristicExtractionRun idempotency", () => {
     };
 
     const result = await createHeuristicExtractionRun(supabase as never, {
-      tenantId: "tenant-1",
+      tenantId: TENANT,
       actorUserId: "user-1",
-      projectId: "project-1",
-      intakeDraftId: "draft-1",
+      projectId: PROJECT,
+      intakeDraftId: DRAFT,
       text: "Kitchen painting",
     });
 
@@ -99,12 +122,40 @@ describe("AIS-CLIENT-005A createHeuristicExtractionRun idempotency", () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
+  it("fails closed when intake_draft_id is unknown", async () => {
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "customer_intake_drafts") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                })),
+              })),
+            })),
+          };
+        }
+        return chainMock({ data: null, error: null });
+      }),
+    };
+    const result = await createHeuristicExtractionRun(supabase as never, {
+      tenantId: TENANT,
+      actorUserId: "user-1",
+      projectId: PROJECT,
+      intakeDraftId: DRAFT,
+      text: "Kitchen",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("DRAFT_NOT_FOUND");
+  });
+
   it("creates a new run when intake_draft_id is absent", async () => {
     const insertResult = {
       data: {
         id: "run-new",
-        tenant_id: "tenant-1",
-        project_id: "project-1",
+        tenant_id: TENANT,
+        project_id: PROJECT,
         intake_draft_id: null,
         status: "pending_review",
         source_kind: "text_heuristic",
@@ -153,9 +204,9 @@ describe("AIS-CLIENT-005A createHeuristicExtractionRun idempotency", () => {
     };
 
     const result = await createHeuristicExtractionRun(supabase as never, {
-      tenantId: "tenant-1",
+      tenantId: TENANT,
       actorUserId: "user-1",
-      projectId: "project-1",
+      projectId: PROJECT,
       text: "Kitchen",
     });
 

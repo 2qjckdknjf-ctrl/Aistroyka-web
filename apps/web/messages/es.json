@@ -4028,7 +4028,9 @@
     "completenessKind_calibrated_photo": "Foto de campo",
     "completenessKind_material_datasheet": "Ficha de material",
     "completenessKind_inspection_checklist": "Lista de inspección",
-    "completenessKind_signoff_document": "Firma del revisor"
+    "completenessKind_signoff_document": "Firma del revisor",
+    "preprojectIntakeDraft": "Borrador de intake (opcional)",
+    "preprojectIntakeNone": "Solo texto — sin borrador"
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",

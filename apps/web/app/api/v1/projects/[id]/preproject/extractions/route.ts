@@ -129,7 +129,13 @@ export async function POST(
 
   if (!result.ok) {
     const http =
-      result.code === "INVALID_INPUT" || result.code === "COMMERCIAL_FORBIDDEN" ? 400 : 500;
+      result.code === "DRAFT_NOT_FOUND" || result.code === "DRAFT_PROJECT_MISMATCH"
+        ? 404
+        : result.code === "DRAFT_WITHDRAWN" ||
+            result.code === "INVALID_INPUT" ||
+            result.code === "COMMERCIAL_FORBIDDEN"
+          ? 400
+          : 500;
     return NextResponse.json({ error: result.error, code: result.code }, { status: http });
   }
 

@@ -3,6 +3,7 @@
 /**
  * AIS-CLIENT-005A Manager review UI for heuristic preproject observations.
  * No prices/margin. Accept/reject/edit only — no auto promote/estimate.
+ * Optional intake draft picker binds extraction to a stable intake_draft_id.
  */
 
 import { useState } from "react";
@@ -28,6 +29,13 @@ type Run = {
   observations: Observation[];
 };
 
+type IntakeDraftOption = {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+};
+
 async function fetchRuns(projectId: string): Promise<Run[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/preproject/extractions`, {
     credentials: "include",
@@ -37,12 +45,28 @@ async function fetchRuns(projectId: string): Promise<Run[]> {
   return json.data?.runs ?? [];
 }
 
-async function createRun(projectId: string, text: string): Promise<Run> {
+async function fetchIntakeDrafts(projectId: string): Promise<IntakeDraftOption[]> {
+  const res = await fetch(`/api/v1/projects/${projectId}/intake-drafts`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("FAILED_LOAD_INTAKES");
+  const json = (await res.json()) as { data?: { drafts?: IntakeDraftOption[] } };
+  return json.data?.drafts ?? [];
+}
+
+async function createRun(
+  projectId: string,
+  text: string,
+  intakeDraftId: string | null
+): Promise<Run> {
   const res = await fetch(`/api/v1/projects/${projectId}/preproject/extractions`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({
+      text,
+      ...(intakeDraftId ? { intake_draft_id: intakeDraftId } : {}),
+    }),
   });
   const json = (await res.json()) as { data?: Run; error?: string };
   if (!res.ok || !json.data) throw new Error(json.error ?? "CREATE_FAILED");
@@ -80,6 +104,7 @@ export function ProjectPreprojectExtractionPanel({
   const isCanon = skin === "canon";
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
+  const [selectedDraftId, setSelectedDraftId] = useState<string>("");
   const [editLabels, setEditLabels] = useState<Record<string, string>>({});
 
   const { data, isPending, isError } = useQuery({
@@ -88,8 +113,14 @@ export function ProjectPreprojectExtractionPanel({
     enabled: !!projectId,
   });
 
+  const intakesQuery = useQuery({
+    queryKey: ["project-intake-drafts", projectId],
+    queryFn: () => fetchIntakeDrafts(projectId),
+    enabled: !!projectId,
+  });
+
   const createMutation = useMutation({
-    mutationFn: () => createRun(projectId, text),
+    mutationFn: () => createRun(projectId, text, selectedDraftId || null),
     onSuccess: () => {
       setText("");
       queryClient.invalidateQueries({ queryKey: ["preproject-extractions", projectId] });
@@ -123,6 +154,27 @@ export function ProjectPreprojectExtractionPanel({
           createMutation.mutate();
         }}
       >
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-aistroyka-text-secondary">{t("preprojectIntakeDraft")}</span>
+          <select
+            className="rounded-md border border-aistroyka-border bg-transparent px-3 py-2"
+            value={selectedDraftId}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedDraftId(id);
+              const draft = (intakesQuery.data ?? []).find((d) => d.id === id);
+              if (draft?.description) setText(draft.description);
+            }}
+            disabled={intakesQuery.isPending}
+          >
+            <option value="">{t("preprojectIntakeNone")}</option>
+            {(intakesQuery.data ?? []).map((draft) => (
+              <option key={draft.id} value={draft.id}>
+                {draft.title} ({draft.status})
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-aistroyka-text-secondary">{t("preprojectText")}</span>
           <textarea
@@ -168,7 +220,10 @@ export function ProjectPreprojectExtractionPanel({
               </div>
               <ul className="divide-y divide-aistroyka-border">
                 {run.observations.map((obs) => (
-                  <li key={obs.id} className="flex flex-col gap-2 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <li
+                    key={obs.id}
+                    className="flex flex-col gap-2 py-2 text-sm sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div>
                       <p className="font-medium text-aistroyka-text-primary">
                         {obs.kind}: {obs.label}
