@@ -43,6 +43,14 @@ function asString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+function runBelongsToOtherProject(
+  runRow: Record<string, unknown>,
+  projectId: string | null
+): boolean {
+  const existingProjectId = asString(runRow.project_id);
+  return existingProjectId !== null && existingProjectId !== projectId;
+}
+
 function parseObservation(row: Record<string, unknown>): PreprojectObservationDto | null {
   const id = asString(row.id);
   const runId = asString(row.run_id);
@@ -159,6 +167,13 @@ export async function createHeuristicExtractionRun(
       return { ok: false, error: existingError.message, code: "LOOKUP_FAILED" };
     }
     if (existing && isRecord(existing)) {
+      if (runBelongsToOtherProject(existing, projectId)) {
+        return {
+          ok: false,
+          error: "Intake draft belongs to another project",
+          code: "DRAFT_PROJECT_MISMATCH",
+        };
+      }
       const loaded = await loadRunWithObservations(supabase, tenantId, existing);
       if (!loaded.ok) return loaded;
       return { ok: true, run: loaded.run, reused: true };
@@ -198,6 +213,13 @@ export async function createHeuristicExtractionRun(
         .limit(1)
         .maybeSingle();
       if (raced && isRecord(raced)) {
+        if (runBelongsToOtherProject(raced, projectId)) {
+          return {
+            ok: false,
+            error: "Intake draft belongs to another project",
+            code: "DRAFT_PROJECT_MISMATCH",
+          };
+        }
         const loaded = await loadRunWithObservations(supabase, tenantId, raced);
         if (!loaded.ok) return loaded;
         return { ok: true, run: loaded.run, reused: true };

@@ -88,6 +88,18 @@ export async function resolveIntakeDraftForExtraction(
       code: "DRAFT_PROJECT_MISMATCH",
     };
   }
+  // Unassigned drafts are bindable once; a run on another project already claimed them.
+  if (draft.project_id === null) {
+    const bound = await findExistingRunProjectId(supabase, tenantId, intakeDraftId);
+    if (!bound.ok) return bound;
+    if (bound.projectId && bound.projectId !== projectId) {
+      return {
+        ok: false,
+        error: "Intake draft belongs to another project",
+        code: "DRAFT_PROJECT_MISMATCH",
+      };
+    }
+  }
   return { ok: true, draft };
 }
 
@@ -125,5 +137,43 @@ export async function listProjectIntakeDraftsForExtraction(
     const parsed = parseSummary(row);
     if (parsed) drafts.push(parsed);
   }
-  return { ok: true, drafts };
+
+  const unassignedIds = drafts.filter((draft) => draft.project_id === null).map((draft) => draft.id);
+  if (unassignedIds.length === 0) return { ok: true, drafts };
+
+  const { data: boundRuns, error: boundError } = await supabase
+    .from("preproject_extraction_runs")
+    .select("intake_draft_id, project_id")
+    .eq("tenant_id", tenantId)
+    .in("intake_draft_id", unassignedIds);
+  if (boundError) return { ok: false, error: boundError.message, code: "LOOKUP_FAILED" };
+
+  const boundElsewhere = new Set<string>();
+  for (const row of boundRuns ?? []) {
+    if (!isRecord(row)) continue;
+    const draftId = asString(row.intake_draft_id);
+    const runProjectId = asString(row.project_id);
+    if (draftId && runProjectId && runProjectId !== projectId) {
+      boundElsewhere.add(draftId);
+    }
+  }
+  return { ok: true, drafts: drafts.filter((draft) => !boundElsewhere.has(draft.id)) };
+}
+
+async function findExistingRunProjectId(
+  supabase: SupabaseClient,
+  tenantId: string,
+  intakeDraftId: string
+): Promise<{ ok: true; projectId: string | null } | { ok: false; error: string; code: "LOOKUP_FAILED" }> {
+  const { data, error } = await supabase
+    .from("preproject_extraction_runs")
+    .select("project_id")
+    .eq("tenant_id", tenantId)
+    .eq("intake_draft_id", intakeDraftId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message, code: "LOOKUP_FAILED" };
+  if (!data || !isRecord(data)) return { ok: true, projectId: null };
+  return { ok: true, projectId: asString(data.project_id) };
 }

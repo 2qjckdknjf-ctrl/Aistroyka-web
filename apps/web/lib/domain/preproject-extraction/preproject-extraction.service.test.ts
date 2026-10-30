@@ -216,6 +216,64 @@ describe("AIS-CLIENT-005A createHeuristicExtractionRun idempotency", () => {
     expect(result.run.id).toBe("run-new");
   });
 
+  it("does not reuse a run bound to another project", async () => {
+    const otherProject = "99999999-9999-4999-8999-999999999999";
+    const existingRun = {
+      id: "run-other",
+      tenant_id: TENANT,
+      project_id: otherProject,
+      intake_draft_id: DRAFT,
+      status: "pending_review",
+      source_kind: "text_heuristic",
+      source_ref: "text_heuristic.v1",
+      created_at: "2026-10-30T00:00:00.000Z",
+    };
+    const insertSpy = vi.fn();
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "customer_intake_drafts") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: {
+                      id: DRAFT,
+                      title: "Kitchen",
+                      description: "painting",
+                      status: "submitted",
+                      project_id: null,
+                      updated_at: "2026-10-30T00:00:00.000Z",
+                    },
+                    error: null,
+                  }),
+                })),
+              })),
+            })),
+          };
+        }
+        if (table === "preproject_extraction_runs") {
+          const builder = chainMock({ data: existingRun, error: null });
+          builder.insert = insertSpy;
+          return builder;
+        }
+        return chainMock({ data: null, error: null });
+      }),
+    };
+
+    const result = await createHeuristicExtractionRun(supabase as never, {
+      tenantId: TENANT,
+      actorUserId: "user-1",
+      projectId: PROJECT,
+      intakeDraftId: DRAFT,
+      text: "Kitchen painting",
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("DRAFT_PROJECT_MISMATCH");
+    expect(insertSpy).not.toHaveBeenCalled();
+  });
+
   it("ships unique partial index migration for intake_draft_id", () => {
     const sql = readFileSync(
       join(
