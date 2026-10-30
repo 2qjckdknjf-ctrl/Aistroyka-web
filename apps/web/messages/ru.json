@@ -396,7 +396,8 @@
     "portfolioReasonCritical": "Несколько сигналов риска — откройте сводку проекта.",
     "portfolioReasonFollowUp": "Нужно некоторое сопровождение.",
     "budgetWithinPlan": "В пределах плана",
-    "portalRecentActivity": "Недавние события"
+    "portalRecentActivity": "Недавние события",
+    "projectTabReconciliation": "Сверка"
   },
   "nav": {
     "dashboard": "Кабинет",
@@ -4011,7 +4012,26 @@
     "reportPublicationPublishPhoto": "Опубликовать фото {number}",
     "reportPublicationWithdraw": "Отозвать",
     "reportPublicationPublish": "Опубликовать",
-    "reportPublicationPaused": "Публикация приостановлена"
+    "reportPublicationPaused": "Публикация приостановлена",
+    "reconTitle": "Сверка тендера",
+    "reconSubtitle": "Фиксируйте расхождения объёмов/состава для проверки сметчика. Сметы не меняются; внутренние затраты не показываются.",
+    "reconTitleField": "Заголовок finding",
+    "reconSummary": "Кратко",
+    "reconSummaryPlaceholder": "Напр. takeoff 145 м² против сметы 167 м²",
+    "reconExpected": "Ожидаемое количество",
+    "reconObserved": "Наблюдаемое количество",
+    "reconUnit": "Ед.",
+    "reconSourceRef": "Ссылка на источник",
+    "reconSourceRevision": "Ревизия источника",
+    "reconCreate": "Создать finding",
+    "reconCreating": "Создание…",
+    "reconCreateFailed": "Не удалось создать finding.",
+    "reconList": "Findings",
+    "reconLoadFailed": "Не удалось загрузить findings.",
+    "reconEmpty": "Пока нет findings сверки",
+    "reconEmptyHint": "Зафиксируйте расхождение объёма для проверки.",
+    "reconAccept": "Принять",
+    "reconReject": "Отклонить"
   },
   "governancePage": {
     "listSubtitle": "Кросс-проектное управление и эскалации по активным проектам.",

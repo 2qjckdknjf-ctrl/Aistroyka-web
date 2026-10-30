@@ -396,7 +396,8 @@
     "portfolioReasonCritical": "Varias señales de riesgo: revise el resumen del proyecto.",
     "portfolioReasonFollowUp": "Conviene un seguimiento.",
     "budgetWithinPlan": "Dentro del presupuesto previsto",
-    "portalRecentActivity": "Actividad reciente"
+    "portalRecentActivity": "Actividad reciente",
+    "projectTabReconciliation": "Conciliación"
   },
   "nav": {
     "dashboard": "Panel",
@@ -3986,7 +3987,26 @@
     "reportPublicationPublishPhoto": "Publicar foto {number}",
     "reportPublicationWithdraw": "Retirar",
     "reportPublicationPublish": "Publicar",
-    "reportPublicationPaused": "Publicación pausada"
+    "reportPublicationPaused": "Publicación pausada",
+    "reconTitle": "Conciliación de licitación",
+    "reconSubtitle": "Registre desajustes de cantidad/alcance para revisión. No cambia presupuestos ni expone costes internos.",
+    "reconTitleField": "Título del hallazgo",
+    "reconSummary": "Resumen",
+    "reconSummaryPlaceholder": "p. ej. takeoff 145 m² vs presupuesto 167 m²",
+    "reconExpected": "Cantidad esperada",
+    "reconObserved": "Cantidad observada",
+    "reconUnit": "Unidad",
+    "reconSourceRef": "Ref. documento fuente",
+    "reconSourceRevision": "Revisión fuente",
+    "reconCreate": "Crear hallazgo",
+    "reconCreating": "Creando…",
+    "reconCreateFailed": "No se pudo crear el hallazgo.",
+    "reconList": "Hallazgos",
+    "reconLoadFailed": "Error al cargar hallazgos.",
+    "reconEmpty": "Aún no hay hallazgos",
+    "reconEmptyHint": "Registre un desajuste de cantidad para revisión humana.",
+    "reconAccept": "Aceptar",
+    "reconReject": "Rechazar"
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",
