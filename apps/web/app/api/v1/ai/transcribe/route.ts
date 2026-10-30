@@ -144,9 +144,9 @@ export async function POST(request: Request) {
 
   const localeHint = normalizeWhisperLanguage(form.get("locale")?.toString() ?? null);
   const projectIdRaw = form.get("project_id")?.toString()?.trim() ?? "";
-  const projectId = projectIdRaw && isLikelyUuid(projectIdRaw) ? projectIdRaw : null;
+  const projectId = projectIdRaw && isLikelyUuid(projectIdRaw) ? projectIdRaw.toLowerCase() : null;
   const mediaIdRaw = form.get("media_id")?.toString()?.trim() ?? "";
-  const mediaId = mediaIdRaw && isLikelyUuid(mediaIdRaw) ? mediaIdRaw : null;
+  const mediaId = mediaIdRaw && isLikelyUuid(mediaIdRaw) ? mediaIdRaw.toLowerCase() : null;
 
   let bytes: Uint8Array;
   try {
@@ -223,24 +223,28 @@ export async function POST(request: Request) {
 
     if (projectId && mediaId && ctx.userId) {
       captionIndex = { attempted: true, indexed: false, inserted: 0 };
-      const media = await getMediaById(userSupabase, mediaId, tenantId);
-      if (!media || media.project_id !== projectId) {
-        captionIndex.code = "MEDIA_SCOPE_MISMATCH";
-      } else {
-        const indexed = await indexTranscriptionResult(userSupabase, {
-          tenantId,
-          projectId,
-          mediaId,
-          actorUserId: ctx.userId,
-          language: localeHint,
-          result,
-        });
-        captionIndex = {
-          attempted: true,
-          indexed: indexed.indexed,
-          inserted: indexed.inserted,
-          code: indexed.code,
-        };
+      try {
+        const media = await getMediaById(userSupabase, mediaId, tenantId);
+        if (!media || media.project_id !== projectId) {
+          captionIndex.code = "MEDIA_SCOPE_MISMATCH";
+        } else {
+          const indexed = await indexTranscriptionResult(userSupabase, {
+            tenantId,
+            projectId,
+            mediaId,
+            actorUserId: ctx.userId,
+            language: localeHint,
+            result,
+          });
+          captionIndex = {
+            attempted: true,
+            indexed: indexed.indexed,
+            inserted: indexed.inserted,
+            code: indexed.code,
+          };
+        }
+      } catch {
+        captionIndex.code = "INDEX_FAILED";
       }
     }
 

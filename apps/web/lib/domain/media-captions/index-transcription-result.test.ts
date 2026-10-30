@@ -41,4 +41,16 @@ describe("indexTranscriptionResult", () => {
     });
     expect(out).toEqual({ indexed: false, inserted: 0, code: "INSERT_FAILED" });
   });
+
+  it("returns INDEX_FAILED when replace throws", async () => {
+    vi.mocked(replaceMediaCaptionSegments).mockRejectedValueOnce(new Error("write timeout"));
+    const out = await indexTranscriptionResult({} as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "m1",
+      actorUserId: "u1",
+      result: { text: "hello", segments: [] },
+    });
+    expect(out).toEqual({ indexed: false, inserted: 0, code: "INDEX_FAILED" });
+  });
 });

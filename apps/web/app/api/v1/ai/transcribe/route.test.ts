@@ -162,6 +162,64 @@ describe("POST /api/v1/ai/transcribe", () => {
     expect(indexTranscriptionResult).toHaveBeenCalled();
   });
 
+  it("indexes when client project_id and media_id are uppercase UUIDs", async () => {
+    vi.mocked(getMediaById).mockResolvedValueOnce({
+      id: "11111111-1111-4111-8111-111111111111",
+      project_id: "22222222-2222-4222-8222-222222222222",
+      tenant_id: "t1",
+      type: "audio",
+      file_url: "https://x/a.webm",
+      uploaded_at: "2026-10-30T00:00:00.000Z",
+    } as never);
+    vi.mocked(indexTranscriptionResult).mockResolvedValueOnce({
+      indexed: true,
+      inserted: 1,
+    });
+
+    const file = new File([minWebmPayload()], "clip.webm", { type: "audio/webm" });
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("project_id", "22222222-2222-4222-8222-222222222222".toUpperCase());
+    fd.append("media_id", "11111111-1111-4111-8111-111111111111".toUpperCase());
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const j = (await res.json()) as {
+      data: { caption_index: { indexed: boolean; inserted: number; code: string | null } };
+    };
+    expect(j.data.caption_index).toEqual({ indexed: true, inserted: 1, code: null });
+    expect(getMediaById).toHaveBeenCalledWith(
+      expect.anything(),
+      "11111111-1111-4111-8111-111111111111",
+      "t1"
+    );
+    expect(indexTranscriptionResult).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        projectId: "22222222-2222-4222-8222-222222222222",
+        mediaId: "11111111-1111-4111-8111-111111111111",
+      })
+    );
+  });
+
+  it("keeps the transcript when caption indexing throws", async () => {
+    vi.mocked(getMediaById).mockRejectedValueOnce(new Error("lookup timeout"));
+
+    const file = new File([minWebmPayload()], "clip.webm", { type: "audio/webm" });
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("project_id", "22222222-2222-4222-8222-222222222222");
+    fd.append("media_id", "11111111-1111-4111-8111-111111111111");
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const j = (await res.json()) as {
+      data: { text: string; caption_index: { indexed: boolean; inserted: number; code: string | null } };
+    };
+    expect(j.data.text).toBe("hello site");
+    expect(j.data.caption_index).toEqual({ indexed: false, inserted: 0, code: "INDEX_FAILED" });
+  });
+
   it("infers WebM when file type is empty", async () => {
     const file = new File([minWebmPayload()], "clip.bin", { type: "" });
     const fd = new FormData();
