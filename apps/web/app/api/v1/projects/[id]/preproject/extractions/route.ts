@@ -136,7 +136,9 @@ export async function POST(
   await emitAudit(supabase, {
     tenant_id: ctx.tenantId!,
     user_id: ctx.userId,
-    action: "preproject_extraction_run_created",
+    action: result.reused
+      ? "preproject_extraction_run_reused"
+      : "preproject_extraction_run_created",
     resource_type: "preproject_extraction_run",
     resource_id: result.run.id,
     details: {
@@ -144,9 +146,13 @@ export async function POST(
       intake_draft_id: intakeDraftId,
       source_kind: result.run.source_kind,
       observation_count: result.run.observations.length,
+      reused: Boolean(result.reused),
       source: "manager_heuristic",
     },
   });
 
-  return NextResponse.json({ data: result.run }, { status: 201 });
+  return NextResponse.json(
+    { data: { ...result.run, reused: Boolean(result.reused) } },
+    { status: result.reused ? 200 : 201 }
+  );
 }
