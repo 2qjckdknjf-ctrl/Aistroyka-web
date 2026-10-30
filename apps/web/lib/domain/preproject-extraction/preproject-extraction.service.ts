@@ -84,6 +84,24 @@ export type CreateHeuristicExtractionInput = {
   text: string;
 };
 
+function toRunDto(
+  tenantId: string,
+  runRow: Record<string, unknown>,
+  observations: PreprojectObservationDto[]
+): PreprojectRunDto {
+  return {
+    id: asString(runRow.id) ?? "",
+    tenant_id: tenantId,
+    project_id: asString(runRow.project_id),
+    intake_draft_id: asString(runRow.intake_draft_id),
+    status: asString(runRow.status) ?? "pending_review",
+    source_kind: asString(runRow.source_kind) ?? "text_heuristic",
+    source_ref: asString(runRow.source_ref),
+    created_at: asString(runRow.created_at) ?? new Date().toISOString(),
+    observations,
+  };
+}
+
 async function loadRunWithObservations(
   supabase: SupabaseClient,
   tenantId: string,
@@ -95,97 +113,23 @@ async function loadRunWithObservations(
   if (!listed.ok) return listed;
   return {
     ok: true,
-    run: {
-      id: runId,
-      tenant_id: tenantId,
-      project_id: asString(runRow.project_id),
-      intake_draft_id: asString(runRow.intake_draft_id),
-      status: asString(runRow.status) ?? "pending_review",
-      source_kind: asString(runRow.source_kind) ?? "text_heuristic",
-      source_ref: asString(runRow.source_ref),
-      created_at: asString(runRow.created_at) ?? new Date().toISOString(),
-      observations: listed.observations,
-    },
+    run: toRunDto(tenantId, runRow, listed.observations),
   };
 }
 
-export async function createHeuristicExtractionRun(
+/** Heuristic extractor always writes ≥1 observation; an empty list means the run never finished. */
+function isReusableExtractionRun(run: PreprojectRunDto): boolean {
+  return run.observations.length > 0;
+}
+
+async function persistObservationsOnRun(
   supabase: SupabaseClient,
-  input: CreateHeuristicExtractionInput
-): Promise<
-  | { ok: true; run: PreprojectRunDto; reused?: boolean }
-  | { ok: false; error: string; code: string }
-> {
-  const tenantId = input.tenantId.trim();
-  const actorUserId = input.actorUserId.trim();
-  if (!tenantId || !actorUserId) {
-    return { ok: false, error: "tenantId and actorUserId required", code: "INVALID_INPUT" };
-  }
-
-  const intakeDraftId = input.intakeDraftId?.trim() || null;
-  // AIS-CLIENT-005A: repeated confirmation for the same intake draft must not duplicate entities.
-  if (intakeDraftId) {
-    const { data: existing, error: existingError } = await supabase
-      .from("preproject_extraction_runs")
-      .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
-      .eq("tenant_id", tenantId)
-      .eq("intake_draft_id", intakeDraftId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (existingError) {
-      return { ok: false, error: existingError.message, code: "LOOKUP_FAILED" };
-    }
-    if (existing && isRecord(existing)) {
-      const loaded = await loadRunWithObservations(supabase, tenantId, existing);
-      if (!loaded.ok) return loaded;
-      return { ok: true, run: loaded.run, reused: true };
-    }
-  }
-
-  const drafts = extractHeuristicObservations(input.text);
-  for (const draft of drafts) {
-    const bad = assertObservationPayloadSafe(draft.payload);
-    if (bad) return { ok: false, error: bad, code: "COMMERCIAL_FORBIDDEN" };
-  }
-
-  const { data: runRow, error: runError } = await supabase
-    .from("preproject_extraction_runs")
-    .insert({
-      tenant_id: tenantId,
-      project_id: input.projectId?.trim() || null,
-      intake_draft_id: intakeDraftId,
-      status: "pending_review",
-      source_kind: "text_heuristic",
-      source_ref: "text_heuristic.v1",
-      provider_meta: { engine: "text_heuristic.v1", observation_count: drafts.length },
-      created_by: actorUserId,
-    })
-    .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
-    .maybeSingle();
-
-  if (runError || !runRow || !isRecord(runRow)) {
-    // Concurrent create for same draft: race → unique violation → reuse winner.
-    if (intakeDraftId && runError?.code === "23505") {
-      const { data: raced } = await supabase
-        .from("preproject_extraction_runs")
-        .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
-        .eq("tenant_id", tenantId)
-        .eq("intake_draft_id", intakeDraftId)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (raced && isRecord(raced)) {
-        const loaded = await loadRunWithObservations(supabase, tenantId, raced);
-        if (!loaded.ok) return loaded;
-        return { ok: true, run: loaded.run, reused: true };
-      }
-    }
-    return { ok: false, error: runError?.message ?? "run insert failed", code: "INSERT_FAILED" };
-  }
-
+  tenantId: string,
+  runRow: Record<string, unknown>,
+  drafts: HeuristicObservationDraft[]
+): Promise<{ ok: true; run: PreprojectRunDto } | { ok: false; error: string; code: string }> {
   const runId = asString(runRow.id);
-  if (!runId) return { ok: false, error: "run insert returned no id", code: "INSERT_FAILED" };
+  if (!runId) return { ok: false, error: "run missing id", code: "INSERT_FAILED" };
 
   const observationRows = drafts.map((draft: HeuristicObservationDraft) => ({
     tenant_id: tenantId,
@@ -206,6 +150,8 @@ export async function createHeuristicExtractionRun(
     );
 
   if (obsError) {
+    const recovered = await loadRunWithObservations(supabase, tenantId, runRow);
+    if (recovered.ok && isReusableExtractionRun(recovered.run)) return recovered;
     return { ok: false, error: obsError.message, code: "INSERT_FAILED" };
   }
 
@@ -215,21 +161,100 @@ export async function createHeuristicExtractionRun(
     const parsed = parseObservation(row);
     if (parsed) observations.push(parsed);
   }
+  if (observations.length === 0) {
+    return { ok: false, error: "observation insert returned no rows", code: "INSERT_FAILED" };
+  }
 
-  return {
-    ok: true,
-    run: {
-      id: runId,
+  return { ok: true, run: toRunDto(tenantId, runRow, observations) };
+}
+
+export async function createHeuristicExtractionRun(
+  supabase: SupabaseClient,
+  input: CreateHeuristicExtractionInput
+): Promise<
+  | { ok: true; run: PreprojectRunDto; reused?: boolean }
+  | { ok: false; error: string; code: string }
+> {
+  const tenantId = input.tenantId.trim();
+  const actorUserId = input.actorUserId.trim();
+  if (!tenantId || !actorUserId) {
+    return { ok: false, error: "tenantId and actorUserId required", code: "INVALID_INPUT" };
+  }
+
+  const intakeDraftId = input.intakeDraftId?.trim() || null;
+  // AIS-CLIENT-005A: repeated confirmation for the same intake draft must not duplicate entities.
+  let incompleteExisting: Record<string, unknown> | null = null;
+  if (intakeDraftId) {
+    const { data: existing, error: existingError } = await supabase
+      .from("preproject_extraction_runs")
+      .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
+      .eq("tenant_id", tenantId)
+      .eq("intake_draft_id", intakeDraftId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (existingError) {
+      return { ok: false, error: existingError.message, code: "LOOKUP_FAILED" };
+    }
+    if (existing && isRecord(existing)) {
+      const loaded = await loadRunWithObservations(supabase, tenantId, existing);
+      if (!loaded.ok) return loaded;
+      if (isReusableExtractionRun(loaded.run)) {
+        return { ok: true, run: loaded.run, reused: true };
+      }
+      incompleteExisting = existing;
+    }
+  }
+
+  const drafts = extractHeuristicObservations(input.text);
+  for (const draft of drafts) {
+    const bad = assertObservationPayloadSafe(draft.payload);
+    if (bad) return { ok: false, error: bad, code: "COMMERCIAL_FORBIDDEN" };
+  }
+
+  if (incompleteExisting) {
+    return persistObservationsOnRun(supabase, tenantId, incompleteExisting, drafts);
+  }
+
+  const { data: runRow, error: runError } = await supabase
+    .from("preproject_extraction_runs")
+    .insert({
       tenant_id: tenantId,
-      project_id: asString(runRow.project_id),
-      intake_draft_id: asString(runRow.intake_draft_id),
-      status: asString(runRow.status) ?? "pending_review",
-      source_kind: asString(runRow.source_kind) ?? "text_heuristic",
-      source_ref: asString(runRow.source_ref),
-      created_at: asString(runRow.created_at) ?? new Date().toISOString(),
-      observations,
-    },
-  };
+      project_id: input.projectId?.trim() || null,
+      intake_draft_id: intakeDraftId,
+      status: "pending_review",
+      source_kind: "text_heuristic",
+      source_ref: "text_heuristic.v1",
+      provider_meta: { engine: "text_heuristic.v1", observation_count: drafts.length },
+      created_by: actorUserId,
+    })
+    .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
+    .maybeSingle();
+
+  if (runError || !runRow || !isRecord(runRow)) {
+    // Concurrent create for same draft: race → unique violation → reuse winner if complete.
+    if (intakeDraftId && runError?.code === "23505") {
+      const { data: raced } = await supabase
+        .from("preproject_extraction_runs")
+        .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
+        .eq("tenant_id", tenantId)
+        .eq("intake_draft_id", intakeDraftId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (raced && isRecord(raced)) {
+        const loaded = await loadRunWithObservations(supabase, tenantId, raced);
+        if (!loaded.ok) return loaded;
+        if (isReusableExtractionRun(loaded.run)) {
+          return { ok: true, run: loaded.run, reused: true };
+        }
+        return persistObservationsOnRun(supabase, tenantId, raced, drafts);
+      }
+    }
+    return { ok: false, error: runError?.message ?? "run insert failed", code: "INSERT_FAILED" };
+  }
+
+  return persistObservationsOnRun(supabase, tenantId, runRow, drafts);
 }
 
 export async function listExtractionRunsForProject(
