@@ -95,6 +95,11 @@ export interface AiRuntimeAuditDetails {
   first_token_ms?: number | null;
   intelligence_diagnostics?: Record<string, unknown>;
   insights_count?: number;
+  /** Optional MEM-016 caption index after Whisper finalize (categorical only). */
+  caption_index_attempted?: boolean;
+  caption_index_indexed?: boolean;
+  caption_segments_inserted?: number;
+  segment_count?: number;
 }
 
 /** Emit AI runtime event to audit_logs. Best-effort; does not throw. */

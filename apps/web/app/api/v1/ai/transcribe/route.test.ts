@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "./route";
+import { getById as getMediaById } from "@/lib/domain/media/media.repository";
+import { indexTranscriptionResult } from "@/lib/domain/media-captions/index-transcription-result";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClientFromRequest: vi.fn().mockResolvedValue({ from: vi.fn() }),
@@ -20,6 +22,14 @@ vi.mock("@/lib/platform/ai-usage/ai-usage.service", () => ({
 
 vi.mock("@/lib/observability/audit.service", () => ({
   emitAiRuntimeAudit: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/domain/media/media.repository", () => ({
+  getById: vi.fn(),
+}));
+
+vi.mock("@/lib/domain/media-captions/index-transcription-result", () => ({
+  indexTranscriptionResult: vi.fn(),
 }));
 
 vi.mock("@/lib/config/server", () => ({
@@ -114,8 +124,42 @@ describe("POST /api/v1/ai/transcribe", () => {
     const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
     const res = await POST(req);
     expect(res.status).toBe(200);
-    const j = (await res.json()) as { data: { text: string } };
+    const j = (await res.json()) as {
+      data: { text: string; segments: unknown[]; caption_index: null };
+    };
     expect(j.data.text).toBe("hello site");
+    expect(j.data.segments).toEqual([]);
+    expect(j.data.caption_index).toBeNull();
+    expect(indexTranscriptionResult).not.toHaveBeenCalled();
+  });
+
+  it("indexes caption segments when project_id and media_id scope match", async () => {
+    vi.mocked(getMediaById).mockResolvedValueOnce({
+      id: "11111111-1111-4111-8111-111111111111",
+      project_id: "22222222-2222-4222-8222-222222222222",
+      tenant_id: "t1",
+      type: "audio",
+      file_url: "https://x/a.webm",
+      uploaded_at: "2026-10-30T00:00:00.000Z",
+    } as never);
+    vi.mocked(indexTranscriptionResult).mockResolvedValueOnce({
+      indexed: true,
+      inserted: 1,
+    });
+
+    const file = new File([minWebmPayload()], "clip.webm", { type: "audio/webm" });
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("project_id", "22222222-2222-4222-8222-222222222222");
+    fd.append("media_id", "11111111-1111-4111-8111-111111111111");
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const j = (await res.json()) as {
+      data: { caption_index: { indexed: boolean; inserted: number } };
+    };
+    expect(j.data.caption_index).toEqual({ indexed: true, inserted: 1, code: null });
+    expect(indexTranscriptionResult).toHaveBeenCalled();
   });
 
   it("infers WebM when file type is empty", async () => {

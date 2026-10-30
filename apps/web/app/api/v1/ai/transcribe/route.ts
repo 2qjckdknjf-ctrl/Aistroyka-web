@@ -1,6 +1,7 @@
 /**
  * POST /api/v1/ai/transcribe — multipart audio → text (OpenAI Whisper).
  * Tenant auth, rate limit, quota, policy, usage. Max 25 MB.
+ * AIS-STREAM-010: optional media_id + project_id indexes final segments into MEM-016.
  */
 
 import { NextResponse } from "next/server";
@@ -16,6 +17,8 @@ import { normalizeWhisperLanguage, transcribeOpenAiAudio } from "@/lib/platform/
 import { getOrCreateRequestId } from "@/lib/observability";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
 import { logStructured } from "@/lib/observability";
+import { getById as getMediaById } from "@/lib/domain/media/media.repository";
+import { indexTranscriptionResult } from "@/lib/domain/media-captions/index-transcription-result";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +145,8 @@ export async function POST(request: Request) {
   const localeHint = normalizeWhisperLanguage(form.get("locale")?.toString() ?? null);
   const projectIdRaw = form.get("project_id")?.toString()?.trim() ?? "";
   const projectId = projectIdRaw && isLikelyUuid(projectIdRaw) ? projectIdRaw : null;
+  const mediaIdRaw = form.get("media_id")?.toString()?.trim() ?? "";
+  const mediaId = mediaIdRaw && isLikelyUuid(mediaIdRaw) ? mediaIdRaw : null;
 
   let bytes: Uint8Array;
   try {
@@ -209,6 +214,36 @@ export async function POST(request: Request) {
       duration_seconds: result.durationSeconds,
     });
 
+    let captionIndex: {
+      attempted: boolean;
+      indexed: boolean;
+      inserted: number;
+      code?: string;
+    } = { attempted: false, indexed: false, inserted: 0 };
+
+    if (projectId && mediaId && ctx.userId) {
+      captionIndex = { attempted: true, indexed: false, inserted: 0 };
+      const media = await getMediaById(userSupabase, mediaId, tenantId);
+      if (!media || media.project_id !== projectId) {
+        captionIndex.code = "MEDIA_SCOPE_MISMATCH";
+      } else {
+        const indexed = await indexTranscriptionResult(userSupabase, {
+          tenantId,
+          projectId,
+          mediaId,
+          actorUserId: ctx.userId,
+          language: localeHint,
+          result,
+        });
+        captionIndex = {
+          attempted: true,
+          indexed: indexed.indexed,
+          inserted: indexed.inserted,
+          code: indexed.code,
+        };
+      }
+    }
+
     void emitAiRuntimeAudit(userSupabase, {
       tenant_id: tenantId,
       user_id: ctx.userId ?? null,
@@ -221,6 +256,10 @@ export async function POST(request: Request) {
         latency_ms: latencyMs,
         output_type: "transcription",
         provider: "openai",
+        caption_index_attempted: captionIndex.attempted,
+        caption_index_indexed: captionIndex.indexed,
+        caption_segments_inserted: captionIndex.inserted,
+        segment_count: result.segments.length,
       },
     });
 
@@ -230,6 +269,18 @@ export async function POST(request: Request) {
           text: result.text,
           duration_seconds: result.durationSeconds,
           model,
+          segments: result.segments.map((segment) => ({
+            start_seconds: segment.startSeconds,
+            end_seconds: segment.endSeconds,
+            text: segment.text,
+          })),
+          caption_index: captionIndex.attempted
+            ? {
+                indexed: captionIndex.indexed,
+                inserted: captionIndex.inserted,
+                code: captionIndex.code ?? null,
+              }
+            : null,
         },
         request_id: requestId,
       },
