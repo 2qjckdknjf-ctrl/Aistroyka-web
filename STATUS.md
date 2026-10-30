@@ -4,7 +4,7 @@
 
 Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Merged #446/#447/#457/#448/#449/#458/#453/#455/#459/#454. Hosted SQL applied (grants, `platform_job_id`, human review). Durable result + manager review + accepted Graph lineage + C04 cores в main.
 
-Stage2a A01–A05 + Manager UI (#463–#471) и AIS-MATERIAL-008 draft+UI (#473–#474) merged; hosted quantity/commercial/material DDL applied. Async video (#461) в main; live Gemini/Worker fixtures отдельно. AIS-CORRECTION-009 (#476) + hosted corrections DDL applied. AIS-MEM-016 (#478) merged. AIS-STREAM-010 (#480) Whisper finals → MEM-016 index. AIS-RULE-015 first slice: waterproofing trade completeness template + evaluate API (no workmanship PASS). Legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
+Stage2a A01–A05 + Manager UI (#463–#471) и AIS-MATERIAL-008 draft+UI (#473–#474) merged; hosted quantity/commercial/material DDL applied. Async video (#461) в main; live Gemini/Worker fixtures отдельно. AIS-CORRECTION-009 (#476) + hosted corrections DDL applied. AIS-MEM-016 (#478) merged. AIS-STREAM-010 (#480) Whisper finals → MEM-016 index. AIS-RULE-015 first slice (#481): waterproofing completeness template + evaluate API. AIS-CLIENT-005A: intake_draft_id extraction idempotency (no duplicate runs). Legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 

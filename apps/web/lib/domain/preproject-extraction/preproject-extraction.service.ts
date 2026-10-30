@@ -84,14 +84,63 @@ export type CreateHeuristicExtractionInput = {
   text: string;
 };
 
+async function loadRunWithObservations(
+  supabase: SupabaseClient,
+  tenantId: string,
+  runRow: Record<string, unknown>
+): Promise<{ ok: true; run: PreprojectRunDto } | { ok: false; error: string; code: string }> {
+  const runId = asString(runRow.id);
+  if (!runId) return { ok: false, error: "run missing id", code: "LOOKUP_FAILED" };
+  const listed = await listObservationsForRun(supabase, tenantId, runId);
+  if (!listed.ok) return listed;
+  return {
+    ok: true,
+    run: {
+      id: runId,
+      tenant_id: tenantId,
+      project_id: asString(runRow.project_id),
+      intake_draft_id: asString(runRow.intake_draft_id),
+      status: asString(runRow.status) ?? "pending_review",
+      source_kind: asString(runRow.source_kind) ?? "text_heuristic",
+      source_ref: asString(runRow.source_ref),
+      created_at: asString(runRow.created_at) ?? new Date().toISOString(),
+      observations: listed.observations,
+    },
+  };
+}
+
 export async function createHeuristicExtractionRun(
   supabase: SupabaseClient,
   input: CreateHeuristicExtractionInput
-): Promise<{ ok: true; run: PreprojectRunDto } | { ok: false; error: string; code: string }> {
+): Promise<
+  | { ok: true; run: PreprojectRunDto; reused?: boolean }
+  | { ok: false; error: string; code: string }
+> {
   const tenantId = input.tenantId.trim();
   const actorUserId = input.actorUserId.trim();
   if (!tenantId || !actorUserId) {
     return { ok: false, error: "tenantId and actorUserId required", code: "INVALID_INPUT" };
+  }
+
+  const intakeDraftId = input.intakeDraftId?.trim() || null;
+  // AIS-CLIENT-005A: repeated confirmation for the same intake draft must not duplicate entities.
+  if (intakeDraftId) {
+    const { data: existing, error: existingError } = await supabase
+      .from("preproject_extraction_runs")
+      .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
+      .eq("tenant_id", tenantId)
+      .eq("intake_draft_id", intakeDraftId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (existingError) {
+      return { ok: false, error: existingError.message, code: "LOOKUP_FAILED" };
+    }
+    if (existing && isRecord(existing)) {
+      const loaded = await loadRunWithObservations(supabase, tenantId, existing);
+      if (!loaded.ok) return loaded;
+      return { ok: true, run: loaded.run, reused: true };
+    }
   }
 
   const drafts = extractHeuristicObservations(input.text);
@@ -105,7 +154,7 @@ export async function createHeuristicExtractionRun(
     .insert({
       tenant_id: tenantId,
       project_id: input.projectId?.trim() || null,
-      intake_draft_id: input.intakeDraftId?.trim() || null,
+      intake_draft_id: intakeDraftId,
       status: "pending_review",
       source_kind: "text_heuristic",
       source_ref: "text_heuristic.v1",
@@ -116,6 +165,22 @@ export async function createHeuristicExtractionRun(
     .maybeSingle();
 
   if (runError || !runRow || !isRecord(runRow)) {
+    // Concurrent create for same draft: race → unique violation → reuse winner.
+    if (intakeDraftId && runError?.code === "23505") {
+      const { data: raced } = await supabase
+        .from("preproject_extraction_runs")
+        .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
+        .eq("tenant_id", tenantId)
+        .eq("intake_draft_id", intakeDraftId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (raced && isRecord(raced)) {
+        const loaded = await loadRunWithObservations(supabase, tenantId, raced);
+        if (!loaded.ok) return loaded;
+        return { ok: true, run: loaded.run, reused: true };
+      }
+    }
     return { ok: false, error: runError?.message ?? "run insert failed", code: "INSERT_FAILED" };
   }
 
