@@ -43,6 +43,8 @@ Vercel может встречаться как исторический/доп�
 | Variable | Описание |
 |----------|----------|
 | `OPENAI_API_KEY` | Ключ OpenAI для vision/analysis. |
+| `AGENTIC_FOUNDATION_MODE` | Slice 01 Construction AI OS: `disabled` (default, Stage 0) \| `internal` \| `staging` \| `selected_tenant` \| `production`. DB flag `AGENTIC_FOUNDATION_ENABLED` still required for selected_tenant/production rollouts. |
+| `AI_ANALYSIS_URL` | Опционально: URL in-app AI endpoint (по умолчанию `NEXT_PUBLIC_APP_URL` + `/api/ai/analyze-image`). |
 | `AI_ANALYSIS_URL` | Опционально: URL in-app AI endpoint (по умолчанию `NEXT_PUBLIC_APP_URL` + `/api/ai/analyze-image`). |
 | `ANTHROPIC_API_KEY` | Опционально: альтернативный vision-провайдер. |
 | `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY` | Опционально: Google AI (Gemini vision и **обязательно** для `POST /api/v1/ai/analyze-video-daily`). |
