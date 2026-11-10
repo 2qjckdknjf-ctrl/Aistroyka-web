@@ -1964,3 +1964,20 @@ Build the trust loop first.
 ## Дополнение — полный аудит продукта V2, 2026-10-20
 
 [Интеграция V2](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) включает все 97 пакетов, 73 находки, 406 критериев, 243 будущих проверки и дизайн-задание MagicPath в существующие Phase 0–13/AIS IDs. Полные карточки/архитектура/исходные snapshot находятся [в приложении к плану](product-experience-audit-2026-10-19/README.md). Первичная навигация по пакетам добавлена внутри каждой Phase. Исполнение — по свежему source/PR gap, с отдельными contractor-core, Customer, AI, commercial и deferred Android scopes; документация не закрывает runtime/release gates.
+
+
+## Weekly AI reconciliation — 2026-11-10
+
+**Period:** 2026-11-03 through 2026-11-10. **Status:** planning-only, not implementation or deployment. Existing canonical IDs, P0 gates and historical records take precedence. Reconcile with currently open PRs and exact HEAD before marking any item DONE. Evidence = reproducible tests + independent review + SHA + deployment/device receipt where applicable. Source ideas: OpenAI engineering/CAD and agent safety, GitHub Xcode and review telemetry, AI Engineer talks on durable SDLC, factual numeric provenance, adaptive worker economics, rollback, memory validity, and new Anthropic/Meta model announcements. Vendor benchmarks are not local acceptance evidence.
+
+| Priority | Existing workstream / ID | Incremental action and acceptance |
+|---|---|---|
+| P0 | AIS-PILOT-001 / existing security and evidence gates | Close actual role/RLS/media/video evidence and release checks; verify on current SHA/device/provider. No claim of production readiness from draft PRs. |
+| P1 | AIS-GRAPH-004 / quantity-materials provenance | Every numeric quantity, price, unit, supplier SKU, VAT, delivery, source revision and professional approval must be traceable; missing data never becomes zero; deterministic calculation and rejection tests. |
+| P1 | Existing Document Intelligence / Drawing Intelligence | Pilot 10-20 deidentified plans: PDF/IFC versions, changes, missing scope, source-linked measurements, human confirmation before estimates; do not build a BIM editor. |
+| P1 | Supplier/materials workflows | Recommend compatible materials and prepare purchase drafts; require explicit authorization, idempotent supplier order and reconciliation; no automatic paid orders. |
+| P2 | Visual models and agent workflows | Test new multimodal models only after baseline; apply ROMA multi-step permission and secrets scanning to all agents. |
+
+**Implementation order:** close existing P0 first; P1 in bounded non-production pilots; P2 only after evidence-based decision. Owner: project engineering lead (assignment TBD); independent reviewer: ROMA/security or domain QA (assignment TBD). No auto-merge, production writes, payments or live trading from this roadmap update.
+
+**Cross-project dependency:** Grow OS orchestrates; ROMA enforces independent policy/verification in Aistroyka-web; Sasha Memory OS stores permission-scoped evidence. Trading repository/runtime remains unverified; shared trading requirements are point-in-time market data, deterministic calculations, independent risk limits, exchange-state reconciliation, paper trading and kill switch, with no autonomous live orders.
