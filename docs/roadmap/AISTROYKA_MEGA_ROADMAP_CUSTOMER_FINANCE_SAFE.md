@@ -3,6 +3,17 @@ Version: 2026-10-23 (active queue; original Phase 0–13 preserved)
 Status: UPDATED WITH CUSTOMER FINANCE ISOLATION RULE
 Purpose: Deep sequential product/engineering plan to finish AISTROYKA as a production-ready AI construction management platform.
 
+## Проверка план/факт — 2026-11-12 (Europe/Madrid)
+
+Наблюдение 12 ноября 2026 (Europe/Madrid): main `f6f56b8387bb3704361991cf05ef6fce26f2bba2`; исходный HEAD docs Draft #488 `b3031b5ca10631d0684400b85720863edf59ce1d`. Это уточнение существующих AIS-ID и исторических статусов, не новый backlog и не приёмка релиза. Снимок 23 октября ниже сохраняется; его PR_ONLY/OPEN и описания отсутствующей реализации нельзя автоматически переносить на текущий main.
+
+- **AIS-PILOT-001 / role isolation:** GitHub подтверждает merge [#446](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/446) 28 октября, merge SHA `3b67ad6ef841f2fe2cc28ea60bd5c94a51ee11fb`, и [#447](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/447), merge SHA `cc58e42bf5e78b7a4b477f3953072d25eb6d4a8d`. Их повторная реализация не нужна; актуальная runtime/role/revoke приёмка проверяется отдельно. Исторический registry содержит другой head_sha для #446; текущие GitHub head `6c38310424d3f9376d79d319e0dde9361d224a44` и merge SHA сохраняются раздельно.
+- **AIS-EVID-002 / AIS-VISION-003:** [#457](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/457) и [#458](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/458) объединены 28 октября. На указанном main прочитан `apps/web/lib/platform/jobs/job.handlers/ai-analyze-media.ts`: результат передаётся в `persistReportMediaAnalysis`, повтор проверяется через `findExistingReportMediaAnalysis`, отсутствие media_id блокирует вызов провайдера. Старое утверждение «handler отбрасывает result» — SUPERSEDED для этого кода. Verdict: PARTIAL, код прочитан; свежий live Worker→result→retry→review/device/provider прогон NOT_RUN.
+- **AIS-STREAM-010 / RULE-015 / CLIENT-005A / RECON-017:** GitHub подтверждает merge #480/#481/#482/#483 30 октября. [STATUS](../../STATUS.md), [truth index](../CURRENT_PROJECT_TRUTH_INDEX.md), [STREAM closure](../reports/ais-stream-010-closure-2026-10-30/RESULT.md) и [RECON closure](../reports/ais-recon-017-closure-2026-10-30/RESULT.md) содержат scoped evidence. Не предлагать заново final transcript→MEM-016 index или Finding Ledger. Эти отчёты не подтверждают текущий production: hosted DDL/test/approval записи сохранены как исторические, самостоятельно сегодня не воспроизведены. Streaming partials, Manager completeness/recon UI, Graph invalidate-on-revoke и takeoff остаются отдельными следующими проверками.
+- **Следующая очередь:** P0 AIS-PILOT-001 — exact-SHA role/revoke/source negatives и live/device receipts; P1 существующий Manager completeness/recon UI и Graph revoke — сначала inventory текущего кода/PR; P2 новые модели только после действующих gates. Не объявлять весь STREAM/RULE/RECON завершённым по первому срезу.
+- **AC следующего среза:** зафиксировать build/SHA/environment, существующие requirement IDs, expected/actual, источник артефактов и независимого проверяющего; отсутствие обязательного live/device/role evidence оставляет PARTIAL/BLOCKED. Legal/store/billing 7-day gates не сняты. Конкретные owner/reviewer не назначены.
+- **Границы проверки:** docs-only; live DB, migrations, deploy, cloud inference и локальный Mac не запускались. `LOCAL_STATE_UNKNOWN`; отсутствие свежих receipts не означает отсутствие уже объединённого кода.
+
 ## Действующая очередь — консолидация 2026-10-23
 
 Эта очередь задаёт текущие приоритеты внутри существующих Phase 0–13 и AIS ID. Полные критерии фаз, [amendment](AISTROYKA_PLAN_AMENDMENT_2026-09-23.md) и [97 пакетов V2](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) сохраняются; не создавать второй backlog из ежедневных новостей. **Ответственные ниже — роли; конкретный исполнитель и независимый reviewer: TBD, назначаются до старта среза.** Вехи являются gates, а не обещанными календарными датами.
@@ -1964,3 +1975,32 @@ Build the trust loop first.
 ## Дополнение — полный аудит продукта V2, 2026-10-20
 
 [Интеграция V2](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) включает все 97 пакетов, 73 находки, 406 критериев, 243 будущих проверки и дизайн-задание MagicPath в существующие Phase 0–13/AIS IDs. Полные карточки/архитектура/исходные snapshot находятся [в приложении к плану](product-experience-audit-2026-10-19/README.md). Первичная навигация по пакетам добавлена внутри каждой Phase. Исполнение — по свежему source/PR gap, с отдельными contractor-core, Customer, AI, commercial и deferred Android scopes; документация не закрывает runtime/release gates.
+
+
+## Weekly AI reconciliation — 2026-11-10
+
+**Period:** 2026-11-03 through 2026-11-10. **Status:** planning-only, not implementation or deployment. Existing canonical IDs, P0 gates and historical records take precedence. Reconcile with currently open PRs and exact HEAD before marking any item DONE. Evidence = reproducible tests + independent review + SHA + deployment/device receipt where applicable. Source ideas: OpenAI engineering/CAD and agent safety, GitHub Xcode and review telemetry, AI Engineer talks on durable SDLC, factual numeric provenance, adaptive worker economics, rollback, memory validity, and new Anthropic/Meta model announcements. Vendor benchmarks are not local acceptance evidence.
+
+| Priority | Existing workstream / ID | Incremental action and acceptance |
+|---|---|---|
+| P0 | AIS-PILOT-001 / existing security and evidence gates | Close actual role/RLS/media/video evidence and release checks; verify on current SHA/device/provider. No claim of production readiness from draft PRs. |
+| P1 | AIS-GRAPH-004 / quantity-materials provenance | Every numeric quantity, price, unit, supplier SKU, VAT, delivery, source revision and professional approval must be traceable; missing data never becomes zero; deterministic calculation and rejection tests. |
+| P1 | Existing Document Intelligence / Drawing Intelligence | Pilot 10-20 deidentified plans: PDF/IFC versions, changes, missing scope, source-linked measurements, human confirmation before estimates; do not build a BIM editor. |
+| P1 | Supplier/materials workflows | Recommend compatible materials and prepare purchase drafts; require explicit authorization, idempotent supplier order and reconciliation; no automatic paid orders. |
+| P2 | Visual models and agent workflows | Test new multimodal models only after baseline; apply ROMA multi-step permission and secrets scanning to all agents. |
+
+**Implementation order:** close existing P0 first; P1 in bounded non-production pilots; P2 only after evidence-based decision. Owner: project engineering lead (assignment TBD); independent reviewer: ROMA/security or domain QA (assignment TBD). No auto-merge, production writes, payments or live trading from this roadmap update.
+
+**Cross-project dependency:** Grow OS orchestrates; ROMA enforces independent policy/verification in Aistroyka-web; Sasha Memory OS stores permission-scoped evidence. Trading repository/runtime remains unverified; shared trading requirements are point-in-time market data, deterministic calculations, independent risk limits, exchange-state reconciliation, paper trading and kill switch, with no autonomous live orders.
+
+
+### AI feature delta — 2026-11-11
+
+These are **proposed additions to existing workstreams** from the November 11 intelligence review, not claims of shipped functionality or verified vendor capabilities. Validate official release/API/pricing availability before selecting any provider; independent exact-SHA acceptance and existing P0 gates remain mandatory.
+
+- **P1 / existing Drawing Intelligence:** add Gemini 4 Carbon to the bounded model benchmark on 10–20 deidentified multi-sheet PDF/IFC projects; test element detection, cross-sheet consistency, dimensional error, uncertainty, and Construction Graph source binding. A generated 3D model is not dimensional evidence; professional approval required.
+- **P1 / customer-facing ChatGPT Plugin:** define read-only project status and estimate explanation first; OAuth/user-role/RLS, explicit scopes, audit, revocation, and source citations; no autonomous material orders, payments or publication.
+- **P1 / existing voice intake:** unify speech/text/image input with existing task and permissions, reconnect-safe outbox, professional confirmation for work scope.
+- **P1 / supply chain:** inventory Dependabot security alert coverage for inactive repos and validate December 8 policy; retain existing security gates.
+
+**Acceptance rule:** record baseline, owner, independent reviewer, test corpus, security/privacy gates, cost per verified task and explicit decision (adopt / defer / reject). No autonomous production actions or merge authorized by this documentation.

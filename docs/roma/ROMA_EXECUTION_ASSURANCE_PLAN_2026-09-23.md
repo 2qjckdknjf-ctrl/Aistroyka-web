@@ -405,3 +405,19 @@ Autoresearch использует ROMA-CORPUS-004 / package promotion / schedule
 ## Уточнение Growth OS 2026-10-13
 
 Владелец уточнил: Grow OS в переписке — Growth OS, repo 2qjckdknjf-ctrl/growth-os. [Existing Growth task mapping](https://github.com/2qjckdknjf-ctrl/growth-os/blob/docs/ai-digest-reconciliation-2026-10-13/docs/canonical/AI_CONTROL_PLANE_TASKS.md#growth-os-ai-рекомендации-2026-10-13) фиксирует ownership/aliases/priority/dependencies/AC инженерных рекомендаций. Этот ROMA документ остаётся источником независимых verification/interface contracts; не открывать зеркальный Growth implementation backlog в AISTROYKA. Ранее употреблённое утверждение о ненайденном отдельном Grow repo отменено; full runtime readiness всё ещё зависит от реальных gates.
+
+
+## Weekly AI reconciliation — 2026-11-10 (ROMA)
+
+Planning-only extension to the canonical 2026-10-23 queue; do not duplicate or mark existing assurance contracts complete. Priority P0: independent mandatory action monitor, real credential/sandbox isolation, complete immutable audit of tool calls and externally observed effects; policy revisions and exact SHA must be revalidated after resume. Test valid credential but unauthorized production action, hidden secret in agent settings, prompt injection over multiple steps, tool output contamination, and failure to stop. All denied before external effect and recorded independently. P0 recovery assurance: prove compensation or reconciliation after timeout and crash; git revert alone is insufficient. Test unknown external effects and duplicate events with deterministic fixtures; zero unauthorized or duplicate logical effects. P1: eval/production-parity, source-grounded numerical claims, reviewer provenance, clean-context review, agent lessons valid only for tested versions. Review new models (Fable 5.2, Muse Ember) as untrusted candidate executors, never as policy authority. Dependency: Grow OS durable Supervisor and Sasha Memory OS evidence ACL. Owner: ROMA security lead TBD; independent verifier TBD. Acceptance requires exact-SHA test receipts and approved ADR before moving from advisory to blocking; no merge/deploy implied.
+
+
+### AI feature delta — 2026-11-11
+
+These are **proposed additions to existing workstreams** from the November 11 intelligence review, not claims of shipped functionality or verified vendor capabilities. Validate official release/API/pricing availability before selecting any provider; independent exact-SHA acceptance and existing P0 gates remain mandatory.
+
+- **P0 / model training security:** before any local Qwen LoRA/fine-tune, require signed/traceable training-set provenance, separation of untrusted tool outputs from approved examples, backdoor/trigger regression tests, clean baseline and rollback. Anthropic's November 10 mixed-data results motivate tests but are not proof of a Qwen-specific exploit.
+- **P1 / voice and multi-agent authority:** voice interruption and reconnect never reset mandate; model-to-model messages, /swarm delegates and Agents API tool calls cannot elevate permissions. Each child agent has scoped credentials, independently auditable tool calls and parent ticket linkage.
+- **P1 / security reviewer pilot:** evaluate Codex Security-style verify-fix-reverify on authorized sandbox tasks; keep independent ROMA verdict and human approvals; no unapproved exploit activity.
+
+**Acceptance rule:** record baseline, owner, independent reviewer, test corpus, security/privacy gates, cost per verified task and explicit decision (adopt / defer / reject). No autonomous production actions or merge authorized by this documentation.
