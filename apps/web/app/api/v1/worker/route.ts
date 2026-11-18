@@ -22,6 +22,9 @@ const canonicalRoutes = {
   upload_session_finalize: "/api/v1/media/upload-sessions/{id}/finalize",
   config: "/api/v1/config",
   projects: "/api/v1/projects",
+  issues: "/api/v1/worker/issues",
+  documents: "/api/v1/worker/documents",
+  site_join: "/api/v1/worker/site-join",
 } as const;
 
 export async function GET() {

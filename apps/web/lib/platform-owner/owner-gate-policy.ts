@@ -10,5 +10,8 @@
 export function isOwnerApiSecretRequired(pathname: string): boolean {
   const criticalOnly = process.env.OWNER_GATE_SECRET_CRITICAL_ONLY === "1";
   if (!criticalOnly) return true;
-  return pathname.startsWith("/api/v1/owner/critical/");
+  return (
+    pathname.startsWith("/api/v1/owner/critical/") ||
+    pathname.startsWith("/api/v1/platform/critical/")
+  );
 }

@@ -8,7 +8,9 @@ import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
-import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { notifyProjectReportReviewers, notifyTenantReportReviewers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { boundedProductWrite, reportSubmitAuditDetails } from "@/lib/growth/product-events";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -59,7 +61,10 @@ export async function addMediaToReport(
   const report = await repo.getById(supabase, reportId, ctx.tenantId);
   if (!report) return { ok: false, error: "Report not found" };
   if (report.user_id !== ctx.userId) return { ok: false, error: "Not your report" };
-  if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
+  // Same write window as submit: workers attach correction photos after changes_requested.
+  if (report.status !== "draft" && report.status !== "changes_requested") {
+    return { ok: false, error: "Report already submitted" };
+  }
   const ok = await repo.addMedia(supabase, reportId, opts);
   return { ok, error: ok ? "" : "Failed to add media" };
 }
@@ -69,7 +74,12 @@ export async function submitReport(
   ctx: TenantContext,
   reportId: string,
   traceId?: string | null,
-  options?: { taskId?: string | null; workerNote?: string | null }
+  options?: {
+    taskId?: string | null;
+    workerNote?: string | null;
+    actualVolume?: number | null;
+    plannedVolume?: number | null;
+  }
 ): Promise<{ ok: boolean; error: string; code?: string; jobIds?: string[] }> {
   if (!canCreateReport(ctx)) return { ok: false, error: "Insufficient rights" };
   const report = await repo.getById(supabase, reportId, ctx.tenantId);
@@ -91,20 +101,33 @@ export async function submitReport(
     return { ok: false, error: "Photo proof required", code: "proof_required" };
   }
 
+  const volume = {
+    actual: options?.actualVolume ?? null,
+    planned: options?.plannedVolume ?? null,
+  };
   const ok =
     report.status === "changes_requested"
-      ? await repo.resubmit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null)
-      : await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null);
+      ? await repo.resubmit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null, volume)
+      : await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null, volume);
   if (!ok) return { ok: false, error: "Failed to submit" };
 
-  await emitAudit(supabase, {
-    tenant_id: ctx.tenantId,
-    user_id: ctx.userId,
-    trace_id: traceId ?? null,
-    action: "report_submit",
-    resource_type: "report",
-    resource_id: reportId,
-  });
+  await boundedProductWrite(() =>
+    emitAudit(supabase, {
+      tenant_id: ctx.tenantId,
+      user_id: ctx.userId,
+      trace_id: traceId ?? null,
+      action: "report_submit",
+      resource_type: "report",
+      resource_id: reportId,
+      details: reportSubmitAuditDetails({
+        client: ctx.clientProfile,
+        role: ctx.role,
+        hasTask: Boolean(taskId ?? report.task_id),
+        hasDay: Boolean(report.day_id),
+        hasMedia: hasPhotoProof,
+      }),
+    }),
+  );
   await emitChange(supabase, {
     tenant_id: ctx.tenantId,
     resource_type: "report",
@@ -115,19 +138,7 @@ export async function submitReport(
   });
 
   const projectId = await repo.getProjectIdForReport(supabase, ctx.tenantId, report);
-  const input = {
-    type: "report_submitted" as const,
-    title: "New report submitted",
-    body: `Report ${reportId.slice(0, 8)}…`,
-    target_type: "report" as const,
-    target_id: reportId,
-    project_id: projectId,
-  };
-  if (projectId) {
-    await notifyProjectManagers(supabase, ctx.tenantId, projectId, input);
-  } else {
-    await notifyTenantManagers(supabase, ctx.tenantId, input);
-  }
+  await notifySubmittedReportReviewers(ctx, reportId);
 
   const jobIds: string[] = [];
   try {
@@ -142,6 +153,21 @@ export async function submitReport(
 
     for (const row of mediaRows) {
       if (row.media_id || row.upload_session_id) {
+        // Skip enqueue when an active AI job already exists for this media attachment
+        // (avoids uncontrolled duplicates; dead/success jobs do not block a later resubmit).
+        const activeDedupe = `ai_analyze_media:${reportId}:${row.media_id ?? ""}:${row.upload_session_id ?? ""}`;
+        const { data: activeExisting } = await supabase
+          .from("jobs")
+          .select("id, status")
+          .eq("tenant_id", ctx.tenantId)
+          .eq("dedupe_key", activeDedupe)
+          .in("status", ["queued", "running"])
+          .limit(1)
+          .maybeSingle();
+        if (activeExisting?.id) {
+          jobIds.push(activeExisting.id as string);
+          continue;
+        }
         const mediaJob = await enqueueJob(supabase, {
           tenant_id: ctx.tenantId,
           user_id: ctx.userId,
@@ -150,8 +176,10 @@ export async function submitReport(
             report_id: reportId,
             media_id: row.media_id ?? undefined,
             upload_session_id: row.upload_session_id ?? undefined,
+            ...(projectId ? { project_id: projectId } : {}),
           },
           trace_id: traceId ?? null,
+          dedupe_key: activeDedupe,
         });
         if (mediaJob) jobIds.push(mediaJob.id);
       }
@@ -160,4 +188,23 @@ export async function submitReport(
     /* enqueue best-effort; still return success with whatever jobIds we have */
   }
   return { ok: true, error: "", jobIds };
+}
+
+/** Called only after caller-RLS author validation and a successful submit CAS.
+ * Recipient IDs stay server-side: assignees need not read project membership rows.
+ */
+async function notifySubmittedReportReviewers(ctx: TenantContext, reportId: string): Promise<void> {
+  try {
+    const admin = getAdminClient();
+    if (!admin) return; // Notifications are best-effort; never infer manager absence from hidden rows.
+    const current = await repo.getById(admin, reportId, ctx.tenantId);
+    if (!current || current.tenant_id !== ctx.tenantId || current.user_id !== ctx.userId || current.status !== "submitted") return;
+    const projectId = await repo.getProjectIdForReport(admin, ctx.tenantId, current);
+    const input = { type: "report_submitted", title: "New report submitted",
+      body: `Report ${reportId.slice(0, 8)}…`, target_type: "report", target_id: reportId, project_id: projectId };
+    if (projectId) await notifyProjectReportReviewers(admin, ctx.tenantId, projectId, input);
+    else await notifyTenantReportReviewers(admin, ctx.tenantId, input);
+  } catch {
+    // Report persistence and its job enqueue remain independent of inbox availability.
+  }
 }

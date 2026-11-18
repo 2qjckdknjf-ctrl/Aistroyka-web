@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
-  Card,
   Table,
   TableHead,
   TableBody,
@@ -17,6 +16,7 @@ import {
   Button,
 } from "@/components/ui";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface JobRow {
   id: string;
@@ -63,17 +63,17 @@ export function AdminJobsClient() {
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (loading && allJobs.length === 0) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={6} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -90,7 +90,7 @@ export function AdminJobsClient() {
   };
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("failedJobs")}</h2>
         <div className="flex items-center gap-2">
@@ -162,6 +162,6 @@ export function AdminJobsClient() {
           />
         </>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

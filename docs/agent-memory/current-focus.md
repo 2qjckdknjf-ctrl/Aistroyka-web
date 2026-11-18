@@ -1,35 +1,15 @@
-# Current Focus — Agent Memory
+# Текущий фокус
 
-> Durable pointer for agents. Update when active module changes. Not a secret store.
+Main/runtime 0bc5d602 после #420–425; actual stage/prod health 0bc5d60. #423 запретил staging cron bypass и добавил served-SHA проверки, #424 восстановил project flag из retained release branch и закрыл false finance proof, #425 Storage role/account repair applied 20261011140341. Восемь sources/семь IDs:[receipts](../ops/VERIFIED_DB_MIGRATION_RECEIPTS.md); SQL не повторять.
 
-**Last updated:** 2026-06-30
+Customer functional Debug QA завершила login→project→detail→intake save→revocation→refresh removes cached view/actions→logout на физическом iPhone 17 Pro. Тест был в ветке test/customer-live-device-2026-10-11 с private launch credentials, без fabricated token/API/role. Typed-password UI и store binary этим не сертифицированы. Все exact fixture rows/blobs/user очищены, временные sessions revoked, xctestrun credentials удалены. [Отчёт](../reports/2026-10-11-customer-device-and-storage-closure.md).
 
-## Active module
+Фактическая сеть iPhone:успешный proof через cellular; NWPath ранее показал Wi-Fi несмотря на ожидавшийся cellular. CoreDevice transport wired/connected — источник проверки кабеля; SPUSBDataType неполон для этой диагностики. Mac Wi-Fi TCP к Cloudflare по-прежнему отдельная сетевая проблема.
 
-**Development OS setup** — building `docs/dev-os/*`, `PROJECT_DASHBOARD.md`, agent-memory, indexes.
+Переиспользовать existing intake/Vision/Graph; новый scope требует hard audit. Следующая очередь:Owner published-media/share/export/summary contracts и evidence/Vision→source-linked result, затем isolated owner-bound preproject extraction. Legacy image worker явно отклоняет video. Customer publication не заменяется raw Storage доступом. #196 старый Storage срез не безопасен для broad merge:он разрешает viewer и stakeholder INSERT; #195/#206 также смешанные PR.
 
-## Recently completed (on main)
+Независимый review через текущий reviewer token, exact PR HEAD и required check; без self-approval/bypass. Сохранённые release/cursor/dirty/ahead sources остаются. 005 B и AndroidD2 после зависимостей; store/legal/billing требуют реальных свидетельств. При продолжении сначала fresh preflight и текущий реестр, затем существующий PR/код, без повторной реализации.
 
-- Project Operating System docs (PR #173)
-- Branch archival dry-run + policy (PR #173)
-- Branch cleanup Slice 1 (PR #174) — 5 local branches deleted
-- STATUS sync after Slice 1 (PR #175)
-- Dirty main worktree audit (PR #176)
+Последующий факт: #426 merged, main40c7e73b; staging38147780974/production38148048805 SUCCESS, actual health40c7e73. Рабочая точка canonical clean/current. Следующий guard в reused archive checkout, fix/published-evidence-guard-2026-10-11; [аудит #244](../audit/2026-10-11-owner-evidence-recovery.md). New source SQL candidate пока не applied.
 
-## Not started / blocked
-
-| Item | State |
-|---|---|
-| **Slice 2** branch cleanup | NOT approved — separate owner dry-run + go required |
-| **Dirty main worktree salvage** | Audit on main; owner must choose preserve/stash/clean/abandon |
-| **Supabase CLI** | Not installed locally |
-
-## Trusted pointers
-
-- Production: `origin/main` @ `fcbef354`
-- Status: `STATUS.md` on main
-- Dashboard: `PROJECT_DASHBOARD.md` (this Dev OS PR adds it)
-
-## Next agent action (after Dev OS lands)
-
-Follow `CLOUD_AGENT_STARTUP_PROTOCOL.md`; do not start Slice 2 or dirty-worktree cleanup without owner prompt.
+Локальный C04 follow-up 2026-10-13 ведётся отдельно в feat/stage2a-calculation-parity-2026-10-13 от свежего Draft PR #448 HEAD f45f875d. Scope: чистое quantity/commercial ядро, parity и синтетические проверки, без runtime/DB/provider вызовов. [Задача](../tasks/2026-10-13-stage2a-calculation-parity.md), [контракт](../roadmap/STAGE2A_C04_QUANTITY_ENGINE_2026-10-13.md), [handoff](../handoff/2026-10-13-stage2a-calculation-parity.md). Предыдущие main/runtime факты выше остаются датированными наблюдениями.

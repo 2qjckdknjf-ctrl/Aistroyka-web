@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Card, Alert } from "@/components/ui";
+import { Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 type MethodsResponse = {
   methods: {
     email: boolean;
     apple: boolean;
     telegram: boolean;
+    google: boolean;
   };
   linkedCount: number;
 };
@@ -22,7 +24,7 @@ async function fetchMethods(): Promise<MethodsResponse> {
   return res.json();
 }
 
-async function unlinkProvider(provider: "apple" | "telegram"): Promise<MethodsResponse> {
+async function unlinkProvider(provider: "apple" | "telegram" | "google"): Promise<MethodsResponse> {
   const res = await fetch("/api/v1/auth/methods", {
     method: "POST",
     credentials: "include",
@@ -36,13 +38,14 @@ async function unlinkProvider(provider: "apple" | "telegram"): Promise<MethodsRe
   return data as MethodsResponse;
 }
 
-export function AuthMethodsSettingsCard() {
+export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default" | "canon" }) {
   const t = useTranslations("auth");
+  const isCanon = skin === "canon";
   const locale = useLocale();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MethodsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [unlinking, setUnlinking] = useState<"apple" | "telegram" | null>(null);
+  const [unlinking, setUnlinking] = useState<"apple" | "telegram" | "google" | null>(null);
 
   useEffect(() => {
     void fetchMethods()
@@ -57,7 +60,7 @@ export function AuthMethodsSettingsCard() {
       });
   }, [t]);
 
-  async function handleUnlink(provider: "apple" | "telegram") {
+  async function handleUnlink(provider: "apple" | "telegram" | "google") {
     setError(null);
     setUnlinking(provider);
     try {
@@ -78,7 +81,7 @@ export function AuthMethodsSettingsCard() {
   const nextToComeBack = `/${locale}/dashboard/settings/auth`;
 
   return (
-    <Card className="p-5">
+    <CanonSurface isCanon={isCanon} className="p-5">
       <h1 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("linkedMethodsTitle")}
       </h1>
@@ -107,6 +110,24 @@ export function AuthMethodsSettingsCard() {
                   loading={unlinking === "apple"}
                   onClick={() => {
                     void handleUnlink("apple");
+                  }}
+                >
+                  {t("unlink")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle px-3 py-2">
+            <span>{t("methodGoogle")}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-aistroyka-text-secondary">{data.methods.google ? t("methodLinked") : t("methodNotLinked")}</span>
+              {data.methods.google ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  loading={unlinking === "google"}
+                  onClick={() => {
+                    void handleUnlink("google");
                   }}
                 >
                   {t("unlink")}
@@ -146,6 +167,6 @@ export function AuthMethodsSettingsCard() {
           }}
         />
       </div>
-    </Card>
+    </CanonSurface>
   );
 }

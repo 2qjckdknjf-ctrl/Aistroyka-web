@@ -9,6 +9,7 @@ import Shared
 struct ProjectPickerView: View {
     let projects: [ProjectDTO]
     @Binding var selected: ProjectDTO?
+    var onScanQR: (() -> Void)? = nil
 
     var body: some View {
         NavigationStack {
@@ -38,9 +39,25 @@ struct ProjectPickerView: View {
                         }
                         .accessibilityIdentifier("pilot_worker_project_\(p.id)")
                     }
+                    .aistroykaListChrome(
+                        pageBackground: WorkerSemanticColors.pageBackground,
+                        surfaceMuted: WorkerSemanticColors.surfaceMuted
+                    )
                 }
             }
+            .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("worker_select_project", comment: ""))
+            .toolbar {
+                if let onScanQR {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: onScanQR) {
+                            Image(systemName: "qrcode.viewfinder")
+                        }
+                        .accessibilityLabel(NSLocalizedString("wrk_v43_scan_qr", comment: ""))
+                        .accessibilityIdentifier("pilot_worker_picker_scan_qr")
+                    }
+                }
+            }
         }
     }
 }

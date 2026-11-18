@@ -3,8 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton, ErrorState } from "@/components/ui";
 import { buildPriorityItems } from "@/lib/dashboard/priority-actions";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface OpsOverview {
   kpis: {
@@ -48,18 +49,18 @@ export function DashboardPriorityActionsClient() {
 
   if (isPending || !data) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-5 w-40 mb-3" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-3/4 mt-2" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   const items = buildPriorityItems(data);
 
   return (
-    <Card className="p-4" aria-label={t("operationsQueueAria")}>
+    <DashboardGlassCard className="p-4" aria-label={t("operationsQueueAria")}>
       <h3 className="text-base font-semibold text-aistroyka-text-primary">
         {t("operationsQueueTitle")}
       </h3>
@@ -109,6 +110,6 @@ export function DashboardPriorityActionsClient() {
           ))}
         </ul>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

@@ -1,0 +1,805 @@
+{
+  "project_ref": "vthfrxehrursfloevnlp",
+  "migrations": [
+    {
+      "version": "20260303000000",
+      "name": "base_tenants_projects"
+    },
+    {
+      "version": "20260304000000",
+      "name": "rate_limit_slots"
+    },
+    {
+      "version": "20260304000100",
+      "name": "ai_usage_and_billing"
+    },
+    {
+      "version": "20260304000200",
+      "name": "tenants_plan"
+    },
+    {
+      "version": "20260304000300",
+      "name": "worker_lite"
+    },
+    {
+      "version": "20260304000400",
+      "name": "upload_sessions"
+    },
+    {
+      "version": "20260305000000",
+      "name": "jobs"
+    },
+    {
+      "version": "20260305000100",
+      "name": "idempotency_keys"
+    },
+    {
+      "version": "20260305000200",
+      "name": "tenant_daily_metrics"
+    },
+    {
+      "version": "20260306000000",
+      "name": "rbac"
+    },
+    {
+      "version": "20260306100000",
+      "name": "project_members_task_assignments"
+    },
+    {
+      "version": "20260306130000",
+      "name": "reports_task_id"
+    },
+    {
+      "version": "20260306140000",
+      "name": "worker_tasks_extend"
+    },
+    {
+      "version": "20260306150000",
+      "name": "push_outbox_device_id"
+    },
+    {
+      "version": "20260306200000",
+      "name": "organizations"
+    },
+    {
+      "version": "20260306235900",
+      "name": "cockpit_indexes"
+    },
+    {
+      "version": "20260306300000",
+      "name": "audit_retention"
+    },
+    {
+      "version": "20260306400000",
+      "name": "sync_engine"
+    },
+    {
+      "version": "20260306410000",
+      "name": "realtime_publication"
+    },
+    {
+      "version": "20260306420000",
+      "name": "tenant_concurrency"
+    },
+    {
+      "version": "20260306430000",
+      "name": "ai_policy_decisions"
+    },
+    {
+      "version": "20260306440000",
+      "name": "jobs_dedupe_key"
+    },
+    {
+      "version": "20260306450000",
+      "name": "ai_policy_decisions"
+    },
+    {
+      "version": "20260306460000",
+      "name": "slo_alerts"
+    },
+    {
+      "version": "20260306470000",
+      "name": "retention_archived"
+    },
+    {
+      "version": "20260306480000",
+      "name": "slo_alerts"
+    },
+    {
+      "version": "20260306490000",
+      "name": "tenant_settings"
+    },
+    {
+      "version": "20260306500000",
+      "name": "tenant_settings_residency"
+    },
+    {
+      "version": "20260306510000",
+      "name": "feature_flags"
+    },
+    {
+      "version": "20260306520000",
+      "name": "billing_entitlements"
+    },
+    {
+      "version": "20260306530000",
+      "name": "identity_sso"
+    },
+    {
+      "version": "20260306540000",
+      "name": "ai_provider_health"
+    },
+    {
+      "version": "20260306550000",
+      "name": "events_analytics"
+    },
+    {
+      "version": "20260306560000",
+      "name": "experiments"
+    },
+    {
+      "version": "20260306570000",
+      "name": "tenant_data_plane"
+    },
+    {
+      "version": "20260306580000",
+      "name": "export_batches"
+    },
+    {
+      "version": "20260306590000",
+      "name": "privacy_pii"
+    },
+    {
+      "version": "20260306600000",
+      "name": "anomaly_baselines"
+    },
+    {
+      "version": "20260306610000",
+      "name": "upload_push_devices"
+    },
+    {
+      "version": "20260306620000",
+      "name": "photo_collab"
+    },
+    {
+      "version": "20260306630000",
+      "name": "push_outbox_drain"
+    },
+    {
+      "version": "20260306640000",
+      "name": "device_tokens_last_seen"
+    },
+    {
+      "version": "20260306650000",
+      "name": "ops_events"
+    },
+    {
+      "version": "20260306660000",
+      "name": "ops_offline_device_count_rpc"
+    },
+    {
+      "version": "20260306670000",
+      "name": "report_review_manager"
+    },
+    {
+      "version": "20260306680000",
+      "name": "manager_notifications"
+    },
+    {
+      "version": "20260306900000",
+      "name": "stripe_webhook_idempotency"
+    },
+    {
+      "version": "20260307000000",
+      "name": "contact_leads"
+    },
+    {
+      "version": "20260307100000",
+      "name": "project_risks"
+    },
+    {
+      "version": "20260307200000",
+      "name": "project_milestones"
+    },
+    {
+      "version": "20260307300000",
+      "name": "report_reject_semantics"
+    },
+    {
+      "version": "20260307400000",
+      "name": "project_documents"
+    },
+    {
+      "version": "20260307500000",
+      "name": "project_cost_items"
+    },
+    {
+      "version": "20260307600000",
+      "name": "project_estimate_results"
+    },
+    {
+      "version": "20260319000000",
+      "name": "contact_leads_status_source_notes"
+    },
+    {
+      "version": "20260319100000",
+      "name": "plan_fit_persistence"
+    },
+    {
+      "version": "20260319200000",
+      "name": "billing_readiness"
+    },
+    {
+      "version": "20260319300000",
+      "name": "billing_pilot_workspaces"
+    },
+    {
+      "version": "20260319400000",
+      "name": "project_issues"
+    },
+    {
+      "version": "20260322000000",
+      "name": "document_decision_fields"
+    },
+    {
+      "version": "20260322500000",
+      "name": "manager_notifications_project_id"
+    },
+    {
+      "version": "20260323000000",
+      "name": "project_members_owner_role"
+    },
+    {
+      "version": "20260323110000",
+      "name": "tenant_members_rls_break_recursion"
+    },
+    {
+      "version": "20260323120000",
+      "name": "ai_memory_records"
+    },
+    {
+      "version": "20260323130000",
+      "name": "ai_eval_learning"
+    },
+    {
+      "version": "20260323130100",
+      "name": "ai_eval_seed_cases"
+    },
+    {
+      "version": "20260323140000",
+      "name": "ai_optimization_layer"
+    },
+    {
+      "version": "20260325160000",
+      "name": "worker_rls_include_tenant_owners"
+    },
+    {
+      "version": "20260326120000",
+      "name": "20260326120000_tenant_invitations"
+    },
+    {
+      "version": "20260328120000",
+      "name": "wave4_milestone_status"
+    },
+    {
+      "version": "20260328180000",
+      "name": "report_approval_events"
+    },
+    {
+      "version": "20260328200000",
+      "name": "project_document_events"
+    },
+    {
+      "version": "20260329100000",
+      "name": "project_client_portal"
+    },
+    {
+      "version": "20260329110000",
+      "name": "project_client_requests"
+    },
+    {
+      "version": "20260329120000",
+      "name": "project_stakeholders"
+    },
+    {
+      "version": "20260329130000",
+      "name": "tenant_members_stakeholder_role"
+    },
+    {
+      "version": "20260329140000",
+      "name": "stakeholder_rls_isolation"
+    },
+    {
+      "version": "20260329150000",
+      "name": "stakeholder_rls_remaining"
+    },
+    {
+      "version": "20260329160000",
+      "name": "stakeholder_rls_identity_export_photo"
+    },
+    {
+      "version": "20260401132206",
+      "name": "20260329170000_stakeholder_notifications"
+    },
+    {
+      "version": "20260401132213",
+      "name": "20260401140000_stakeholder_discussions"
+    },
+    {
+      "version": "20260401132214",
+      "name": "20260401150000_stakeholder_discussion_portal_status_rpc"
+    },
+    {
+      "version": "20260401132230",
+      "name": "20260402120000_project_change_orders"
+    },
+    {
+      "version": "20260401132234",
+      "name": "20260403100000_project_handover"
+    },
+    {
+      "version": "20260401132243",
+      "name": "20260404120000_project_defects"
+    },
+    {
+      "version": "20260407145435",
+      "name": "20260407150000_trigger_analysis_rpc"
+    },
+    {
+      "version": "20260407194053",
+      "name": "20260411120000_release1_analysis_engine"
+    },
+    {
+      "version": "20260407194123",
+      "name": "20260407195000_release1_trigger_analysis_permissions"
+    },
+    {
+      "version": "20260418085229",
+      "name": "governance_cases"
+    },
+    {
+      "version": "20260418085301",
+      "name": "project_commercial_items"
+    },
+    {
+      "version": "20260418095736",
+      "name": "media_storage_owner_access"
+    },
+    {
+      "version": "20260418095802",
+      "name": "media_storage_project_prefix_access"
+    },
+    {
+      "version": "20260418120345",
+      "name": "ai_chat_stream_tables"
+    },
+    {
+      "version": "20260507062905",
+      "name": "phase0_customer_finance_isolation"
+    },
+    {
+      "version": "20260507094409",
+      "name": "phase2_customer_portal_commercial_rls"
+    },
+    {
+      "version": "20260507103314",
+      "name": "phase3_decision_request_fields"
+    },
+    {
+      "version": "20260507105822",
+      "name": "phase4_customer_estimates"
+    },
+    {
+      "version": "20260507112209",
+      "name": "phase5_change_order_commercial_approval"
+    },
+    {
+      "version": "20260507115916",
+      "name": "phase6_proof_pack_shares"
+    },
+    {
+      "version": "20260507141452",
+      "name": "ai_guide_events"
+    },
+    {
+      "version": "20260507141507",
+      "name": "ai_guide_events_worker_role"
+    },
+    {
+      "version": "20260508052004",
+      "name": "project_defects_severity_and_photos"
+    },
+    {
+      "version": "20260508052011",
+      "name": "phase10_telegram_integration"
+    },
+    {
+      "version": "20260508052013",
+      "name": "phase11_tenant_contractor_profiles"
+    },
+    {
+      "version": "20260526084428",
+      "name": "cabinet_architecture_recovery"
+    },
+    {
+      "version": "20260526084437",
+      "name": "user_identities"
+    },
+    {
+      "version": "20260526084750",
+      "name": "superbase_hardening_safe_private_tables"
+    },
+    {
+      "version": "20260526084831",
+      "name": "superbase_hardening_current_user_tenant_ids_grants"
+    },
+    {
+      "version": "20260526085029",
+      "name": "superbase_hardening_service_only_tables_policies"
+    },
+    {
+      "version": "20260526085409",
+      "name": "superbase_hardening_enable_rls_remaining_tables"
+    },
+    {
+      "version": "20260526085504",
+      "name": "superbase_hardening_fix_mutable_search_path"
+    },
+    {
+      "version": "20260526085655",
+      "name": "superbase_hardening_remove_legacy_allow_all_policies"
+    },
+    {
+      "version": "20260526085810",
+      "name": "superbase_hardening_remove_true_insert_policies"
+    },
+    {
+      "version": "20260526085839",
+      "name": "superbase_hardening_security_definer_execute_grants"
+    },
+    {
+      "version": "20260526090108",
+      "name": "superbase_hardening_cover_all_unindexed_foreign_keys"
+    },
+    {
+      "version": "20260526090156",
+      "name": "superbase_hardening_cover_remaining_unindexed_fks"
+    },
+    {
+      "version": "20260526090223",
+      "name": "superbase_hardening_optimize_auth_rls_initplan"
+    },
+    {
+      "version": "20260526090320",
+      "name": "superbase_hardening_optimize_auth_jwt_initplan"
+    },
+    {
+      "version": "20260526090359",
+      "name": "superbase_hardening_drop_autogenerated_duplicate_fk_indexes"
+    },
+    {
+      "version": "20260526090423",
+      "name": "superbase_hardening_restore_missing_fk_indexes_after_dedupe"
+    },
+    {
+      "version": "20260526090458",
+      "name": "superbase_hardening_optimize_auth_role_initplan"
+    },
+    {
+      "version": "20260526090532",
+      "name": "superbase_hardening_drop_known_duplicate_indexes"
+    },
+    {
+      "version": "20260526162549",
+      "name": "superbase_hardening_drop_redundant_autogen_indexes"
+    },
+    {
+      "version": "20260526162608",
+      "name": "superbase_hardening_restore_missing_fk_indexes_after_redundant_cleanup"
+    },
+    {
+      "version": "20260526162827",
+      "name": "superbase_hardening_merge_overlapping_permissive_policies"
+    },
+    {
+      "version": "20260526163230",
+      "name": "superbase_hardening_scope_permissive_policies_to_authenticated"
+    },
+    {
+      "version": "20260526163342",
+      "name": "superbase_hardening_drop_unused_non_fk_indexes_on_internal_tables"
+    },
+    {
+      "version": "20260527164934",
+      "name": "revoke_authenticated_create_analysis_job"
+    },
+    {
+      "version": "20260527170815",
+      "name": "revoke_authenticated_get_offline_device_count"
+    },
+    {
+      "version": "20260528122855",
+      "name": "revoke_authenticated_stakeholder_status_rpc"
+    },
+    {
+      "version": "20260528131556",
+      "name": "wrap_security_definer_helpers_for_rls"
+    },
+    {
+      "version": "20260529053520",
+      "name": "rls_split_overlapping_all_policies"
+    },
+    {
+      "version": "20260529053555",
+      "name": "project_defects_insert_policy_merge"
+    },
+    {
+      "version": "20260529065058",
+      "name": "drop_redundant_indexes_batch1"
+    },
+    {
+      "version": "20260529071342",
+      "name": "drop_redundant_indexes_batch2"
+    },
+    {
+      "version": "20260602055340",
+      "name": "drop_redundant_indexes_batch3"
+    },
+    {
+      "version": "20260602060533",
+      "name": "drop_redundant_indexes_batch4"
+    },
+    {
+      "version": "20260602061551",
+      "name": "drop_redundant_indexes_batch5"
+    },
+    {
+      "version": "20260602062700",
+      "name": "drop_redundant_indexes_batch6"
+    },
+    {
+      "version": "20260602064024",
+      "name": "drop_redundant_indexes_batch7"
+    },
+    {
+      "version": "20260617070145",
+      "name": "ai_flywheel_foundation"
+    },
+    {
+      "version": "20260617135436",
+      "name": "ai_gold_memory"
+    },
+    {
+      "version": "20260617141607",
+      "name": "ai_expert_review_queue"
+    },
+    {
+      "version": "20260619220213",
+      "name": "worker_report_worker_note_smoke_unblock"
+    },
+    {
+      "version": "20260620140442",
+      "name": "rbac_stage1_security_hardening"
+    },
+    {
+      "version": "20260620142136",
+      "name": "stage2_1_accounts_foundation"
+    },
+    {
+      "version": "20260620152055",
+      "name": "stage2_3b_tenant_members_self_update_guard"
+    },
+    {
+      "version": "20260620152812",
+      "name": "stage2_4_1_account_billing_foundation"
+    },
+    {
+      "version": "20260620154604",
+      "name": "stage2_4_2b_entitlement_resolution_drift"
+    },
+    {
+      "version": "20260704054830",
+      "name": "platform_owner_grants"
+    },
+    {
+      "version": "20260704054837",
+      "name": "platform_owner_roles_audit"
+    },
+    {
+      "version": "20260705101054",
+      "name": "roma_audit_runs"
+    },
+    {
+      "version": "20260718085830",
+      "name": "task_messages"
+    },
+    {
+      "version": "20260718091239",
+      "name": "task_messages_rls_manager_roles"
+    },
+    {
+      "version": "20260802084030",
+      "name": "20260725143000_dequeue_tenant_job"
+    },
+    {
+      "version": "20260802084052",
+      "name": "20260725190000_rate_limit_try_increment"
+    },
+    {
+      "version": "20260821215505",
+      "name": "021_saved_places"
+    },
+    {
+      "version": "20260821215559",
+      "name": "022_protected_day_events"
+    },
+    {
+      "version": "20260822124938",
+      "name": "media_file_url_immutable_for_clients"
+    },
+    {
+      "version": "20260822124945",
+      "name": "jobs_payload_project_tenant_check"
+    },
+    {
+      "version": "20260824122312",
+      "name": "20260824120000_pilot_governed_ai_evidence_staging_compat"
+    },
+    {
+      "version": "20260824122423",
+      "name": "pilot_governed_ai_evidence_search_path_hardening"
+    },
+    {
+      "version": "20260824123120",
+      "name": "pilot_visual_evidence_report_project_consistency_compat"
+    },
+    {
+      "version": "20260824150000",
+      "name": "pilot_governed_ai_evidence_security_hardening"
+    },
+    {
+      "version": "20260825142551",
+      "name": "worker_tasks_priority"
+    },
+    {
+      "version": "20260825143207",
+      "name": "worker_day_start_location"
+    },
+    {
+      "version": "20260825145209",
+      "name": "worker_sync_volume_issue_evidence"
+    },
+    {
+      "version": "20260829130816",
+      "name": "contact_leads_attribution"
+    },
+    {
+      "version": "20260831023354",
+      "name": "user_identities_google"
+    },
+    {
+      "version": "20260831194500",
+      "name": "20260831194500_user_identities_hardening"
+    },
+    {
+      "version": "20260906090000",
+      "name": "20260906090000_block_membership_privilege_escalation"
+    },
+    {
+      "version": "20260906091000",
+      "name": "20260906091000_harden_project_commercial_writes"
+    },
+    {
+      "version": "20260906092000",
+      "name": "20260906092000_harden_viewer_project_jobs_estimate_writes"
+    },
+    {
+      "version": "20260906104000",
+      "name": "20260906104000_project_write_authorization_hardening"
+    },
+    {
+      "version": "20260906105000",
+      "name": "20260906105000_project_members_tenant_match"
+    },
+    {
+      "version": "20260906109500",
+      "name": "20260906109500_bootstrap_worker_day_project_id"
+    },
+    {
+      "version": "20260906110000",
+      "name": "20260906110000_project_ops_tenant_consistency"
+    },
+    {
+      "version": "20260906113000",
+      "name": "20260906113000_harden_client_requests_costs_estimate_writes"
+    },
+    {
+      "version": "20260907034138",
+      "name": "20260906113500_bootstrap_missing_aftercare_tables"
+    },
+    {
+      "version": "20260907034157",
+      "name": "20260906114000_harden_aftercare_assignments_sync_cursors"
+    },
+    {
+      "version": "20260927223745",
+      "name": "notification_opened_once"
+    },
+    {
+      "version": "20261003094120",
+      "name": "harden_field_daily_logs_rls"
+    },
+    {
+      "version": "20261003094130",
+      "name": "block_stakeholder_self_reactivation"
+    },
+    {
+      "version": "20261003234343",
+      "name": "task_created_once"
+    },
+    {
+      "version": "20261004102047",
+      "name": "field_daily_logs_server_confirm_stamp"
+    },
+    {
+      "version": "20261004102509",
+      "name": "analysis_jobs_attempt_count"
+    },
+    {
+      "version": "20261004111442",
+      "name": "construction_graph_overlay"
+    },
+    {
+      "version": "20261004111504",
+      "name": "construction_graph_overlay_persist"
+    },
+    {
+      "version": "20261004114659",
+      "name": "analysis_jobs_async_identity"
+    },
+    {
+      "version": "20261011090316",
+      "name": "customer_intake_drafts_with_lifecycle_20261011"
+    },
+    {
+      "version": "20261011090351",
+      "name": "create_analysis_job_request_key_atomic_20261011"
+    },
+    {
+      "version": "20261011092544",
+      "name": "hide_intake_policy_helpers_20261011"
+    },
+    {
+      "version": "20261011093430",
+      "name": "close_post_apply_database_tails_20261011"
+    },
+    {
+      "version": "20261011112358",
+      "name": "session_analysis_job_scope_20261011"
+    },
+    {
+      "version": "20261011114415",
+      "name": "harden_media_analysis_access_20261011"
+    },
+    {
+      "version": "20261011140341",
+      "name": "harden_media_storage_role_access_20261011"
+    },
+    {
+      "version": "20261011161355",
+      "name": "harden_published_evidence_source_guard_20261011"
+    },
+    {
+      "version": "20261011184023",
+      "name": "harden_upload_session_and_reviewed_media_source_20261011"
+    },
+    {
+      "version": "20261011234051",
+      "name": "unique_published_evidence_sources_20261011"
+    },
+    {
+      "version": "20261012083027",
+      "name": "platform_job_lease_slots_20261012"
+    }
+  ]
+}

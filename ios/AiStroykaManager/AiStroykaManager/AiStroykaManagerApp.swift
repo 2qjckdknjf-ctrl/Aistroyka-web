@@ -10,6 +10,7 @@ import Shared
 
 @main
 struct AiStroykaManagerApp: App {
+    @UIApplicationDelegateAdaptor(AiStroykaManagerAppDelegate.self) private var appDelegate
     @StateObject private var sessionState = ManagerSessionState()
 
     init() {
@@ -20,6 +21,8 @@ struct AiStroykaManagerApp: App {
         WindowGroup {
             ManagerRootView()
                 .environmentObject(sessionState)
+                .preferredColorScheme(.dark)
+                .background(ManagerV43.bg)
         }
     }
 }

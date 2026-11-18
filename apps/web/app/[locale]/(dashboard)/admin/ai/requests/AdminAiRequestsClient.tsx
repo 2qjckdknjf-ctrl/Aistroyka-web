@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useRequestById } from "@/src/features/admin/ai/api/useRequestById";
 import { QueryBoundary } from "@/lib/query/render";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const DEBOUNCE_MS = 300;
 
@@ -49,7 +49,7 @@ export function AdminAiRequestsClient() {
           {(data) => (
             <div className="space-y-4">
               {data.llm ? (
-                <Card>
+                <DashboardGlassCard>
                   <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("llmLog")}</h2>
                   <dl className="mt-2 grid gap-1 text-aistroyka-caption sm:grid-cols-2">
                     <dt className="text-aistroyka-text-tertiary">{tDetail("mode")}</dt>
@@ -69,13 +69,13 @@ export function AdminAiRequestsClient() {
                     <dt className="text-aistroyka-text-tertiary">{tDetail("securityBlocked")}</dt>
                     <dd>{String(data.llm.security_blocked)}</dd>
                   </dl>
-                </Card>
+                </DashboardGlassCard>
               ) : (
                 <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noLlmLogForRequest")}</p>
               )}
 
               {data.retrieval_logs?.length ? (
-                <Card>
+                <DashboardGlassCard>
                   <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("retrievalLogs")}</h2>
                   <ul className="mt-2 space-y-2 text-aistroyka-caption">
                     {data.retrieval_logs.map((r) => (
@@ -84,11 +84,11 @@ export function AdminAiRequestsClient() {
                       </li>
                     ))}
                   </ul>
-                </Card>
+                </DashboardGlassCard>
               ) : null}
 
               {data.chat_messages?.length ? (
-                <Card>
+                <DashboardGlassCard>
                   <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("chatMessagesByRequestId")}</h2>
                   <ul className="mt-2 space-y-2 text-aistroyka-caption">
                     {data.chat_messages.map((m) => (
@@ -98,7 +98,7 @@ export function AdminAiRequestsClient() {
                       </li>
                     ))}
                   </ul>
-                </Card>
+                </DashboardGlassCard>
               ) : null}
             </div>
           )}

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, Badge, Button } from "@/components/ui";
+import { Badge, Button } from "@/components/ui";
 import type { ClientRequestKind, ClientRequestManager } from "@/lib/domain/client-requests/client-requests.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchRequests(projectId: string): Promise<ClientRequestManager[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/client-requests`, { credentials: "include" });
@@ -104,7 +105,7 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
   });
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-info p-4">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-info p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -280,6 +281,6 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
           )}
         </ul>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

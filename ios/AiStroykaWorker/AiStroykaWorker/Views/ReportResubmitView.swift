@@ -2,10 +2,12 @@
 //  ReportResubmitView.swift
 //  AiStroykaWorker
 //
-//  Resubmit flow when manager status is `changes_requested` (existing proof only; see server report.service).
+//  Resubmit when manager status is `changes_requested`. Existing proof stays required;
+//  a new photo attaches via POST /api/v1/worker/report/add-media before submit.
 //
 
 import SwiftUI
+import UIKit
 import Shared
 
 struct ReportResubmitView: View {
@@ -17,6 +19,11 @@ struct ReportResubmitView: View {
     @State private var submitJobId: String?
     @State private var submitted = false
     @State private var workerReplyNote = ""
+    @State private var correctionImage: UIImage?
+    @State private var showCamera = false
+    @State private var attachingPhoto = false
+    @State private var attachError: String?
+    @State private var attachedSessionId: String?
 
     private var trimmedReplyNote: String {
         workerReplyNote.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,7 +46,7 @@ struct ReportResubmitView: View {
                     ProgressView(NSLocalizedString("worker_loading_report", comment: ""))
                 }
                 if let loadError {
-                    Text(loadError).foregroundColor(.red).font(.caption)
+                    Text(WorkerV43Copy.userFacing(loadError)).foregroundColor(.red).font(.caption)
                 }
 
                 Text(String(format: NSLocalizedString("worker_report_id_short_fmt", comment: ""), String(reportId.prefix(8))))
@@ -51,6 +58,20 @@ struct ReportResubmitView: View {
                         .font(.subheadline).fontWeight(.semibold)
                     Text(wn)
                         .font(.body)
+                }
+
+                if let actual = detail?.actualVolume, let planned = detail?.plannedVolume {
+                    Text(String(format: NSLocalizedString("wrk_v43_volume_pair_fmt", comment: ""), actual, planned))
+                        .font(.subheadline)
+                        .foregroundStyle(WorkerV43.textPrimary)
+                } else if let actual = detail?.actualVolume {
+                    Text(String(format: NSLocalizedString("wrk_v43_volume_m3_fmt", comment: ""), actual))
+                        .font(.subheadline)
+                        .foregroundStyle(WorkerV43.textPrimary)
+                } else if let planned = detail?.plannedVolume {
+                    Text(String(format: NSLocalizedString("wrk_v43_volume_m3_fmt", comment: ""), planned))
+                        .font(.subheadline)
+                        .foregroundStyle(WorkerV43.textPrimary)
                 }
 
                 if let note = detail?.managerNote, !note.isEmpty {
@@ -74,6 +95,25 @@ struct ReportResubmitView: View {
                 }
 
                 if detail?.status == "changes_requested" {
+                    if let correctionImage {
+                        Image(uiImage: correctionImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 180)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .accessibilityLabel(NSLocalizedString("wrk_v43_resubmit_photo", comment: ""))
+                    }
+                    WorkerV43PrimaryButton(
+                        title: NSLocalizedString("wrk_v43_resubmit_photo", comment: ""),
+                        systemImage: "camera",
+                        enabled: !submitted && !attachingPhoto,
+                        fill: WorkerV43.warning
+                    ) { showCamera = true }
+                    .accessibilityIdentifier("pilot_worker_resubmit_camera")
+                    if let attachError {
+                        Text(attachError).font(.caption).foregroundStyle(WorkerV43.danger)
+                    }
                     VStack(alignment: .leading, spacing: 6) {
                         Text(NSLocalizedString("worker_resubmit_note_label", comment: ""))
                             .font(.caption)
@@ -87,11 +127,12 @@ struct ReportResubmitView: View {
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("pilot_worker_resubmit_note")
                     }
-                    Button(NSLocalizedString("worker_submit_again", comment: "")) {
-                        enqueueSubmit()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(submitted || submitInFlight)
+                    WorkerV43PrimaryButton(
+                        title: NSLocalizedString("worker_submit_again", comment: ""),
+                        systemImage: "paperplane.fill",
+                        enabled: !submitted && !submitInFlight && !attachingPhoto,
+                        loading: submitInFlight || attachingPhoto
+                    ) { enqueueSubmit() }
                     .accessibilityIdentifier("pilot_worker_submit_again")
                 } else if let st = detail?.status {
                     Text(String(format: NSLocalizedString("worker_report_status_fmt", comment: ""), st))
@@ -108,8 +149,12 @@ struct ReportResubmitView: View {
             }
             .padding()
         }
+        .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("worker_report_resubmit_title", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPicker(image: $correctionImage)
+        }
         .onAppear(perform: loadDetail)
         .onChange(of: opStore.operations) { _ in
             guard let op = activeSubmitOp else { return }
@@ -132,6 +177,12 @@ struct ReportResubmitView: View {
     }
 
     private func loadDetail() {
+        if WorkerV43Preview.showsCatalogWithoutAuth {
+            detail = WorkerV43PreviewCatalog.reportDetail(id: reportId)
+            loading = false
+            loadError = nil
+            return
+        }
         Task {
             do {
                 let d = try await WorkerAPI.reportDetail(id: reportId)
@@ -142,7 +193,7 @@ struct ReportResubmitView: View {
                 }
             } catch {
                 await MainActor.run {
-                    loadError = (error as? APIError)?.message ?? error.localizedDescription
+                    loadError = WorkerV43Copy.userFacing(error)
                     loading = false
                 }
             }
@@ -150,6 +201,46 @@ struct ReportResubmitView: View {
     }
 
     private func enqueueSubmit() {
+        if WorkerV43Preview.showsCatalogWithoutAuth {
+            submitted = true
+            return
+        }
+        if attachingPhoto || submitInFlight || submitted { return }
+        Task { await attachCorrectionThenSubmit() }
+    }
+
+    @MainActor
+    private func attachCorrectionThenSubmit() async {
+        if let correctionImage, attachedSessionId == nil {
+            attachingPhoto = true
+            attachError = nil
+            do {
+                guard let jpeg = correctionImage.jpegData(compressionQuality: 0.85) else {
+                    attachError = NSLocalizedString("worker_error_generic", comment: "")
+                    attachingPhoto = false
+                    return
+                }
+                let sessionId = try await WorkerAPI.uploadEvidence(
+                    purpose: WorkerPhotoKind.after.rawValue,
+                    jpeg: jpeg
+                )
+                try await WorkerAPI.addMedia(
+                    reportId: reportId,
+                    uploadSessionId: sessionId,
+                    idempotencyKey: DeviceContext.newIdempotencyKey()
+                )
+                attachedSessionId = sessionId
+            } catch {
+                attachError = WorkerV43Copy.userFacing(error)
+                attachingPhoto = false
+                return
+            }
+            attachingPhoto = false
+        }
+        queueSubmitOperation()
+    }
+
+    private func queueSubmitOperation() {
         let jobId = "submitResubmit-\(reportId)-\(UUID().uuidString)"
         submitJobId = jobId
         let taskId = detail?.taskId

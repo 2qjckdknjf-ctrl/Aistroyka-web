@@ -13,9 +13,17 @@ function isPathAllowed(pathname: string, method: string): boolean {
   const m = (method || "GET").toUpperCase();
   // Wave 3: worker task detail + own-report read — RBAC enforced in route handlers; lite middleware only gates surface area.
   if (m === "GET" && /^\/api\/v1\/tasks\/[^/]+$/.test(pathname)) return true;
+  // Task chat (Worker ↔ Manager): list/create/soft-delete — RBAC in handlers.
+  if (/^\/api\/v1\/tasks\/[^/]+\/messages(\/[^/]+)?$/.test(pathname)) {
+    if (m === "GET" || m === "POST" || m === "DELETE") return true;
+  }
   if (m === "GET" && /^\/api\/v1\/reports\/[^/]+$/.test(pathname)) return true;
   // Worker/iOS+Android lite apps list tenant projects (tenant-scoped; same as dashboard read).
   if (pathname === "/api/v1/projects" && method === "GET") return true;
+  // Stage2a A03: Worker reported/measured quantity snapshots (RBAC in route handler).
+  if (/^\/api\/v1\/projects\/[^/]+\/quantities\/snapshots$/.test(pathname)) {
+    if (m === "GET" || m === "POST") return true;
+  }
   if (pathname === "/api/v1/config") return true;
   if (pathname.startsWith("/api/v1/worker")) return true;
   if (pathname.startsWith("/api/v1/sync")) return true;
@@ -28,6 +36,12 @@ function isPathAllowed(pathname: string, method: string): boolean {
   if (pathname === "/api/v1/help/hints" && m === "POST") return true;
   if (pathname === "/api/v1/help/assistant" && m === "POST") return true;
   if (pathname === "/api/v1/help/assistant/events" && m === "POST") return true;
+  // Inbox is user-scoped in the handler (manager_notifications.user_id = caller).
+  if (pathname === "/api/v1/notifications" && m === "GET") return true;
+  if (pathname === "/api/v1/notifications/unread-count" && m === "GET") return true;
+  if (pathname === "/api/v1/notifications/read-all" && (m === "PATCH" || m === "POST")) return true;
+  if (m === "PATCH" && /^\/api\/v1\/notifications\/[^/]+\/read$/.test(pathname)) return true;
+  if (m === "POST" && /^\/api\/v1\/notifications\/[^/]+\/opened$/.test(pathname)) return true;
   return false;
 }
 

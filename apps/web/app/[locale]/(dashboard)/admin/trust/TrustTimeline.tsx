@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui";
+
 import { EmptyState } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Point = { day: string; ai_trust_index: number; governance_risk_index: number; meta_stability_index: number };
 
@@ -22,13 +23,13 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
 
   if (timeline.length === 0) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-aistroyka-text-tertiary text-2xl">—</span>}
           title={tDetail("noTrustTimeline")}
           subtitle={tDetail("needSevenDaysTrustHistory")}
         />
-      </Card>
+      </DashboardGlassCard>
     )
   }
 
@@ -38,7 +39,7 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
   const range = maxV - minV || 1
 
   return (
-    <Card>
+    <DashboardGlassCard>
       <div className="mb-aistroyka-4 flex flex-wrap gap-aistroyka-3">
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("days")}</span>
@@ -80,6 +81,6 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
       <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
         {metric === "ati" ? tDetail("aiTrustIndex") : tDetail("governanceRiskIndex")} {tDetail("overLastDays", { count: filtered.length })}
       </p>
-    </Card>
+    </DashboardGlassCard>
   )
 }

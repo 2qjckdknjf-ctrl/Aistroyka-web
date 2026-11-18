@@ -4,7 +4,7 @@ import { useAIState, useProjectRisk } from "@/lib/features/ai/useAIState";
 import { useTranslations } from "next-intl";
 import { AISignalLine } from "@/components/ai/AISignalLine";
 import { StructuralGridActivation } from "@/components/ai/StructuralGridActivation";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 /**
  * Dashboard AI Insights panel: global AI state from backend (ai_state_cache + ai_events).
@@ -22,7 +22,7 @@ export function DashboardAIInsightsClient() {
 
   return (
     <StructuralGridActivation state={state} highlight={state === "analyzing" || state === "risk_detected"}>
-      <Card className="relative overflow-hidden border-l-4 border-l-transparent">
+      <DashboardGlassCard className="relative border-l-4 border-l-transparent" contentClassName="overflow-hidden p-aistroyka-4">
         <div className="flex items-start gap-3">
           <div className="flex shrink-0 items-center pt-0.5" title={tDetail("aiSignalHint")}>
             <AISignalLine state={state} totalScore={score ?? undefined} />
@@ -56,7 +56,7 @@ export function DashboardAIInsightsClient() {
             )}
           </div>
         </div>
-      </Card>
+      </DashboardGlassCard>
     </StructuralGridActivation>
   );
 }

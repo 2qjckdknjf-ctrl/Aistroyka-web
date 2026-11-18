@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Skeleton, ErrorState } from "@/components/ui";
+import { Button, Skeleton, ErrorState } from "@/components/ui";
 import type { HandoverManagerPackPayload, HandoverOwnerPackPayload } from "@/lib/domain/project-handover/handover-pack.types";
 import { translateApiError } from "@/lib/i18n/api-error-messages";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchPack(
   projectId: string,
@@ -85,7 +86,7 @@ export function HandoverPackPreviewClient({ projectId }: { projectId: string }) 
       </div>
 
       {isManager ? (
-        <Card className="p-4 print:border print:shadow-none">
+        <DashboardGlassCard className="p-4 print:border print:shadow-none">
           <h2 className="font-semibold text-aistroyka-text-primary">{t("handoverPackReadiness")}</h2>
           {pack.readiness.ready ? (
             <p className="mt-2 text-sm text-aistroyka-success">{t("handoverPackReady")}</p>
@@ -105,22 +106,22 @@ export function HandoverPackPreviewClient({ projectId }: { projectId: string }) 
           {!pack.portal_preview_full ? (
             <p className="mt-3 text-xs text-aistroyka-text-tertiary">{t("handoverPackPortalPartial")}</p>
           ) : null}
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       {!isManager && pack.handover ? (
-        <Card className="p-4 print:border print:shadow-none">
+        <DashboardGlassCard className="p-4 print:border print:shadow-none">
           <h2 className="font-semibold text-aistroyka-text-primary">{t("handoverCompletion")}</h2>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">{formatPortalStatus(pack.handover.status, "handover", tPortal)}</p>
           {pack.handover.handover_notes ? (
             <p className="mt-2 text-sm text-aistroyka-text-primary whitespace-pre-wrap">{pack.handover.handover_notes}</p>
           ) : null}
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       <div className="space-y-4">
         {pack.sections.map((s) => (
-          <Card key={s.id} className="p-4 print:break-inside-avoid print:border print:shadow-none">
+          <DashboardGlassCard key={s.id} className="p-4 print:break-inside-avoid print:border print:shadow-none">
             <h3 className="font-semibold text-aistroyka-text-primary">{t(`handoverPackSectionTitles.${s.id}`)}</h3>
             <p className="mt-1 text-sm text-aistroyka-text-secondary">{s.summary}</p>
             {s.lines && s.lines.length > 0 ? (
@@ -137,7 +138,7 @@ export function HandoverPackPreviewClient({ projectId }: { projectId: string }) 
                 </Link>
               </p>
             ) : null}
-          </Card>
+          </DashboardGlassCard>
         ))}
       </div>
     </main>

@@ -1,3 +1,5 @@
+> Contract update 2026-10-11: `--require-live` now proves only an authenticated, schema-valid, non-fallback response from the deployed application. It never substitutes a local direct-provider success for a failed Worker request. Use AUTH_HEADER or the existing SMOKE_EMAIL/SMOKE_PASSWORD plus Supabase settings. Historical observations below retain their original date; they are not current full-capability certification.
+
 # AI Module Validation Report (Truth-Based)
 
 **Last updated:** 2026-06-04  

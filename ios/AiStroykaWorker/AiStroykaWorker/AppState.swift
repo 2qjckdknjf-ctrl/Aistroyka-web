@@ -48,6 +48,7 @@ final class AppState: ObservableObject {
                 try? await WorkerAPI.unregisterDevice()
             }
             await auth.signOut()
+            AppStateStoreManager.shared.clearSessionScopedCache()
             isLoggedIn = false
             currentUser = nil
         }

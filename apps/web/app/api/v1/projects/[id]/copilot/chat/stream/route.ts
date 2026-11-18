@@ -201,7 +201,7 @@ export async function POST(
   const tenantId = ctx.tenantId!;
   const userId = ctx.userId ?? "";
 
-  const admin = getAdminClient();
+  const admin = getAdminClient() as SupabaseClient | null;
   if (!admin) {
     return NextResponse.json(
       {
@@ -402,7 +402,7 @@ export async function POST(
         errorKind: string | null = null
       ): Promise<string | null> => {
         try {
-          const { data: inserted, error: insertErr } = await supabase
+          const { data: inserted, error: insertErr } = await admin
             .from("ai_chat_messages")
             .insert({
               tenant_id: tenantId,

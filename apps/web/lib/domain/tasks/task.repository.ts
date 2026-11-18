@@ -3,7 +3,7 @@ import { getAssignedTaskIds } from "@/lib/domain/task-assignments";
 import type { Task, CreateTaskInput, UpdateTaskInput } from "./task.types";
 
 const TASK_SELECT =
-  "id, project_id, title, description, status, assigned_to, due_date, milestone_id, required_photos, report_required, created_at, updated_at";
+  "id, project_id, title, description, status, assigned_to, due_date, milestone_id, required_photos, report_required, priority, created_at, updated_at";
 
 /**
  * List tasks assigned to user: worker_tasks.assigned_to = user OR task in task_assignments.
@@ -23,7 +23,12 @@ export async function listTasksForUser(
     .lte("due_date", today)
     .in("status", ["pending", "in_progress"]);
   const { data: byAssignedTo, error: e1 } = await base.eq("assigned_to", userId);
-  if (e1) return [];
+  // Fail closed: an empty array is a valid "no work today" snapshot. V4.3 Worker
+  // persists HTTP 200 `{ data: [] }` over the offline Today cache, so a query
+  // error must not be collapsed into that success shape.
+  if (e1) {
+    throw new Error("Task list failed");
+  }
   const fromLegacy = (byAssignedTo ?? []) as Task[];
   if (assignedIds.length === 0) return fromLegacy;
   const legacyIds = new Set(fromLegacy.map((t) => t.id));
@@ -96,6 +101,7 @@ export async function create(
       status: "pending",
       required_photos: input.required_photos ?? {},
       report_required: input.report_required ?? true,
+      priority: input.priority ?? "medium",
     })
     .select(TASK_SELECT)
     .single();
@@ -117,6 +123,7 @@ export async function update(
   if (input.status !== undefined) payload.status = input.status;
   if (input.required_photos !== undefined) payload.required_photos = input.required_photos;
   if (input.report_required !== undefined) payload.report_required = input.report_required;
+  if (input.priority !== undefined) payload.priority = input.priority;
   const { data, error } = await supabase
     .from("worker_tasks")
     .update(payload)
@@ -160,7 +167,7 @@ export async function list(
 
   let q = supabase
     .from("worker_tasks")
-    .select("id, project_id, title, description, status, assigned_to, due_date, milestone_id, required_photos, report_required, created_at, updated_at", { count: "exact" })
+    .select(TASK_SELECT, { count: "exact" })
     .eq("tenant_id", tenantId)
     .order("due_date", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })

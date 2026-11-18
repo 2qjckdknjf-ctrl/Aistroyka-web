@@ -14,6 +14,7 @@ export interface CreateAnalysisJobParams {
   p_tenant_id: string;
   p_media_id: string;
   p_priority?: "high" | "normal" | "low";
+  p_request_key?: string | null;
 }
 
 export interface AnalysisJobRow {

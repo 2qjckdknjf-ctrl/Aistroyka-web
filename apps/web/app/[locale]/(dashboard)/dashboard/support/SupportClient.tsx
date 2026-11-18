@@ -18,7 +18,9 @@ type TicketMessage = {
   created_at: string;
 };
 
-export function SupportClient() {
+export function SupportClient({ skin = "default" }: { skin?: "default" | "canon" }) {
+  const isCanon = skin === "canon";
+  const shell = isCanon ? "canon-glass p-4" : "card";
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [messages, setMessages] = useState<TicketMessage[]>([]);
@@ -130,7 +132,7 @@ export function SupportClient() {
         </p>
       </header>
 
-      <form onSubmit={createTicket} className="card space-y-3">
+      <form onSubmit={createTicket} className={`${shell} space-y-3`}>
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">New support request</h2>
         <input
           value={subject}
@@ -153,7 +155,7 @@ export function SupportClient() {
       </form>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="card">
+        <section className={shell}>
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">My tickets</h2>
           <ul className="mt-3 space-y-2">
             {tickets.map((ticket) => (
@@ -180,7 +182,7 @@ export function SupportClient() {
           </ul>
         </section>
 
-        <section className="card">
+        <section className={shell}>
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Ticket thread</h2>
           {activeTicket ? (
             <>

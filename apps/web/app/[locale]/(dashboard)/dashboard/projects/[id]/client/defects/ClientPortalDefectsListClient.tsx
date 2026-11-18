@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Button, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { blockingBadgeClass, defectStatusBadgeClass } from "../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Row = {
   id: string;
@@ -67,21 +68,21 @@ export function ClientPortalDefectsListClient({ projectId }: { projectId: string
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-32" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📌</span>}
           title={tDetail("couldNotLoadPunchList")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -92,7 +93,7 @@ export function ClientPortalDefectsListClient({ projectId }: { projectId: string
       <Link href={`/dashboard/projects/${projectId}/client`} className="text-aistroyka-accent hover:underline text-sm font-medium">
         {tDetail("backToClientPortal")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h1 className="text-aistroyka-title3 font-semibold">{tDetail("punchList")}</h1>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">
           {tDetail("reportSnagsHint")}
@@ -141,7 +142,7 @@ export function ClientPortalDefectsListClient({ projectId }: { projectId: string
           ))}
         </ul>
         {rows.length === 0 ? <p className="mt-3 text-sm text-aistroyka-text-secondary">{tDetail("noItemsYet")}</p> : null}
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

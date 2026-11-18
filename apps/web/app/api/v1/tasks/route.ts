@@ -8,7 +8,9 @@ import {
   storeResponse,
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
-import type { CreateTaskInput } from "@/lib/domain/tasks/task.types";
+import { parseTaskPriority, type CreateTaskInput } from "@/lib/domain/tasks/task.types";
+import { emitAudit } from "@/lib/observability/audit.service";
+import { boundedProductWrite, taskCreatedAuditDetails } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -96,11 +98,37 @@ export async function POST(request: Request) {
         : undefined,
     report_required: typeof body.report_required === "boolean" ? body.report_required : undefined,
   };
+  if (body.priority !== undefined && body.priority !== null && body.priority !== "") {
+    const priority = parseTaskPriority(body.priority);
+    if (!priority) return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    input.priority = priority;
+  }
 
   const supabase = await createClientFromRequest(request);
   const { data, error } = await createTask(supabase, ctx, input);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
   if (!data) return NextResponse.json({ error: "Create failed" }, { status: 500 });
+
+  if (ctx.tenantId && ctx.userId && data.id) {
+    await boundedProductWrite(() =>
+      emitAudit(supabase, {
+        tenant_id: ctx.tenantId!,
+        user_id: ctx.userId!,
+        trace_id: ctx.traceId ?? null,
+        action: "task_created",
+        resource_type: "task",
+        resource_id: data.id,
+        details: taskCreatedAuditDetails({
+          client: ctx.clientProfile,
+          role: ctx.role,
+          hasProject: Boolean(data.project_id),
+          hasAssignee: Boolean(data.assigned_to),
+          hasDueDate: Boolean(data.due_date),
+          priority: data.priority,
+        }),
+      }),
+    );
+  }
 
   const res = NextResponse.json({ data }, { status: 201 });
   if (idempotencyKey && ctx.tenantId && ctx.userId) {

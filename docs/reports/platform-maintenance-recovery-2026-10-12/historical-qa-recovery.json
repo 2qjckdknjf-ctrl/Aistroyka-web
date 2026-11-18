@@ -1,0 +1,26 @@
+{
+  "kind": "exact-two-2026-10-03-maintenance-claim-recovery",
+  "results": [
+    {
+      "id": "39e2a0b7-510c-4faf-adad-e8b92188c60d",
+      "type": "ops_events_prune",
+      "status": "queued",
+      "attempts": 1,
+      "locked_by": null,
+      "locked_at": null,
+      "cas_won": true
+    },
+    {
+      "id": "4b050879-be51-4777-9d57-7910875bc3c8",
+      "type": "upload_reconcile",
+      "status": "queued",
+      "attempts": 1,
+      "locked_by": null,
+      "locked_at": null,
+      "cas_won": true
+    }
+  ],
+  "provider_called": false,
+  "jobs_deleted": false,
+  "not_a_general_stale_sweeper": true
+}

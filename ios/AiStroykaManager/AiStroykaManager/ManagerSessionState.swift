@@ -16,6 +16,7 @@ final class ManagerSessionState: ObservableObject {
     @Published var authErrorMessage: String?
     /// Live E2E: block tab shell until programmatic sign-in + token are ready (avoids 401 on first API load).
     @Published var isE2EBootstrapping = false
+    @Published var signedInEmail: String?
     private var sessionCheckTask: Task<Void, Never>?
     private var sessionCheckSequence = 0
     private var unauthorizedObserver: NSObjectProtocol?
@@ -174,14 +175,16 @@ final class ManagerSessionState: ObservableObject {
         roleFailureMessage = nil
         let session = await AuthService.shared.currentSession()
         guard sequence == sessionCheckSequence else { return }
-        if session == nil {
+        guard let session else {
             isLoggedIn = false
             isAuthorizedRole = false
             canRetryRoleCheck = false
             roleFailureMessage = nil
+            signedInEmail = nil
             isCheckingSession = false
             return
         }
+        signedInEmail = session.user.email
 
         let roleCheck = await fetchRoleCheckResult()
         guard sequence == sessionCheckSequence else { return }
@@ -256,6 +259,7 @@ final class ManagerSessionState: ObservableObject {
     func signOut() async {
         sessionCheckSequence += 1
         sessionCheckTask?.cancel()
+        try? await ManagerAPI.unregisterDevice()
         await AuthService.shared.signOut()
         isLoggedIn = false
         isCheckingSession = false

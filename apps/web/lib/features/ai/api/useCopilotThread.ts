@@ -64,7 +64,7 @@ export function useCopilotThread(projectId: string | null) {
         ? queryKeys.threadDetail(projectId, activeThreadId)
         : ["ai", "threadDetail", "", ""],
     queryFn: async () => {
-      if (!activeThreadId) return null;
+      if (!projectId || !activeThreadId) return null;
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       let session: { access_token?: string } | null = null;
@@ -75,7 +75,7 @@ export function useCopilotThread(projectId: string | null) {
         // fallthrough
       }
       const getAuthToken = async () => session?.access_token ?? null;
-      return getThread(activeThreadId, getAuthToken);
+      return getThread(projectId, activeThreadId, getAuthToken);
     },
     enabled: !!projectId && !!activeThreadId,
   });
@@ -144,7 +144,7 @@ export function useCopilotThread(projectId: string | null) {
       }
       const getAuthToken = async () => session?.access_token ?? null;
       if (activeThreadId) {
-        await archiveThread(activeThreadId, getAuthToken);
+        await archiveThread(projectId, activeThreadId, getAuthToken);
       }
       const newThread = await createThread(projectId, getAuthToken);
       return newThread.id;

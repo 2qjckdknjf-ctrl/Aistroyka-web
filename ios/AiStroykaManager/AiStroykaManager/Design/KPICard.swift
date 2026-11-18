@@ -27,7 +27,7 @@ struct KPICard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(ManagerSemanticColors.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

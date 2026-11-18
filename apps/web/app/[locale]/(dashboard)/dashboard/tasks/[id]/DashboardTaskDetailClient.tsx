@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   Badge,
   Skeleton,
   Button,
   Modal,
   Select,
 } from "@/components/ui";
+import { CanonSurface } from "@/components/canon/CanonSurface";
+import { TaskChatPanel } from "@/components/dashboard/TaskChatPanel";
 
 interface TaskDetail {
   id: string;
@@ -24,6 +25,7 @@ interface TaskDetail {
   report_status?: string | null;
   created_at?: string;
   updated_at?: string;
+  priority?: string | null;
 }
 
 function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" {
@@ -39,14 +41,22 @@ function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" 
   }
 }
 
-export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
+export function DashboardTaskDetailClient({
+  taskId,
+  skin = "default",
+}: {
+  taskId: string;
+  skin?: "default" | "canon";
+}) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
+  const [savingPriority, setSavingPriority] = useState(false);
 
   const fetchTask = () => {
     setLoading(true);
@@ -106,6 +116,20 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
       .catch(() => {});
   };
 
+  const patchPriority = (priority: string) => {
+    if (savingPriority) return;
+    setSavingPriority(true);
+    fetch(`/api/v1/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ priority }),
+    })
+      .then((r) => (r.ok ? fetchTask() : Promise.reject()))
+      .catch(() => {})
+      .finally(() => setSavingPriority(false));
+  };
+
   const patchStatus = (status: string) => {
     fetch(`/api/v1/tasks/${taskId}`, {
       method: "PATCH",
@@ -119,23 +143,23 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
 
   if (loading && !task) {
     return (
-      <Card>
+      <CanonSurface isCanon={isCanon}>
         <Skeleton lines={6} />
-      </Card>
+      </CanonSurface>
     );
   }
 
   if (error || !task) {
     return (
-      <Card>
+      <CanonSurface isCanon={isCanon}>
         <p className="text-aistroyka-text-secondary">{error ?? "Not found"}</p>
-      </Card>
+      </CanonSurface>
     );
   }
 
   return (
     <>
-      <Card className="p-4 space-y-4">
+      <CanonSurface isCanon={isCanon} contentClassName="space-y-4 p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
@@ -144,6 +168,19 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             <Badge variant={statusVariant(task.status)} className="mt-1">
               {task.status}
             </Badge>
+            <label className="mt-2 flex items-center gap-2 text-aistroyka-caption text-aistroyka-text-secondary">
+              <span>{tDetail("priority")}</span>
+              <Select
+                value={task.priority === "low" || task.priority === "high" ? task.priority : "medium"}
+                disabled={savingPriority}
+                onChange={(e) => patchPriority(e.target.value)}
+                aria-label={tDetail("priority")}
+              >
+                <option value="low">{tDetail("priorityLow")}</option>
+                <option value="medium">{tDetail("priorityMedium")}</option>
+                <option value="high">{tDetail("priorityHigh")}</option>
+              </Select>
+            </label>
           </div>
           <div className="flex gap-2">
             {(task.status === "pending" || task.status === "in_progress") && (
@@ -206,7 +243,9 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             </dd>
           </div>
         </dl>
-      </Card>
+      </CanonSurface>
+
+      <TaskChatPanel taskId={taskId} />
 
       {assignOpen && (
         <Modal open={true} title={tDetail("assignTask")} onClose={() => setAssignOpen(false)}>

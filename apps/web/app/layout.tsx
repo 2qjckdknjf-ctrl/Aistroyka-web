@@ -22,18 +22,17 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.aistroyka.ai";
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Aistroyka — AI Construction Intelligence",
+    default: "Aistroyka — construction operations for a controlled pilot",
     template: "%s | Aistroyka",
   },
-  description: "AI Construction Intelligence — control progress, risks, and quality on site. AI construction platform, construction intelligence, AI project management.",
-  keywords: ["AI construction platform", "construction intelligence", "AI project management", "construction analytics", "construction AI"],
+  description: "Controlled-pilot construction operations: projects, field reports, and photo evidence. A person decides.",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "/",
     siteName: "Aistroyka",
-    title: "Aistroyka — AI Construction Intelligence",
-    description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
+    title: "Aistroyka — construction operations for a controlled pilot",
+    description: "Controlled-pilot construction operations: projects, tasks, daily reports, and photo evidence. A person decides.",
     images: [{ url: "/brand/social/aistroyka-og.png", width: 1200, height: 630, alt: "AISTROYKA" }],
   },
   icons: {
@@ -62,7 +61,9 @@ export default async function RootLayout({
   let lang: (typeof LOCALES)[number] = "ru";
   try {
     const headersList = await headers();
-    const locale = headersList.get("x-next-intl-locale") ?? "ru";
+    const fromHeader = headersList.get("x-next-intl-locale")?.trim();
+    const fromPath = headersList.get("x-aistroyka-pathname")?.match(/^\/(ru|en|es|it)(?=\/|$)/)?.[1];
+    const locale = fromHeader || fromPath || "ru";
     lang = LOCALES.includes(locale as (typeof LOCALES)[number])
       ? (locale as (typeof LOCALES)[number])
       : "ru";

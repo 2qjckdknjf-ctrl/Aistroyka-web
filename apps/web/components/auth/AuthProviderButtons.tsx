@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
+import { isTelegramLoginUiEnabled } from "@/lib/auth/telegram-login-ui";
 import { createClient } from "@/lib/supabase/client";
+
+type OAuthProvider = "apple" | "google";
 
 type Props = {
   nextPath: string;
@@ -29,34 +32,36 @@ export function AuthProviderButtons({
 }: Props) {
   const locale = useLocale();
   const t = useTranslations("auth");
-  const [appleLoading, setAppleLoading] = useState(false);
-  const [appleError, setAppleError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<OAuthProvider | null>(null);
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const safeNext = useMemo(() => makeSafePath(nextPath, locale), [locale, nextPath]);
   const telegramStartHref = `/${locale}/telegram/start?next=${encodeURIComponent(safeNext)}`;
+  const telegramEnabled = isTelegramLoginUiEnabled();
 
-  async function continueWithApple() {
-    setAppleError(null);
-    setAppleLoading(true);
+  async function continueWithOAuth(provider: OAuthProvider) {
+    setOauthError(null);
+    setOauthLoading(provider);
+    const failedKey = provider === "apple" ? "oauthAppleFailed" : "oauthGoogleFailed";
     try {
       const supabase = createClient();
-      const redirectTo = `${window.location.origin}/api/auth/callback?callback=${encodeURIComponent(`/${locale}/dashboard`)}&next=${encodeURIComponent(safeNext)}&intent=${encodeURIComponent(appleIntent)}`;
+      const redirectTo = `${window.location.origin}/api/auth/callback?callback=${encodeURIComponent(`/${locale}/dashboard`)}&next=${encodeURIComponent(safeNext)}&intent=${encodeURIComponent(appleIntent)}&provider=${encodeURIComponent(provider)}`;
       const result = appleIntent === "link"
-        ? await (supabase.auth as any).linkIdentity({
-            provider: "apple",
+        ? await (supabase.auth as { linkIdentity: (args: { provider: OAuthProvider; options: { redirectTo: string } }) => Promise<{ error?: { message?: string } | null }> }).linkIdentity({
+            provider,
             options: { redirectTo },
           })
         : await supabase.auth.signInWithOAuth({
-            provider: "apple",
+            provider,
             options: { redirectTo },
           });
       if (result?.error) {
-        setAppleError(result.error.message || t("oauthAppleFailed"));
+        setOauthError(result.error.message || t(failedKey));
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : t("oauthAppleFailed");
-      setAppleError(message);
+      const message = error instanceof Error ? error.message : t(failedKey);
+      setOauthError(message);
     } finally {
-      setAppleLoading(false);
+      setOauthLoading(null);
     }
   }
 
@@ -72,21 +77,34 @@ export function AuthProviderButtons({
         variant="secondary"
         className="w-full"
         onClick={() => {
-          void continueWithApple();
+          void continueWithOAuth("apple");
         }}
-        loading={appleLoading}
+        loading={oauthLoading === "apple"}
       >
         {t("continueWithApple")}
       </Button>
-      <a
-        href={telegramStartHref}
-        className="inline-flex min-h-[var(--aistroyka-touch-min)] w-full items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-button-secondary-border)] bg-[var(--aistroyka-button-secondary-bg)] px-[var(--aistroyka-space-4)] py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-button-secondary-text)] transition-colors hover:bg-aistroyka-surface-raised"
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full"
+        onClick={() => {
+          void continueWithOAuth("google");
+        }}
+        loading={oauthLoading === "google"}
       >
-        {t("continueWithTelegram")}
-      </a>
-      {appleError ? (
+        {t("continueWithGoogle")}
+      </Button>
+      {telegramEnabled ? (
+        <a
+          href={telegramStartHref}
+          className="inline-flex min-h-[var(--aistroyka-touch-min)] w-full items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-button-secondary-border)] bg-[var(--aistroyka-button-secondary-bg)] px-[var(--aistroyka-space-4)] py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-button-secondary-text)] transition-colors hover:bg-aistroyka-surface-raised"
+        >
+          {t("continueWithTelegram")}
+        </a>
+      ) : null}
+      {oauthError ? (
         <p className="text-sm text-aistroyka-error" role="alert">
-          {appleError}
+          {oauthError}
         </p>
       ) : null}
     </div>

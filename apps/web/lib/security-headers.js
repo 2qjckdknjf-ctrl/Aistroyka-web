@@ -1,7 +1,10 @@
-/** CJS shim for next.config.js (Node require does not load .ts). Keep in sync with security-headers.ts. */
+/**
+ * CJS shim for next.config.js (Node require does not load .ts).
+ * Keep in sync with security-headers.ts — page headers are owned by next.config.js.
+ */
 const BASE_CSP_DIRECTIVES = [
   "default-src 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://growth-os-sable-psi.vercel.app",
   "img-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
   "frame-ancestors 'none'",
@@ -28,11 +31,16 @@ function getPageSecurityHeaders(isDevelopment = process.env.NODE_ENV === "develo
   ];
 }
 
-function getApiSecurityHeaders() {
+function isPrivateDocumentOriginalPath(pathname) {
+  const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+  return new RegExp(`^/api/v1/projects/${uuid}/documents/${uuid}/original$`, "i").test(pathname);
+}
+
+function getApiSecurityHeaders(pathname = "") {
   return [
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    { key: "X-Frame-Options", value: "DENY" },
+    { key: "X-Frame-Options", value: isPrivateDocumentOriginalPath(pathname) ? "SAMEORIGIN" : "DENY" },
     { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
   ];
 }
@@ -71,8 +79,8 @@ function applySecurityHeadersToResponse(res, profile, options) {
   return res;
 }
 
-function applyApiSecurityHeadersToHeaders(headers) {
-  getApiSecurityHeaders().forEach(({ key, value }) => headers.set(key, value));
+function applyApiSecurityHeadersToHeaders(headers, pathname = "") {
+  getApiSecurityHeaders(pathname).forEach(({ key, value }) => headers.set(key, value));
 }
 
 module.exports = {
@@ -84,6 +92,7 @@ module.exports = {
   getSecurityHeaders,
   getPageSecurityHeaders,
   getApiSecurityHeaders,
+  isPrivateDocumentOriginalPath,
   applySecurityHeadersToResponse,
   applyApiSecurityHeadersToHeaders,
 };

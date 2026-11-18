@@ -20,6 +20,32 @@ export const LG_FILTER_IDS = {
 
 export const LG_STORAGE_KEY = "aistroyka-lg-intensity";
 
+/** CSS custom properties that must be defined on `:root` in `app/design-tokens.css`. */
+export const LG_REQUIRED_ROOT_VARS = [
+  "--lg-intensity",
+  "--lg-opacity",
+  "--lg-blur",
+  "--lg-blur-refraction",
+  "--lg-radius",
+  "--lg-radius-control",
+  "--lg-radius-pill",
+  "--lg-tint",
+  "--lg-tint-strong",
+  "--lg-tint-accent",
+  "--lg-border",
+  "--lg-sheen-highlight",
+  "--lg-sheen-bottom",
+  "--lg-sheen-opacity",
+  "--lg-shadow",
+  "--lg-shadow-hover",
+  "--lg-z-content",
+  "--lg-motion-duration",
+  "--lg-motion-sweep",
+  "--lg-motion-ease",
+  "--lg-motion-ease-gentle",
+  "--lg-motion-ease-bouncy",
+] as const;
+
 const INTENSITY_CLASS: Record<LiquidGlassIntensity, string> = {
   subtle: "lg--intensity-subtle",
   medium: "lg--intensity-medium",

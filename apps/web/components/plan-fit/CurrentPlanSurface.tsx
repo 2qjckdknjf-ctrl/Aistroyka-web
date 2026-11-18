@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
 import { fetchPlanSurface } from "@/lib/plan-fit/api-client";
 import {
   getPlanCardTitle,
@@ -11,6 +11,7 @@ import {
   getUpgradeCtaTargetRoute,
 } from "@/lib/platform/plan-fit/plan-surface";
 import type { PlanSurfaceViewModel } from "@/lib/platform/plan-fit/plan-surface.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 function LimitsSummary({ limits }: { limits: PlanSurfaceViewModel["limitsSummary"] }) {
   const t = useTranslations("planFitSurface");
@@ -94,26 +95,26 @@ export function CurrentPlanSurface() {
 
   if (isLoading) {
     return (
-      <Card className="mb-aistroyka-8">
+      <DashboardGlassCard className="mb-aistroyka-8">
         <Skeleton className="h-48 w-full rounded-[var(--aistroyka-radius-md)]" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (isError || !data?.surface) {
     return (
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-error">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-error">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
           {getPlanSurfaceErrorMessage(error instanceof Error ? error : null)}
         </p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   const surface = data.surface;
 
   return (
-    <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
+    <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary">
@@ -139,6 +140,6 @@ export function CurrentPlanSurface() {
       </div>
 
       <UpgradeCta suggestion={surface.upgradeSuggestion} />
-    </Card>
+    </DashboardGlassCard>
   );
 }

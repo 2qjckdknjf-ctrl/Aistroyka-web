@@ -112,7 +112,7 @@ export async function emitTelegramForNewClientRequest(
     .eq("tenant_id", params.tenantId)
     .maybeSingle();
   const projectName = (proj as { name?: string } | null)?.name ?? undefined;
-  const stakeholders = await shRepo.listByProject(admin, params.tenantId, params.projectId);
+  const { rows: stakeholders } = await shRepo.listByProject(admin, params.tenantId, params.projectId);
   const stakeholderUserIds = stakeholders
     .filter((s) => s.status === "active" && s.user_id)
     .map((s) => s.user_id as string);

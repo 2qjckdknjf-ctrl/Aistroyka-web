@@ -1,0 +1,23 @@
+# Phase 1 admin host — wrangler triggers reference (OAuth deploy).
+# Preserves apex routes; adds admin as custom domain (auto DNS + TLS).
+# Deploy: unset CLOUDFLARE_API_TOKEN && bunx wrangler triggers deploy -c wrangler.admin-phase1.toml -e production --name aistroyka-web-production
+
+name = "aistroyka-web-production"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+main = ".open-next/deploy/worker-bootstrap.js"
+
+[env.production]
+name = "aistroyka-web-production"
+
+[[env.production.routes]]
+pattern = "aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "admin.aistroyka.ai"
+custom_domain = true

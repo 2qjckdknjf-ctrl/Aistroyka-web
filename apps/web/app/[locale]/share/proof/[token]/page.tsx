@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const MEDIA_ORDER = ["before", "after", "progress", "issue", "document", "other"] as const;
 type MediaBucket = (typeof MEDIA_ORDER)[number];
@@ -49,10 +49,10 @@ export default async function ProofSharePage({
   if (!pack) {
     return (
       <main className="mx-auto max-w-3xl p-4 sm:p-6">
-        <Card className="p-6">
+        <DashboardGlassCard className="p-6">
           <h1 className="text-aistroyka-title3 font-semibold">{t("unavailableTitle")}</h1>
           <p className="mt-2 text-aistroyka-text-secondary">{t("unavailableHint")}</p>
-        </Card>
+        </DashboardGlassCard>
       </main>
     );
   }
@@ -74,15 +74,15 @@ export default async function ProofSharePage({
 
   return (
     <main className="mx-auto max-w-5xl space-y-4 p-4 sm:space-y-6 sm:p-6">
-      <Card className="border-l-4 border-l-aistroyka-accent p-4 sm:p-6">
+      <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent p-4 sm:p-6">
         <p className="text-sm font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{t("subtitle")}</p>
         <h1 className="mt-1 text-aistroyka-title font-bold text-aistroyka-text-primary">{pack.project.name}</h1>
         <p className="mt-2 text-sm text-aistroyka-text-secondary sm:text-base">
           {t("progressLine", { done: pack.progress.tasks_done, total: pack.progress.tasks_total })}
         </p>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-4 sm:p-6">
+      <DashboardGlassCard className="p-4 sm:p-6">
         <h2 className="text-aistroyka-title3 font-semibold">{t("evidenceHeading")}</h2>
         {pack.media.length === 0 ? (
           <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("evidenceEmpty")}</p>
@@ -125,10 +125,10 @@ export default async function ProofSharePage({
             })}
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="p-4">
+        <DashboardGlassCard className="p-4">
           <h2 className="font-semibold">{t("documentsHeading")}</h2>
           {pack.documents.length === 0 ? (
             <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("emptyList")}</p>
@@ -141,8 +141,8 @@ export default async function ProofSharePage({
               ))}
             </ul>
           )}
-        </Card>
-        <Card className="p-4">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="p-4">
           <h2 className="font-semibold">{t("decisionsHeading")}</h2>
           {pack.decisions.length === 0 ? (
             <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("emptyList")}</p>
@@ -155,8 +155,8 @@ export default async function ProofSharePage({
               ))}
             </ul>
           )}
-        </Card>
-        <Card className="p-4">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="p-4">
           <h2 className="font-semibold">{t("commercialHeading")}</h2>
           {pack.approved_commercial_changes.length === 0 ? (
             <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("emptyList")}</p>
@@ -170,7 +170,7 @@ export default async function ProofSharePage({
               ))}
             </ul>
           )}
-        </Card>
+        </DashboardGlassCard>
       </div>
     </main>
   );

@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Card, Button, Badge } from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Item = {
   id: string;
@@ -44,9 +45,9 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
 
   if (q.isPending) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <p className="text-sm text-aistroyka-text-tertiary">{tDetail("loadingUpdates")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -62,7 +63,7 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
   }
 
   return (
-    <Card className="p-4 border-l-4 border-l-aistroyka-info">
+    <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-info">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("updatesForYou")}</h3>
         {unread > 0 ? (
@@ -97,6 +98,6 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

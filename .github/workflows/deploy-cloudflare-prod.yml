@@ -18,14 +18,64 @@ on:
         required: false
         default: "main"
 
+# Narrow token: read commit metadata for skip-marker / SHA validation only. No write / deploy secrets here.
+permissions:
+  contents: read
+  actions: read
+
 concurrency:
   group: deploy-cloudflare-prod
   cancel-in-progress: false
 
 
 jobs:
+  # Fail-closed before migrations/deploy so a skipped staging promotion cannot yield a green
+  # production workflow with only migrations-preflight succeeding and deploy skipped.
+  no-promotion-guard:
+    name: Production promotion guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Load upstream commit message
+        id: upstream
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_HEAD_SHA:-}" ]; then
+            echo "message=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! [[ "$STAGING_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "message=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fetch message for exact [skip-staging-deploy] detection; do not print full message.
+          MSG="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${STAGING_HEAD_SHA}" --jq .commit.message)"
+          {
+            echo "message<<PROMOTION_GUARD_EOF"
+            printf '%s\n' "$MSG"
+            echo "PROMOTION_GUARD_EOF"
+          } >> "$GITHUB_OUTPUT"
+          if printf '%s' "$MSG" | grep -Fq '[skip-staging-deploy]'; then
+            echo "has_skip_marker=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_skip_marker=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Evaluate production promotion guard
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          STAGING_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          STAGING_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          COMMIT_MESSAGE: ${{ steps.upstream.outputs.message }}
+        run: bash scripts/release/production-promotion-guard.sh
+
   migrations-preflight:
     name: Supabase migrations preflight (blocking)
+    needs: [no-promotion-guard]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -51,7 +101,8 @@ jobs:
         run: bash scripts/release/check-env-config.sh migrations
 
   deploy:
-    needs: migrations-preflight
+    needs: [no-promotion-guard, migrations-preflight]
+    # Defense in depth: staging must be success on workflow_run; failed no-promotion-guard skips this job.
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Build and deploy to production
     runs-on: ubuntu-latest
@@ -83,6 +134,7 @@ jobs:
       - name: Validate deploy ref
         env:
           DEPLOY_REF: ${{ steps.deploy_ref.outputs.ref }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -95,19 +147,14 @@ jobs:
 
           # Only allow full 40-character SHA, not partial SHA.
           if echo "$DEPLOY_REF" | grep -Eq '^[0-9a-f]{40}$'; then
-            if git ls-remote --exit-code "$REPO_URL" "$DEPLOY_REF" >/dev/null 2>&1; then
-              echo "Resolved deploy ref as full commit SHA: $DEPLOY_REF"
+            # A successful staging SHA can be an ancestor after a docs-only merge.
+            # Verify the repository commit object, not equality with today's refs.
+            if gh api "repos/${GITHUB_REPOSITORY}/git/commits/$DEPLOY_REF" >/dev/null 2>&1; then
+              echo "Resolved deploy ref as repository commit: $DEPLOY_REF"
               exit 0
             fi
 
-            # Fallback: ls-remote by SHA may not always return direct object lookup.
-            # If checkout can fetch by exact SHA from repository, allow it only after verifying all refs contain it.
-            if git ls-remote "$REPO_URL" | awk '{print $1}' | grep -Fx "$DEPLOY_REF" >/dev/null; then
-              echo "Resolved deploy ref as exact remote commit SHA: $DEPLOY_REF"
-              exit 0
-            fi
-
-            echo "::error::Full commit SHA '$DEPLOY_REF' was not found in remote refs."
+            echo "::error::Full commit SHA '$DEPLOY_REF' does not resolve to a repository commit."
             exit 1
           fi
 
@@ -154,6 +201,11 @@ jobs:
           PILOT_SMOKE_BEARER: ${{ secrets.PILOT_SMOKE_BEARER_PRODUCTION }}
         run: bash scripts/release/check-env-config.sh deploy-production
 
+      - name: Setup Node for atomic Wrangler deploy
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -164,7 +216,7 @@ jobs:
 
       - name: Set build stamp and app env
         run: |
-          echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
 
@@ -175,6 +227,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
           NEXT_PUBLIC_APP_URL: https://aistroyka.ai
+          NEXT_PUBLIC_GROWTH_OS_EVENTS_URL: ${{ secrets.NEXT_PUBLIC_GROWTH_OS_EVENTS_URL }}
         run: bun run cf:build
 
       - name: Verify build output and app source
@@ -200,38 +253,33 @@ jobs:
         run: |
           grep -q 'x.includes("middleware") && x.includes("manifest")' .open-next/deploy/worker-bootstrap.js || (echo "::error::Patch not applied: middleware-manifest stub missing in deploy bundle" && exit 1)
           echo "Patched bundle verified."
-      - name: Deploy to Cloudflare (production, patched bundle)
+      - name: Deploy reviewed bundle and provider secrets atomically
         working-directory: apps/web
         env:
           OPEN_NEXT_DEPLOY: "true"
-        run: |
-          set -euo pipefail
-          npx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml \
-            --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
-            --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
-            --var NEXT_PUBLIC_APP_ENV:production
-
-      - name: Persist AI provider secrets on Worker (production)
-        working-directory: apps/web
-        env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -n "${OPENAI_API_KEY:-}" ]; then
-            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY --env production --config wrangler.deploy.toml
-          fi
-          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put ANTHROPIC_API_KEY --env production --config wrangler.deploy.toml
-          fi
+        run: bash ../../scripts/release/deploy-production-worker.sh
+
+      - name: Checkout verification tooling from the workflow commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .deployment-verification
+          sparse-checkout: scripts/release/verify_deployed_commit.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Verify served production commit (blocking)
+        run: python3 .deployment-verification/scripts/release/verify_deployed_commit.py --target production --expected-sha "$NEXT_PUBLIC_BUILD_SHA"
 
       - name: Post-deploy summary
         run: |
-          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
+          SHA7="${NEXT_PUBLIC_BUILD_SHA:0:7}"
           echo "Deployed worker: aistroyka-web-production (apps/web)"
-          echo "Commit SHA (full): ${{ github.sha }}"
+          echo "Commit SHA (full): $NEXT_PUBLIC_BUILD_SHA"
           echo "Commit sha7: $SHA7"
-          echo "workers.dev URL: In the 'Deploy to Cloudflare (production)' step above, look for: https://aistroyka-web-production.<account>.workers.dev"
+          echo "workers.dev URL: In the atomic deploy step above, look for: https://aistroyka-web-production.<account>.workers.dev"
 
       - name: Verify pilot smoke secret (production)
         env:
@@ -289,16 +337,51 @@ jobs:
     name: Post-deploy security headers (blocking)
     needs: [deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ needs.deploy.outputs.deploy_ref }}
+          persist-credentials: false
 
-      - name: Run security headers smoke
+      - name: Run security headers smoke (www + apex, 2 consecutive)
         env:
-          SECURITY_HEADERS_BASE_URL: https://www.aistroyka.ai
-        run: bash scripts/smoke/security_headers.sh
+          SECURITY_HEADERS_MAX_ATTEMPTS: "1"
+          SECURITY_HEADERS_REQUIRE_CONSECUTIVE: "1"
+        run: |
+          set -euo pipefail
+          consecutive=0
+          max_pair_attempts=8
+          sleep_sec=15
+          require=2
+          run_host() {
+            local host="$1"
+            env -u BASE_URL \
+              SECURITY_HEADERS_BASE_URL="$host" \
+              SECURITY_HEADERS_MAX_ATTEMPTS=1 \
+              SECURITY_HEADERS_REQUIRE_CONSECUTIVE=1 \
+              bash scripts/smoke/security_headers.sh
+          }
+          for attempt in $(seq 1 "$max_pair_attempts"); do
+            echo "=== security headers pair attempt $attempt/$max_pair_attempts (consecutive=$consecutive) ==="
+            if run_host "https://www.aistroyka.ai" \
+              && run_host "https://aistroyka.ai"; then
+              consecutive=$((consecutive + 1))
+              echo "PAIR PASS consecutive=$consecutive/$require"
+              if [[ "$consecutive" -ge "$require" ]]; then
+                echo "security_headers: PASS (consecutive pair=$consecutive)"
+                exit 0
+              fi
+            else
+              consecutive=0
+              echo "PAIR FAIL — consecutive reset"
+            fi
+            if [[ "$attempt" -lt "$max_pair_attempts" ]]; then
+              sleep "$sleep_sec"
+            fi
+          done
+          echo "::error::security_headers: FAIL — need $require consecutive www+apex passes"
+          exit 1
 
   ai-phase5-gate:
     name: Post-deploy AI Phase 5 gate (non-blocking)
@@ -341,4 +424,8 @@ jobs:
         continue-on-error: true
         env:
           BASE_URL: https://aistroyka.ai
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: bash scripts/smoke/ai_live_provider.sh --require-live

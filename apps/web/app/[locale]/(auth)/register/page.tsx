@@ -60,7 +60,7 @@ function RegisterForm() {
       router.refresh();
     } catch (thrown) {
       const isTimeout = thrown instanceof Error && thrown.message === "timeout";
-      setError(isTimeout ? "Request timed out. Please check your connection and try again." : t("defaultError"));
+      setError(isTimeout ? t("requestTimedOut") : t("defaultError"));
     } finally {
       setLoading(false);
     }

@@ -1,0 +1,30 @@
+{
+  "kind": "protected-source-processor-through-live-Supabase-SDK",
+  "http_processor": false,
+  "provider_called": false,
+  "checks": [
+    {
+      "scenario": "exact sentinel acknowledged by the existing processor",
+      "pass": true
+    },
+    {
+      "scenario": "terminal state and released lease read back",
+      "pass": true
+    },
+    {
+      "scenario": "two safe durable lifecycle audit records",
+      "pass": true
+    },
+    {
+      "scenario": "repeat processor tick has no duplicate execution or terminal audit",
+      "pass": true
+    },
+    {
+      "scenario": "historical running jobs remain untouched",
+      "pass": true,
+      "count": 2
+    }
+  ],
+  "audit_retained": true,
+  "cleanup": true
+}

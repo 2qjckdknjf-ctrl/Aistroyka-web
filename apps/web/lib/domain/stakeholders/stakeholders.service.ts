@@ -71,8 +71,9 @@ export async function listStakeholders(
   if (!(await canManageProjectStakeholders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
-  const rows = await repo.listByProject(supabase, ctx.tenantId, projectId);
-  return { data: rows.map(rowToListItem), error: "" };
+  const listed = await repo.listByProject(supabase, ctx.tenantId, projectId);
+  if (listed.error) return { data: null, error: "List failed" };
+  return { data: listed.rows.map(rowToListItem), error: "" };
 }
 
 export async function revokeStakeholder(
@@ -85,8 +86,9 @@ export async function revokeStakeholder(
   if (!(await canManageProjectStakeholders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
-  const rows = await repo.listByProject(supabase, ctx.tenantId, projectId);
-  const hit = rows.find((r) => r.id === stakeholderId);
+  const listed = await repo.listByProject(supabase, ctx.tenantId, projectId);
+  if (listed.error) return { data: null, error: "List failed" };
+  const hit = listed.rows.find((r) => r.id === stakeholderId);
   if (!hit) return { data: null, error: "Not found" };
   const updated = await repo.updateRow(supabase, stakeholderId, ctx.tenantId, { status: "revoked" });
   if (!updated) return { data: null, error: "Revoke failed" };
@@ -97,62 +99,103 @@ export async function revokeStakeholder(
  * Accept invite: ensures tenant_members(stakeholder) and activates stakeholder row.
  * Caller must be authenticated; tenant context may be absent until after upsert.
  */
+function acceptedPayload(row: {
+  project_id: string;
+  tenant_id: string;
+  stakeholder_role: StakeholderRole;
+}): { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } {
+  return {
+    project_id: row.project_id,
+    tenant_id: row.tenant_id,
+    stakeholder_role: row.stakeholder_role,
+  };
+}
+
+async function ensurePortalTenantMembership(
+  supabase: SupabaseClient,
+  userId: string,
+  tenantId: string,
+  options?: { downgradeViewer?: boolean }
+): Promise<{ error: string }> {
+  const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", tenantId).maybeSingle();
+  const isTenantOwner = tenantRow?.user_id === userId;
+  if (isTenantOwner) return { error: "" };
+  const { data: existingTm } = await supabase
+    .from("tenant_members")
+    .select("id, role")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!existingTm) {
+    const { error: tmError } = await supabase.from("tenant_members").insert({
+      tenant_id: tenantId,
+      user_id: userId,
+      role: "stakeholder",
+    });
+    if (tmError) return { error: "Unable to join workspace for this project" };
+    return { error: "" };
+  }
+  // First accept of an invited grant may move viewer → stakeholder.
+  // Re-opening an already-active invite must not undo a later viewer grant.
+  if (existingTm.role === "viewer" && options?.downgradeViewer !== false) {
+    const { error: upErr } = await supabase
+      .from("tenant_members")
+      .update({ role: "stakeholder" })
+      .eq("id", existingTm.id)
+      .eq("tenant_id", tenantId);
+    if (upErr) return { error: "Unable to update workspace role for portal access" };
+  }
+  return { error: "" };
+}
+
 export async function acceptStakeholderInvite(
   supabase: SupabaseClient,
   userId: string,
   userEmail: string | null | undefined,
   token: string
-): Promise<{ data: { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } | null; error: string }> {
+): Promise<{
+  data: { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } | null;
+  error: string;
+  activated: boolean;
+}> {
   const row = await repo.getByToken(supabase, token);
-  if (!row) return { data: null, error: "Invitation not found" };
-  if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid" };
-  if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired" };
+  if (!row) return { data: null, error: "Invitation not found", activated: false };
 
   const inviteEmail = repo.normalizeEmail(row.email);
   const u = repo.normalizeEmail(userEmail ?? "");
   if (!u || u !== inviteEmail) {
-    return { data: null, error: "Sign in with the email address this invitation was sent to." };
+    return { data: null, error: "Sign in with the email address this invitation was sent to.", activated: false };
   }
 
-  const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", row.tenant_id).maybeSingle();
-  const isTenantOwner = tenantRow?.user_id === userId;
-  if (!isTenantOwner) {
-    const { data: existingTm } = await supabase
-      .from("tenant_members")
-      .select("id, role")
-      .eq("tenant_id", row.tenant_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!existingTm) {
-      const { error: tmError } = await supabase.from("tenant_members").insert({
-        tenant_id: row.tenant_id,
-        user_id: userId,
-        role: "stakeholder",
-      });
-      if (tmError) return { data: null, error: "Unable to join workspace for this project" };
-    } else if (existingTm.role === "viewer") {
-      const { error: upErr } = await supabase
-        .from("tenant_members")
-        .update({ role: "stakeholder" })
-        .eq("id", existingTm.id)
-        .eq("tenant_id", row.tenant_id);
-      if (upErr) return { data: null, error: "Unable to update workspace role for portal access" };
-    }
+  if (row.status === "active" && row.user_id === userId) {
+    const membership = await ensurePortalTenantMembership(supabase, userId, row.tenant_id, {
+      downgradeViewer: false,
+    });
+    if (membership.error) return { data: null, error: membership.error, activated: false };
+    return { data: acceptedPayload(row), error: "", activated: false };
   }
+  if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid", activated: false };
+  if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired", activated: false };
 
-  const updated = await repo.updateRow(supabase, row.id, row.tenant_id, {
-    status: "active",
-    user_id: userId,
-    accepted_at: new Date().toISOString(),
-  });
-  if (!updated) return { data: null, error: "Activation failed" };
+  const membership = await ensurePortalTenantMembership(supabase, userId, row.tenant_id);
+  if (membership.error) return { data: null, error: membership.error, activated: false };
 
-  return {
-    data: {
-      project_id: row.project_id,
-      tenant_id: row.tenant_id,
-      stakeholder_role: row.stakeholder_role,
+  const updated = await repo.updateRow(
+    supabase,
+    row.id,
+    row.tenant_id,
+    {
+      status: "active",
+      user_id: userId,
+      accepted_at: new Date().toISOString(),
     },
-    error: "",
-  };
+    "invited"
+  );
+  if (updated) return { data: acceptedPayload(updated), error: "", activated: true };
+
+  const latest = await repo.getByToken(supabase, token);
+  if (latest?.status === "active" && latest.user_id === userId) {
+    return { data: acceptedPayload(latest), error: "", activated: false };
+  }
+  return { data: null, error: "Activation failed", activated: false };
 }

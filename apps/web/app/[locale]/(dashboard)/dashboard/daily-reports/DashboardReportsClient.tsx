@@ -10,17 +10,21 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
   TablePagination,
   Button,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import {
+  countPendingReportApprovals,
+  reportStatusBadgeVariant,
+} from "./reports-list.utils";
 
 interface ReportRow {
   id: string;
@@ -31,6 +35,19 @@ interface ReportRow {
   project_id: string | null;
   media_count?: number;
   analysis_status?: "none" | "queued" | "running" | "success" | "failed";
+  actual_volume?: number | null;
+  planned_volume?: number | null;
+}
+
+function formatReportVolume(
+  actual: number | null | undefined,
+  planned: number | null | undefined,
+  t: (key: string, values?: Record<string, string | number | Date>) => string
+): string {
+  if (actual != null && planned != null) return t("volumePairFmt", { actual, planned });
+  if (actual != null) return t("volumeSingleFmt", { value: actual });
+  if (planned != null) return t("volumeSingleFmt", { value: planned });
+  return "—";
 }
 
 function formatAge(dateStr: string, t: (key: string, values?: Record<string, string | number | Date>) => string): string {
@@ -47,7 +64,14 @@ function formatAge(dateStr: string, t: (key: string, values?: Record<string, str
 
 const DEFAULT_REPORTS_BASE = "/dashboard/daily-reports";
 
-export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { basePath?: string }) {
+export function DashboardReportsClient({
+  basePath = DEFAULT_REPORTS_BASE,
+  skin = "default",
+}: {
+  basePath?: string;
+  skin?: "default" | "canon";
+}) {
+  const tDashboard = useTranslations("dashboard");
   const tDetail = useTranslations("dashboardDetail");
   const reportStatusOptions = [
     { value: "", label: tDetail("all") },
@@ -111,42 +135,67 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
     return { rows: data.slice(start, start + pageSize), total };
   }, [data, page, pageSize]);
 
+  const pendingReviewCount = useMemo(
+    () => countPendingReportApprovals(data ?? []),
+    [data],
+  );
+
+  const isCanon = skin === "canon";
+  const shellClass = isCanon ? "canon-glass overflow-hidden" : undefined;
+
   if (loading && !data) {
-    return (
-      <Card>
+    return isCanon ? (
+      <div className="canon-glass p-4">
         <Skeleton lines={5} />
-      </Card>
+      </div>
+    ) : (
+      <DashboardGlassCard>
+        <Skeleton lines={5} />
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
-    return (
-      <Card>
+    return isCanon ? (
+      <div className="canon-glass p-4 text-[var(--canon-text-secondary)]">{error}</div>
+    ) : (
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary p-4">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (!data?.length) {
-    return (
-      <Card>
+    return isCanon ? (
+      <div className="canon-glass p-8">
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
           title={tDetail("noReportsYet")}
           subtitle={tDetail("dailyReportsAppear")}
         />
-      </Card>
+      </div>
+    ) : (
+      <DashboardGlassCard>
+        <EmptyState
+          icon={<span className="text-2xl">📋</span>}
+          title={tDetail("noReportsYet")}
+          subtitle={tDetail("dailyReportsAppear")}
+        />
+      </DashboardGlassCard>
     );
   }
 
   const exportCsv = () => {
-    const headers = [tDetail("reportId"), tDetail("status"), tDetail("worker"), tDetail("project"), tDetail("ai"), tDetail("media"), tDetail("age"), tDetail("created")];
+    const headers = [tDetail("reportId"), tDetail("status"), tDetail("worker"), tDetail("project"), tDetail("ai"), tDetail("volume"), tDetail("media"), tDetail("age"), tDetail("created")];
     const rows = data.slice(0, 500).map((r) => [
       r.id,
       r.status,
       r.user_id,
       r.project_id ?? "",
       r.analysis_status ?? "",
+      r.actual_volume != null || r.planned_volume != null
+        ? formatReportVolume(r.actual_volume, r.planned_volume, tDetail)
+        : "",
       String(r.media_count ?? 0),
       formatAge(r.created_at, tDetail),
       new Date(r.created_at).toISOString(),
@@ -170,11 +219,137 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
           showSavedViews={true}
         />
       </div>
-      <Card className="p-0 overflow-hidden">
-        <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+      {pendingReviewCount > 0 ? (
+        isCanon ? (
+          <div
+            className="canon-glass mb-4 flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-[var(--canon-gold)] p-4"
+            aria-label={tDashboard("queueReportsReview")}
+          >
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--canon-text-muted)]">
+                {tDashboard("queueReportsReview")}
+              </p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-[var(--canon-gold)]">
+                {pendingReviewCount}
+              </p>
+            </div>
+            {params.status !== "submitted" ? (
+              <button
+                type="button"
+                className="canon-ghost-btn !text-xs"
+                onClick={() => {
+                  setParam("status", "submitted");
+                  setParam("page", "1");
+                }}
+              >
+                {tDashboard("viewAll")}
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <DashboardGlassCard
+            className="mb-4 border-l-4 border-l-aistroyka-warning"
+            contentClassName="flex flex-wrap items-center justify-between gap-3 p-4"
+            aria-label={tDashboard("queueReportsReview")}
+          >
+            <div>
+              <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
+                {tDashboard("queueReportsReview")}
+              </p>
+              <p className="mt-1 text-aistroyka-title3 font-semibold tabular-nums text-aistroyka-text-primary">
+                {pendingReviewCount}
+              </p>
+            </div>
+            {params.status !== "submitted" ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setParam("status", "submitted");
+                  setParam("page", "1");
+                }}
+              >
+                {tDashboard("viewAll")}
+              </Button>
+            ) : null}
+          </DashboardGlassCard>
+        )
+      ) : null}
+      {isCanon ? (
+        <div className={shellClass ?? "canon-glass overflow-hidden"}>
+          <div className="flex justify-end p-2">
+            <button type="button" className="canon-ghost-btn !text-xs" onClick={exportCsv}>
+              {tDetail("exportCsv")}
+            </button>
+          </div>
+          <div className="canon-data-table-wrap">
+            <table className="canon-data-table">
+              <thead>
+                <tr>
+                  <th>{tDetail("report")}</th>
+                  <th>{tDetail("status")}</th>
+                  <th className="canon-hide-mobile">{tDetail("volume")}</th>
+                  <th className="canon-hide-mobile">{tDetail("worker")}</th>
+                  <th className="canon-hide-mobile">{tDetail("project")}</th>
+                  <th>{tDetail("age")}</th>
+                  <th>{tDetail("action")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageData.rows.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <Link
+                        href={`${basePath}/${r.id}`}
+                        className="font-mono text-xs text-[var(--canon-cyan)] hover:underline"
+                      >
+                        {r.id.slice(0, 8)}…
+                      </Link>
+                    </td>
+                    <td>
+                      <span className={`canon-risk-badge ${
+                        r.status === "approved"
+                          ? "canon-risk-badge--low"
+                          : r.status === "rejected"
+                            ? "canon-risk-badge--high"
+                            : "canon-risk-badge--medium"
+                      }`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="canon-hide-mobile text-xs tabular-nums">
+                      {formatReportVolume(r.actual_volume, r.planned_volume, tDetail)}
+                    </td>
+                    <td className="canon-hide-mobile font-mono text-xs">
+                      {r.user_id.slice(0, 8)}…
+                    </td>
+                    <td className="canon-hide-mobile font-mono text-xs">
+                      {r.project_id ? r.project_id.slice(0, 8) + "…" : "—"}
+                    </td>
+                    <td className="text-xs tabular-nums">{formatAge(r.created_at, tDetail)}</td>
+                    <td>
+                      <Link href={`${basePath}/${r.id}`} className="text-[var(--canon-cyan)] hover:underline">
+                        {tDetail("view")}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={pageData.total}
+            onPageChange={(p) => setParam("page", String(p))}
+          />
         </div>
-        <Table aria-label={tDetail("reports")}>
+      ) : (
+        <DashboardGlassCard contentClassName="p-0 overflow-hidden">
+          <div className="p-2 flex justify-end">
+            <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+          </div>
+          <Table aria-label={tDetail("reports")}>
         <TableHead>
           <TableRow>
             <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
@@ -182,6 +357,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
             <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("ai")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("volume")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("age")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
@@ -196,17 +372,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
                 </Link>
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={
-                    r.status === "approved"
-                      ? "success"
-                      : r.status === "submitted"
-                        ? "warning"
-                        : r.status === "changes_requested" || r.status === "rejected"
-                          ? "danger"
-                          : "neutral"
-                  }
-                >
+                <Badge variant={reportStatusBadgeVariant(r.status)}>
                   {r.status}
                 </Badge>
               </TableCell>
@@ -231,6 +397,9 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
                   "—"
                 )}
               </TableCell>
+              <TableCell className="tabular-nums">
+                {formatReportVolume(r.actual_volume, r.planned_volume, tDetail)}
+              </TableCell>
               <TableCell className="tabular-nums">{r.media_count ?? 0}</TableCell>
               <TableCell className="text-aistroyka-text-secondary tabular-nums">{formatAge(r.created_at, tDetail)}</TableCell>
               <TableCell>
@@ -248,7 +417,8 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
         totalCount={pageData.total}
         onPageChange={(p) => setParam("page", String(p))}
       />
-    </Card>
+      </DashboardGlassCard>
+      )}
     </>
   );
 }

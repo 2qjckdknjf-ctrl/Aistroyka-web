@@ -1,19 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("@/lib/tenant", () => ({
-  getTenantContextFromRequest: vi.fn().mockResolvedValue({ tenantId: "t1", userId: "u1", role: "admin" }),
-  requireTenant: vi.fn(),
-  TenantRequiredError: class extends Error {
-    constructor(m: string) {
-      super(m);
-      this.name = "TenantRequiredError";
-    }
-  },
-  authorize: vi.fn().mockReturnValue(true),
-}));
-
-vi.mock("@/lib/api/require-admin", () => ({
-  requireAdmin: vi.fn().mockReturnValue(null),
+vi.mock("@/lib/platform-owner/require-platform-owner-api", () => ({
+  requirePlatformOwnerApi: vi.fn().mockResolvedValue({ ok: true, supabase: {}, userId: "u1", role: "OWNER" }),
 }));
 
 const FLAG_PROVIDER = "ENABLE_STRIPE_BILLING_PROVIDER";

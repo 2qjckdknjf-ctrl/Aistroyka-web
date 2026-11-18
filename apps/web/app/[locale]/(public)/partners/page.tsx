@@ -1,72 +1,75 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { V41_ASSETS } from "@/components/public/v41";
+import { ConstructionMedia, FinalPilotCta, InternalPageHero, PilotTimeline } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
-const TYPES = ["type1", "type2", "type3", "type4"] as const;
-const BENEFITS = ["benefit1", "benefit2", "benefit3", "benefit4"] as const;
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "public.partners" });
-  return { title: t("title"), description: t("metaDescription") };
+  const t = await getTranslations({ locale, namespace: "public.v43.partners" });
+  return { title: t("title"), description: t("lead") };
 }
 
 export default async function PartnersPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("public.partners");
+  const t = await getTranslations("public.v43.partners");
+  const tV41 = await getTranslations("public.v41");
+  const types = ["integration", "implementation", "expert"] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
+    <>
+      <InternalPageHero
+        eyebrow={t("eyebrow")}
+        title={t("h1")}
+        lead={t("lead")}
+        primaryLabel={t("becomeCta")}
+        secondaryHref="/contact"
+        secondaryLabel={t("discussCta")}
+        visual={<ConstructionMedia src={V41_ASSETS.hero} alt={tV41("heroAlt")} />}
+      />
+      <section className="v41-page v43-partner-grid">
+        {types.map((key) => (
+          <article key={key} className="v43-plan-card v41-glass">
+            <h2>{t(`${key}Title`)}</h2>
+            <p>{t(`${key}Who`)}</p>
+            <p>{t(`${key}Together`)}</p>
+            <p>{t(`${key}Next`)}</p>
+          </article>
+        ))}
       </section>
-
-      <section className="mt-12">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Partner types
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {TYPES.map((key) => (
-            <div
-              key={key}
-              className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-            >
-              {t(key)}
-            </div>
-          ))}
-        </div>
+      <PilotTimeline
+        title={t("processTitle")}
+        steps={[
+          { n: "1", title: t("s1Title"), text: t("s1Text") },
+          { n: "2", title: t("s2Title"), text: t("s2Text") },
+          { n: "3", title: t("s3Title"), text: t("s3Text") },
+          { n: "4", title: t("s4Title"), text: t("s4Text") },
+          { n: "5", title: t("s5Title"), text: t("s5Text") },
+        ]}
+      />
+      <section className="v41-page v41-section v43-benefit-grid">
+        {(["b1", "b2", "b3"] as const).map((key) => (
+          <article key={key} className="v43-plan-card v41-glass">
+            <h2>{t(`${key}Title`)}</h2>
+            <p>{t(`${key}Text`)}</p>
+          </article>
+        ))}
       </section>
-
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Benefits
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {BENEFITS.map((key) => (
-            <div
-              key={key}
-              className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-            >
-              {t(key)}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-12 flex justify-center">
-        <Link href="/contact" className="btn-primary max-w-full">
-          {t("cta")}
-        </Link>
-      </section>
-    </div>
+      <FinalPilotCta
+        copy={{
+          eyebrow: tV41("pilotEyebrow"),
+          title: tV41("pilotTitle"),
+          lead: tV41("pilotLead"),
+          launchPilot: tV41("launchPilot"),
+          contact: tV41("contactUs"),
+          note: tV41("pilotNote"),
+        }}
+      />
+    </>
   );
 }
 

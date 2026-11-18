@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Badge, Skeleton, EmptyState } from "@/components/ui";
 import { changeOrderStatusBadgeClass } from "../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Row = {
   id: string;
@@ -34,21 +35,21 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-32" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
           title={tDetail("couldNotLoadChangeOrders")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -59,7 +60,7 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
       <Link href={`/dashboard/projects/${projectId}/client`} className="text-aistroyka-accent hover:underline text-sm font-medium">
         {tDetail("backToClientPortal")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h1 className="text-aistroyka-title3 font-semibold">{tDetail("changeOrders")}</h1>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">
           {tDetail("changeOrdersClientHint")}
@@ -94,7 +95,7 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
             ))}
           </ul>
         )}
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

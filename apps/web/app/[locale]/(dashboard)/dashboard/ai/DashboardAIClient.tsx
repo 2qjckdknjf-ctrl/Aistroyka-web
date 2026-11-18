@@ -10,7 +10,6 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
@@ -21,6 +20,8 @@ import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { aiSummaryChipOrder, sortAiRequestsByAttention } from "./ai-requests-workspace.utils";
 
 interface AIRequestRow {
   id: string;
@@ -29,8 +30,43 @@ interface AIRequestRow {
   entity: string | null;
   attempts: number;
   last_error: string | null;
+  last_error_type: string | null;
+  user_message_key?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface AISummary {
+  total: number;
+  queued: number;
+  running: number;
+  success: number;
+  failed: number;
+  dead: number;
+}
+
+function statusBadgeVariant(status: string): "success" | "danger" | "warning" {
+  if (status === "success") return "success";
+  if (status === "failed" || status === "dead") return "danger";
+  return "warning";
+}
+
+function friendlyStatusLabel(
+  tDetail: ReturnType<typeof useTranslations<"dashboardDetail">>,
+  row: AIRequestRow
+): string {
+  const key = row.user_message_key;
+  if (key === "aiStatusQueued") return tDetail("aiStatusQueued");
+  if (key === "aiStatusRunning") return tDetail("aiStatusRunning");
+  if (key === "aiStatusSuccess") return tDetail("aiStatusSuccess");
+  if (key === "aiStatusTemporary") return tDetail("aiStatusTemporary");
+  if (key === "aiStatusNotConfigured") return tDetail("aiStatusNotConfigured");
+  if (key === "aiStatusFailed") return tDetail("aiStatusFailed");
+  // Fallback by status
+  if (row.status === "queued") return tDetail("aiStatusQueued");
+  if (row.status === "running") return tDetail("aiStatusRunning");
+  if (row.status === "success") return tDetail("aiStatusSuccess");
+  return tDetail("aiStatusFailed");
 }
 
 export function DashboardAIClient() {
@@ -45,6 +81,8 @@ export function DashboardAIClient() {
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<AIRequestRow[] | null>(null);
   const [total, setTotal] = useState(0);
+  const [summary, setSummary] = useState<AISummary | null>(null);
+  const [visionConfigured, setVisionConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -53,7 +91,7 @@ export function DashboardAIClient() {
 
   useEffect(() => {
     fetch("/api/v1/projects", { credentials: "include" })
-      .then((res) => res.ok ? res.json() : Promise.resolve({ data: [] }))
+      .then((res) => (res.ok ? res.json() : Promise.resolve({ data: [] })))
       .then((json: { data?: { id: string; name: string }[] }) => setProjects(json.data ?? []))
       .catch(() => setProjects([]));
   }, []);
@@ -72,18 +110,28 @@ export function DashboardAIClient() {
         if (!res.ok) throw new Error(res.statusText);
         return res.json();
       })
-      .then((json: { data?: AIRequestRow[]; total?: number }) => {
-        setData(json.data ?? []);
-        setTotal(json.total ?? 0);
-        setError(null);
-      })
+      .then(
+        (json: {
+          data?: AIRequestRow[];
+          total?: number;
+          summary?: AISummary;
+          vision_configured?: boolean;
+        }) => {
+          setData(json.data ?? []);
+          setTotal(json.total ?? 0);
+          setSummary(json.summary ?? null);
+          setVisionConfigured(json.vision_configured !== false);
+          setError(null);
+        }
+      )
       .catch((e) => {
         setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setData([]);
         setTotal(0);
+        setSummary(null);
       })
       .finally(() => setLoading(false));
-  }, [offset, limit, params.status, params.from, params.to, params.q]);
+  }, [offset, limit, params.status, params.from, params.to, params.q, tDetail]);
 
   const filterBar = (
     <div className="mb-4">
@@ -103,7 +151,14 @@ export function DashboardAIClient() {
   );
 
   const exportCsv = () => {
-    const headers = [tDetail("id"), tDetail("type"), tDetail("status"), tDetail("entity"), tDetail("attempts"), tDetail("created")];
+    const headers = [
+      tDetail("id"),
+      tDetail("type"),
+      tDetail("status"),
+      tDetail("entity"),
+      tDetail("attempts"),
+      tDetail("created"),
+    ];
     const rows = (data ?? []).slice(0, 500).map((r) => [
       r.id,
       r.type,
@@ -119,7 +174,9 @@ export function DashboardAIClient() {
     return (
       <>
         {filterBar}
-        <Card><Skeleton lines={5} /></Card>
+        <DashboardGlassCard>
+          <Skeleton lines={5} />
+        </DashboardGlassCard>
       </>
     );
   }
@@ -127,21 +184,72 @@ export function DashboardAIClient() {
     return (
       <>
         {filterBar}
-        <Card><p className="text-aistroyka-text-secondary p-4">{error}</p></Card>
+        <DashboardGlassCard>
+          <p className="text-aistroyka-text-secondary p-4">{error}</p>
+        </DashboardGlassCard>
       </>
     );
   }
+
+  const summaryTotal = summary?.total ?? 0;
+  const hasFailed = (summary?.failed ?? 0) + (summary?.dead ?? 0) > 0;
+  const hasPending = (summary?.queued ?? 0) + (summary?.running ?? 0) > 0;
+  const filtersActive = Boolean(params.status || params.q.trim());
+
+  // Never show "No AI requests" when failed/dead/queued jobs exist for the tenant.
   if (!data?.length && !loading && total === 0) {
+    if (summaryTotal > 0) {
+      let title = tDetail("aiStatusFilteredEmpty");
+      let subtitle = tDetail("aiRequestsFilteredHint");
+      if (!filtersActive && hasFailed) {
+        title = tDetail("aiStatusFailed");
+        subtitle = tDetail("aiRequestsFailedHint");
+      } else if (!filtersActive && hasPending) {
+        title = tDetail("aiStatusQueued");
+        subtitle = tDetail("aiRequestsPendingHint");
+      } else if (!visionConfigured) {
+        title = tDetail("aiStatusNotConfigured");
+        subtitle = tDetail("aiRequestsNotConfiguredHint");
+      }
+      return (
+        <>
+          {filterBar}
+          <DashboardGlassCard>
+            <EmptyState
+              icon={<span className="text-2xl" aria-hidden>🤖</span>}
+              title={title}
+              subtitle={subtitle}
+            />
+          </DashboardGlassCard>
+        </>
+      );
+    }
+
+    if (!visionConfigured) {
+      return (
+        <>
+          {filterBar}
+          <DashboardGlassCard>
+            <EmptyState
+              icon={<span className="text-2xl" aria-hidden>🤖</span>}
+              title={tDetail("aiStatusNotConfigured")}
+              subtitle={tDetail("aiRequestsNotConfiguredHint")}
+            />
+          </DashboardGlassCard>
+        </>
+      );
+    }
+
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
-            icon={<span className="text-2xl">🤖</span>}
+            icon={<span className="text-2xl" aria-hidden>🤖</span>}
             title={tDetail("noAiRequests")}
             subtitle={tDetail("aiRequestsAppear")}
           />
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -149,49 +257,119 @@ export function DashboardAIClient() {
   return (
     <>
       {filterBar}
-      <Card className="p-0 overflow-hidden">
+      {!visionConfigured && (
+        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-warning">
+          <p className="p-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            {tDetail("aiStatusNotConfigured")}
+          </p>
+        </DashboardGlassCard>
+      )}
+      {summary && summary.total > 0 ? (
+        <div className="mb-4">
+          <DashboardGlassCard contentClassName="p-3">
+            <div
+              role="group"
+              aria-label={tDetail("aiStatusDensity")}
+              className="flex flex-wrap gap-2"
+            >
+              {aiSummaryChipOrder(summary).map((chip) => {
+                const pressed = params.status === chip.status;
+                const labelKey =
+                  chip.status === "queued"
+                    ? "queued"
+                    : chip.status === "running"
+                      ? "running"
+                      : chip.status === "success"
+                        ? "success"
+                        : chip.status === "failed"
+                          ? "failed"
+                          : "dead";
+                return (
+                  <button
+                    key={chip.status}
+                    type="button"
+                    aria-pressed={pressed}
+                    onClick={() => setParam("status", pressed ? "" : chip.status)}
+                    className={`min-h-aistroyka-touch rounded-[var(--aistroyka-radius-lg)] border px-3 text-aistroyka-caption font-medium ${
+                      pressed
+                        ? "border-aistroyka-accent bg-aistroyka-accent-light text-aistroyka-accent"
+                        : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
+                    }`}
+                  >
+                    {tDetail(labelKey)}
+                    <span className="ml-1 tabular-nums text-aistroyka-text-tertiary">
+                      ({chip.count})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </DashboardGlassCard>
+        </div>
+      ) : null}
+      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">
+            {tDetail("exportCsv")}
+          </Button>
         </div>
         <Table aria-label={tDetail("aiRequests")}>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("entity")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("attempts")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(data ?? []).map((r) => (
-            <TableRow key={r.id}>
-              <TableCell><span className="font-mono text-sm" title={r.id}>{r.id.slice(0, 8)}…</span></TableCell>
-              <TableCell>{r.type}</TableCell>
-              <TableCell>
-                <Badge variant={r.status === "success" ? "success" : r.status === "failed" || r.status === "dead" ? "danger" : "warning"}>{r.status}</Badge>
-              </TableCell>
-              <TableCell className="font-mono text-sm">{r.entity ? `${r.entity.slice(0, 8)}…` : "—"}</TableCell>
-              <TableCell className="tabular-nums">{r.attempts}</TableCell>
-              <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                {new Date(r.created_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
-              </TableCell>
-              <TableCell>
-                <Link href={`/dashboard/ai/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">{tDetail("view")}</Link>
-              </TableCell>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("aiUserStatus")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("entity")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("attempts")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <TablePagination
-        page={page}
-        pageSize={pageSize}
-        totalCount={total}
-        onPageChange={(p) => setParam("page", String(p))}
-      />
-    </Card>
+          </TableHead>
+          <TableBody>
+            {sortAiRequestsByAttention(data ?? []).map((r) => (
+              <TableRow key={r.id}>
+                <TableCell>
+                  <span className="font-mono text-sm" title={r.id}>
+                    {r.id.slice(0, 8)}…
+                  </span>
+                </TableCell>
+                <TableCell>{r.type}</TableCell>
+                <TableCell>
+                  <Badge variant={statusBadgeVariant(r.status)}>{r.status}</Badge>
+                </TableCell>
+                <TableCell className="text-aistroyka-text-secondary text-sm">
+                  {friendlyStatusLabel(tDetail, r)}
+                </TableCell>
+                <TableCell className="font-mono text-sm">
+                  {r.entity ? `${r.entity.slice(0, 8)}…` : "—"}
+                </TableCell>
+                <TableCell className="tabular-nums">{r.attempts}</TableCell>
+                <TableCell className="tabular-nums text-aistroyka-text-secondary">
+                  {new Date(r.created_at).toLocaleString(undefined, {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/dashboard/ai/${r.id}`}
+                    className="font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {tDetail("view")}
+                  </Link>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          totalCount={total}
+          onPageChange={(p) => setParam("page", String(p))}
+        />
+      </DashboardGlassCard>
     </>
   );
 }

@@ -29,6 +29,8 @@ struct HomeView: View {
     @State private var guideConfidence: Int?
     @State private var guideRiskSignals: [WorkerHelpAssistantRiskSignalDTO] = []
     @State private var feedbackReports: [WorkerSyncReportRow] = []
+    @State private var unreadChatByTaskId: [String: Bool] = [:]
+    @Environment(\.scenePhase) private var scenePhase
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -51,7 +53,7 @@ struct HomeView: View {
                         .accessibilityIdentifier(executor.isPaused ? "pilot_worker_resume_queue" : "pilot_worker_pause_queue")
                     }
                     .padding(8)
-                    .background(Color.orange.opacity(0.15))
+                    .background(WorkerSemanticColors.warningSurface)
                     .cornerRadius(8)
                 }
                 if store.pendingCount > 0 {
@@ -67,7 +69,7 @@ struct HomeView: View {
                         .accessibilityIdentifier("pilot_worker_resume_uploads")
                     }
                     .padding(8)
-                    .background(Color.orange.opacity(0.15))
+                    .background(WorkerSemanticColors.warningSurface)
                     .cornerRadius(8)
                 }
                 HStack {
@@ -106,10 +108,21 @@ struct HomeView: View {
                     ForEach(todayTasks, id: \.id) { task in
                         NavigationLink {
                             TaskDetailView(task: task, projectId: project.id, dayId: dayId)
-                        } label: {
+                        }                         label: {
                             HStack {
                                 Text(task.title)
                                 Spacer()
+                                if unreadChatByTaskId[task.id] == true {
+                                    Circle()
+                                        .fill(Color.accentColor)
+                                        .frame(width: 8, height: 8)
+                                        .accessibilityLabel(NSLocalizedString("task_chat_unread", comment: ""))
+                                }
+                                if let priority = task.priority, !priority.isEmpty {
+                                    Text(localizedWorkerPriority(priority))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                                 Text(task.status).font(.caption).foregroundColor(.secondary)
                             }
                             .padding(.vertical, 4)
@@ -146,6 +159,7 @@ struct HomeView: View {
             }
             .padding()
             }
+            .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
             .accessibilityIdentifier("pilot_worker_home_scroll")
             .navigationTitle(project.name ?? project.id)
             .navigationBarTitleDisplayMode(.inline)
@@ -174,7 +188,7 @@ struct HomeView: View {
                         WorkerHowItWorksContent()
                             .padding()
                     }
-                    .background(Color(.systemGroupedBackground))
+                    .background(WorkerSemanticColors.pageBackground)
                     .navigationTitle(NSLocalizedString("worker_how_title", comment: ""))
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
@@ -222,7 +236,24 @@ struct HomeView: View {
                 ReportResubmitView(reportId: rid)
             }
         }
+        .refreshable {
+            loadTodayTasks()
+            loadFeedbackReports()
+            syncService.runSyncIfOnline()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                loadTodayTasks()
+                loadFeedbackReports()
+                OperationQueueExecutor.shared.runLoop()
+                syncService.runSyncIfOnline()
+            }
+        }
         .onAppear {
+            let cached = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
+            if todayTasks.isEmpty, !cached.isEmpty {
+                todayTasks = cached
+            }
             loadTodayTasks()
             loadFeedbackReports()
             loadHelpHints()
@@ -234,7 +265,7 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .aiStroykaWorkerPushPayload)) { notification in
             guard let type = notification.userInfo?["type"] as? String else { return }
             switch type {
-            case "task_assigned", "task_updated":
+            case "task_assigned", "task_updated", "task_message":
                 loadTodayTasks()
                 loadFeedbackReports()
             case "report_reminder", "upload_failed": break
@@ -321,7 +352,7 @@ struct HomeView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.12))
+        .background(WorkerSemanticColors.warningSurface)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -422,14 +453,34 @@ struct HomeView: View {
         Task {
             do {
                 let list = try await WorkerAPI.tasksToday(projectId: project.id)
+                var unread: [String: Bool] = [:]
+                for t in list.prefix(30) {
+                    do {
+                        let msgs = try await TaskMessagesAPI.listAll(taskId: t.id, pageSize: 50, maxPages: 2)
+                        unread[t.id] = TaskChatReadStore.isUnread(taskId: t.id, latestCreatedAt: msgs.last?.createdAt)
+                    } catch {
+                        unread[t.id] = false
+                    }
+                }
                 await MainActor.run {
                     todayTasks = list
+                    unreadChatByTaskId = unread
                     tasksLoading = false
+                    errorMessage = nil
+                    if let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey) {
+                        store.save { $0.replaceCachedTodayTasks(list, userId: userId) }
+                    }
                 }
             } catch {
                 await MainActor.run {
-                    todayTasks = []
+                    if todayTasks.isEmpty {
+                        todayTasks = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
+                    }
+                    unreadChatByTaskId = [:]
                     tasksLoading = false
+                    if todayTasks.isEmpty {
+                        errorMessage = NSLocalizedString("worker_tasks_load_error", comment: "")
+                    }
                 }
             }
         }

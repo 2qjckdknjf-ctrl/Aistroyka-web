@@ -3,7 +3,7 @@
 #
 # Proves live provider execution via:
 #   1) Remote POST /api/v1/ai/analyze-image without X-AI-Fallback-Reason (preferred), or
-#   2) Minimal direct OpenAI chat completion when OPENAI_API_KEY is set locally (never printed).
+#   2) Optional diagnostic direct completion (AI_ALLOW_DIRECT_PROBE=1, never strict deployment proof).
 #
 # Usage:
 #   ./scripts/smoke/ai_live_provider.sh
@@ -12,7 +12,7 @@
 # Env:
 #   BASE_URL          — deployed app (default https://aistroyka.ai)
 #   IMAGE_URL         — public https image for vision probe
-#   AUTH_HEADER       — optional Bearer for tenant-scoped checks
+#   AUTH_HEADER       — Bearer for authenticated tenant analysis
 #   SMOKE_EMAIL/SMOKE_PASSWORD/SUPABASE_URL/SUPABASE_ANON_KEY — mint JWT
 #   OPENAI_API_KEY    — optional local direct probe (loaded from .env.pilot / .env.local if unset)
 #   OPENAI_COPILOT_MODEL — direct probe model (default gpt-4o-mini)
@@ -45,7 +45,7 @@ read_env_value() {
   fi
   for f in "$REPO_ROOT/.env.pilot" "$REPO_ROOT/.env.local" "$REPO_ROOT/apps/web/.env.local"; do
     [[ -f "$f" ]] || continue
-    val="$(grep -E "^${name}=" "$f" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '\r' || true)"
+    val="$(grep -E "^${name}=" "$f" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '\r' || true)"
     val="${val%\"}"; val="${val#\"}"; val="${val%\'}"; val="${val#\'}"
     if [[ -n "${val//[[:space:]]/}" ]]; then
       printf '%s' "$val"
@@ -163,6 +163,10 @@ fi
 # --- remote vision probe ---
 remote_vision_probe() {
   local code fb hdr body
+  if [[ -z "${AUTH_HEADER:-}" ]]; then
+    error_kind="auth_missing"
+    return 1
+  fi
   body="$(mktemp)"
   hdr="$(mktemp)"
   trap 'rm -f "$body" "$hdr"' RETURN
@@ -171,12 +175,12 @@ remote_vision_probe() {
   model_used="${OPENAI_VISION_MODEL:-gpt-4o-mini}"
 
   if [[ -n "${AUTH_HEADER:-}" ]]; then
-    code=$(curl -sS --location-trusted -D "$hdr" -o "$body" -w "%{http_code}" -m 90 \
+    code=$(curl -sS -D "$hdr" -o "$body" -w "%{http_code}" -m 90 \
       -H "Authorization: $AUTH_HEADER" -H "Content-Type: application/json" \
       -X POST "${BASE}/api/v1/ai/analyze-image" \
       --data-binary "{\"image_url\":\"${IMAGE_URL}\"}" 2>/dev/null || echo "000")
   else
-    code=$(curl -sS --location-trusted -D "$hdr" -o "$body" -w "%{http_code}" -m 90 \
+    code=$(curl -sS -D "$hdr" -o "$body" -w "%{http_code}" -m 90 \
       -H "Content-Type: application/json" \
       -X POST "${BASE}/api/v1/ai/analyze-image" \
       --data-binary "{\"image_url\":\"${IMAGE_URL}\"}" 2>/dev/null || echo "000")
@@ -200,7 +204,7 @@ remote_vision_probe() {
     return 1
   fi
 
-  if smoke_assert_analysis_result "$body" 2>/dev/null || smoke_python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get("risk_level") and d.get("stage") else 1)' "$body"; then
+  if smoke_assert_analysis_result "$body" 2>/dev/null; then
     llm_success_count=1
     live_provider_call_succeeded=true
     provider_used="vision_router"
@@ -244,7 +248,15 @@ direct_openai_probe() {
   return 1
 }
 
-# Mint auth if needed for remote (optional)
+# Mint auth for the deployment probe. Existing configuration may provide credentials.
+for auth_name in SMOKE_EMAIL SMOKE_PASSWORD SUPABASE_URL SUPABASE_ANON_KEY NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY; do
+  if [[ -z "${!auth_name:-}" ]]; then
+    auth_value="$(read_env_value "$auth_name" 2>/dev/null || true)"
+    printf -v "$auth_name" '%s' "$auth_value"
+  fi
+done
+unset auth_value auth_name
+# Mint auth if needed for remote
 if [[ -z "${AUTH_HEADER:-}" && -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" ]]; then
   SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
   SUPA_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
@@ -261,7 +273,7 @@ fi
 if command -v curl &>/dev/null; then
   remote_vision_probe || true
 fi
-if [[ "$live_provider_call_succeeded" != true ]]; then
+if [[ "$live_provider_call_succeeded" != true && "$REQUIRE_LIVE" -eq 0 && "${AI_ALLOW_DIRECT_PROBE:-0}" == "1" ]]; then
   direct_openai_probe || true
 fi
 

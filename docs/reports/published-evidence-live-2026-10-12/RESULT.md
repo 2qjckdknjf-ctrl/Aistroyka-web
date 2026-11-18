@@ -1,0 +1,11 @@
+# Published evidence live verification —2026-10-12
+
+Application source: protected #429 HEAD7cb4d9a1699f7726427faa6b639ceeede2871820, integrationeb8af3de3d0c7c69584a759210c36bc6f3a6e827. CI38173849131 and three-app iOS smoke38173849108 SUCCESS; staging38180679417/production38180877857 SUCCESS. Fresh actual staging, apex and www health SHAeb8af3d matched.
+
+13 actual scoped HTTP checks PASS in the [sanitized proof](published-evidence-live-proof.json). Includes exact PNG bytes, uncached publication withdrawal/restoration and grant revocation, direct Storage/provenance denial, actual manager Proof Pack create/revoke, actual document create201/upload/private PDF bytes/SAMEORIGIN and customer denial. Only exact synthetic task parents and deterministic blobs were exercised. No AI job or business document was consumed.
+
+First HTTP run was refused403 for the default Python-urllib agent before API assertions. Read-only diagnosis confirmed that the same authenticated request succeeds with an explicit AistroykaQA/1.0 agent. The first fixture was fully cleaned before creating the second one; the local approved-main runner used that operator User-Agent. The checked-in runner now declares it for subsequent runs. No network/security protection was disabled. The first native gallery attempt revealed an inaccessible decoded image element; explicit image traits/container accessibility fixed it. A second live simulator test passed1/1 in17.587s. This is Debug with private fixture prefill and actual Auth/API/image decoding, not physical-device/manual-keyboard/store certification.
+
+[Cleanup proof](published-evidence-cleanup-proof.json): exact8 rows and Auth identity absent, fixture sessions globally revoked, owner task-local session revoked, exact PNG/share/document/PDF deleted. Additional active-project read-only SQL verified project_members and private reviewed-media seals both0. Fresh nonce reads avoid stale Storage deletion checks. Native xctestrun credentials scrubbed; no repository fixture secret was created. Audit traces retained. The earlier cleaned fixture proof is separate.
+
+Remaining product work: explicit report-source assembly/manager publication controls, full source-linked Vision/video/Graph, reviewed preproject extraction. This gateway proof does not certify those workflows or full project readiness.

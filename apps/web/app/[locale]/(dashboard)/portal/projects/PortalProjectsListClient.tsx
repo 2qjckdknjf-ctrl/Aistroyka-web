@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Row = { id: string; name: string };
 
@@ -37,20 +37,20 @@ export function PortalProjectsListClient() {
   }, [t]);
 
   if (error) {
-    return <Card className="p-aistroyka-4 text-aistroyka-text-secondary">{error}</Card>;
+    return <DashboardGlassCard className="p-aistroyka-4 text-aistroyka-text-secondary">{error}</DashboardGlassCard>;
   }
   if (data === null) {
     return <div className="h-24 animate-pulse rounded bg-aistroyka-surface-muted" />;
   }
   if (data.length === 0) {
-    return <Card className="p-aistroyka-4 text-aistroyka-text-secondary">{t("empty")}</Card>;
+    return <DashboardGlassCard className="p-aistroyka-4 text-aistroyka-text-secondary">{t("empty")}</DashboardGlassCard>;
   }
 
   return (
     <ul className="flex flex-col gap-aistroyka-3">
       {data.map((p) => (
         <li key={p.id}>
-          <Card className="flex flex-row flex-wrap items-center justify-between gap-aistroyka-4 p-aistroyka-4">
+          <DashboardGlassCard className="flex flex-row flex-wrap items-center justify-between gap-aistroyka-4 p-aistroyka-4">
             <span className="font-medium text-aistroyka-text-primary">{p.name}</span>
             <Link
               href={`/dashboard/projects/${p.id}/client`}
@@ -58,7 +58,7 @@ export function PortalProjectsListClient() {
             >
               {t("openPortal")} →
             </Link>
-          </Card>
+          </DashboardGlassCard>
         </li>
       ))}
     </ul>

@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 
+/**
+ * Legacy Card API → Liquid Glass `.card` / `.card-elevated` (canon v4).
+ * Prefer `DashboardGlassCard` for new dashboard panels.
+ */
 export function Card({
   children,
   elevated = false,
@@ -10,13 +14,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-[var(--aistroyka-radius-card)] border bg-[var(--aistroyka-card-bg)] p-[var(--aistroyka-card-padding)] ${
-        elevated
-          ? "border-[var(--aistroyka-card-border-e2)] shadow-[var(--aistroyka-card-shadow-e2)]"
-          : "border-[var(--aistroyka-card-border-e1)] shadow-[var(--aistroyka-card-shadow-e1)]"
-      } ${className}`.trim()}
-    >
+    <div className={`${elevated ? "card-elevated" : "card"} ${className}`.trim()}>
       {children}
     </div>
   );

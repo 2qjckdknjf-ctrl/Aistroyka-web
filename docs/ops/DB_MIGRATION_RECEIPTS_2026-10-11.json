@@ -1,0 +1,111 @@
+{
+  "project_ref": "vthfrxehrursfloevnlp",
+  "observed_date": "2026-10-11",
+  "scope": "Ten source migrations applied on 2026-10-11 under nine remote IDs; excludes historical migration drift.",
+  "receipts": [
+    {
+      "remote_version": "20261011090316",
+      "remote_name": "customer_intake_drafts_with_lifecycle_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261003170000_customer_intake_drafts.sql",
+          "sha256": "6f14ffef049a87c75219767a87bb5717f7503f0b604aded4fa850f522ae73e98"
+        },
+        {
+          "path": "apps/web/supabase/migrations/20261011080113_harden_customer_intake_status_transitions.sql",
+          "sha256": "007b719caccfe0f445e53c379714dfbcf77604a886ba04db7322c9515919ffdb"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011090351",
+      "remote_name": "create_analysis_job_request_key_atomic_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261004180000_create_analysis_job_request_key.sql",
+          "sha256": "39243741133b607fa6e412def7c78d6e31c65063e4c606d5e4bacda973c113f3"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011092544",
+      "remote_name": "hide_intake_policy_helpers_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011091100_hide_intake_policy_helpers.sql",
+          "sha256": "ea482beef24ae9337d8ec280f322fb3907aa04afb7f501faed5cc1421c9ebccd"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011093430",
+      "remote_name": "close_post_apply_database_tails_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011092645_close_post_apply_database_tails.sql",
+          "sha256": "b618271a427210ae0de90024c99cd45ce98f795b45d40762d7a6cfcefb700c05"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011112358",
+      "remote_name": "session_analysis_job_scope_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011110418_complete_session_analysis_job.sql",
+          "sha256": "9d1e90c1a044cc6eaa69a83a2c7882f16daaee1f1a68520e9fc74c9041cea882"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011114415",
+      "remote_name": "harden_media_analysis_access_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011112701_harden_media_analysis_access.sql",
+          "sha256": "14e9d399ff3cc8788693f990b3500ea800d589784250dd92630cb0eac3ea6418"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011140341",
+      "remote_name": "harden_media_storage_role_access_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011134735_harden_media_storage_role_access.sql",
+          "sha256": "c3f2fb7b5487b53cef850d63894216d328a726aa88194c8aaa9179d49bd138e8"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011161355",
+      "remote_name": "harden_published_evidence_source_guard_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011144945_harden_published_evidence_source_guard.sql",
+          "sha256": "6d3d5264e7d61a8c3ac22c5b19936a2c0a3ab975a1d0e76f28ba316b8f5ef7aa"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011184023",
+      "remote_name": "harden_upload_session_and_reviewed_media_source_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011163944_harden_upload_session_source.sql",
+          "sha256": "b1027dabb152da89b6ae05580cb13b628e9dc1d6f307c78a78a90e0fb838c41f"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011234051",
+      "remote_name": "unique_published_evidence_sources_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011230105_unique_published_evidence_sources.sql",
+          "sha256": "19c8c5a94a805dab89ce96c505e28990f52669f7ad75234ccba13a71690240bf"
+        }
+      ]
+    }
+  ]
+}

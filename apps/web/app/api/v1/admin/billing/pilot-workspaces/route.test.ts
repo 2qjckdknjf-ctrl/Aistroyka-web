@@ -1,17 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/tenant", () => ({
-  getTenantContextFromRequest: vi.fn().mockResolvedValue({ tenantId: "t1", userId: "u1", role: "admin" }),
-  requireTenant: vi.fn(),
-  TenantRequiredError: class extends Error {
-    constructor(m: string) {
-      super(m);
-      this.name = "TenantRequiredError";
-    }
-  },
-}));
-vi.mock("@/lib/api/require-admin", () => ({
-  requireAdmin: vi.fn().mockReturnValue(null),
+vi.mock("@/lib/platform-owner/require-platform-owner-api", () => ({
+  requirePlatformOwnerApi: vi.fn().mockResolvedValue({ ok: true, supabase: {}, userId: "u1", role: "OWNER" }),
 }));
 vi.mock("@/lib/supabase/admin", () => ({
   getAdminClient: vi.fn(),

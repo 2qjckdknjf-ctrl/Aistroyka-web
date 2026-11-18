@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Job } from "../job.types";
+import { JobPayloadError } from "../job.errors";
 import { attemptSend } from "@/lib/platform/push/push.provider.router";
 
 const DRAIN_LIMIT = 20;
@@ -15,10 +16,43 @@ function nextRetryAt(attempts: number): Date {
   return new Date(Date.now() + BACKOFF_MS[idx]);
 }
 
-export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<void> {
+/** Exported for unit tests — merge nested `data` with flat stringifiable keys + message type. */
+export function buildPushDataMap(
+  type: string,
+  payload: Record<string, unknown>
+): Record<string, string> {
+  const out: Record<string, string> = { type };
+  const nested =
+    payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)
+      ? (payload.data as Record<string, unknown>)
+      : null;
+  if (nested) {
+    for (const [k, v] of Object.entries(nested)) {
+      if (v == null) continue;
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+        out[k] = String(v);
+      }
+    }
+  }
+  for (const [k, v] of Object.entries(payload)) {
+    if (k === "data" || k === "title" || k === "body") continue;
+    if (v == null) continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+      out[k] = String(v);
+    }
+  }
+  return out;
+}
+
+export async function handlePushSend(admin: SupabaseClient, job: Job): Promise<void> {
+  const payloadScope = job.payload as { tenant_id?: unknown };
+  if (!job.tenant_id || (payloadScope?.tenant_id != null && payloadScope.tenant_id !== job.tenant_id)) {
+    throw new JobPayloadError("Push tenant scope mismatch");
+  }
   const { data: rows } = await admin
     .from("push_outbox")
     .select("id, tenant_id, user_id, platform, device_id, type, payload, attempts")
+    .eq("tenant_id", job.tenant_id)
     .eq("status", "queued")
     .or("next_retry_at.is.null,next_retry_at.lte." + new Date().toISOString())
     .order("created_at", { ascending: true })
@@ -35,6 +69,7 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
     payload: Record<string, unknown> | null;
     attempts: number;
   }>) {
+    if (row.tenant_id !== job.tenant_id) continue;
     let q = admin
       .from("device_tokens")
       .select("device_id, token")
@@ -50,14 +85,15 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
       await admin
         .from("push_outbox")
         .update({ status: "failed", last_error: "no_tokens" })
-        .eq("id", row.id);
+        .eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
       continue;
     }
 
     const payload = row.payload ?? {};
     const title = typeof payload.title === "string" ? payload.title : undefined;
     const body = typeof payload.body === "string" ? payload.body : undefined;
-    const data = payload.data && typeof payload.data === "object" ? (payload.data as Record<string, string>) : undefined;
+    /** Flat outbox payload keys + type → APNs/FCM data map (clients read userInfo.type / task_id). */
+    const data = buildPushDataMap(row.type, payload);
 
     let anySent = false;
     let retryableError: string | null = null;
@@ -91,7 +127,7 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
     }
 
     if (anySent) {
-      await admin.from("push_outbox").update({ status: "sent" }).eq("id", row.id);
+      await admin.from("push_outbox").update({ status: "sent" }).eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
     } else if (retryableError) {
       const attempts = row.attempts + 1;
       await admin
@@ -101,12 +137,12 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
           last_error: retryableError,
           next_retry_at: nextRetryAt(attempts).toISOString(),
         })
-        .eq("id", row.id);
+        .eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
     } else {
       await admin
         .from("push_outbox")
         .update({ status: "failed", last_error: "send_failed" })
-        .eq("id", row.id);
+        .eq("id", row.id).eq("tenant_id", job.tenant_id).eq("status", "queued");
     }
   }
 }

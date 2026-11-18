@@ -11,7 +11,7 @@ import {
   storeResponse,
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
-import type { UpdateTaskInput } from "@/lib/domain/tasks/task.types";
+import { parseTaskPriority, type UpdateTaskInput } from "@/lib/domain/tasks/task.types";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +102,11 @@ export async function PATCH(
     input.required_photos = body.required_photos as UpdateTaskInput["required_photos"];
   if (typeof body.report_required === "boolean") input.report_required = body.report_required;
   if (body.milestone_id !== undefined) input.milestone_id = typeof body.milestone_id === "string" ? body.milestone_id : null;
+  if (body.priority !== undefined && body.priority !== null && body.priority !== "") {
+    const priority = parseTaskPriority(body.priority);
+    if (!priority) return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    input.priority = priority;
+  }
 
   const supabase = await createClientFromRequest(request);
   const { data, error } = await updateTask(supabase, ctx, id, input);

@@ -5,10 +5,11 @@ import { Link } from "@/i18n/navigation";
 import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
 import { QueryBoundary } from "@/lib/query/render";
-import { Card } from "@/components/ui";
+
 import { Button } from "@/components/ui";
 import { DemoProjectCard } from "@/components/onboarding";
 import type { ProjectRow } from "@/lib/supabase/rpc";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const RECENT_LIMIT = 10;
 
@@ -36,15 +37,15 @@ export function DashboardRecentProjectsClient() {
         </Link>
       }
       loadingFallback={
-        <Card className="overflow-hidden p-0">
+        <DashboardGlassCard contentClassName="overflow-hidden p-0">
           <div className="h-32 animate-pulse rounded bg-aistroyka-surface-muted" />
-        </Card>
+        </DashboardGlassCard>
       }
     >
       {(allProjects: ProjectRow[]) => {
         const projectList = allProjects.slice(0, RECENT_LIMIT);
         return projectList.length > 0 ? (
-          <Card className="overflow-hidden p-0">
+          <DashboardGlassCard contentClassName="overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[260px] text-left text-aistroyka-subheadline">
                 <thead>
@@ -74,7 +75,7 @@ export function DashboardRecentProjectsClient() {
                       </td>
                       <td className="table-cell">
                         <Link
-                          href={`/projects/${p.id}`}
+                          href={`/dashboard/projects/${p.id}`}
                           onMouseEnter={() => prefetchProject(p.id)}
                           className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm"
                         >
@@ -86,7 +87,7 @@ export function DashboardRecentProjectsClient() {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </DashboardGlassCard>
         ) : (
           <>
             <DemoProjectCard />

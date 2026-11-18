@@ -1,28 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Input, Button } from "@/components/ui";
 import { Textarea } from "@/components/ui";
+import { readAttributionFromBrowser } from "@/lib/public/lead-attribution";
+import { trackGrowthEvent } from "@/lib/growth/track-event";
 
 export function ContactForm() {
   const t = useTranslations("public.form");
+  const locale = useLocale();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
+
+  function markStarted() {
+    if (started) {
+      return;
+    }
+    setStarted(true);
+    void trackGrowthEvent("contact_lead.started", { page: window.location.pathname, locale });
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("sending");
     setErrorMessage(null);
     try {
+      const attribution = { ...readAttributionFromBrowser(), locale };
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, company: company || undefined, message }),
+        body: JSON.stringify({
+          name,
+          email,
+          company: company || undefined,
+          message,
+          ...attribution,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -30,6 +49,7 @@ export function ContactForm() {
         setErrorMessage(data.error || t("error"));
         return;
       }
+      void trackGrowthEvent("contact_lead.submitted", { page: window.location.pathname, locale });
       setStatus("success");
       setName("");
       setEmail("");
@@ -48,6 +68,7 @@ export function ContactForm() {
         label={t("name")}
         value={name}
         onChange={(e) => setName(e.target.value)}
+        onFocus={markStarted}
         required
         maxLength={200}
         disabled={status === "sending"}

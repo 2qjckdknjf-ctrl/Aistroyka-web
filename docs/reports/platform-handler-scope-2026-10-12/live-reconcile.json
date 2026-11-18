@@ -1,0 +1,24 @@
+{
+  "kind": "protected-handler-through-live-Supabase-SDK",
+  "queue_http": false,
+  "checks": [
+    {
+      "scenario": "only expired unfinished fixture transitions",
+      "pass": true
+    },
+    {
+      "scenario": "future and previously finalized sessions preserved",
+      "pass": true
+    },
+    {
+      "scenario": "real session finalized after selection survives CAS",
+      "pass": true
+    },
+    {
+      "scenario": "all reconciliation requests carry exact job tenant",
+      "pass": true
+    }
+  ],
+  "cleanup": true,
+  "no_external_push": true
+}

@@ -1,16 +1,16 @@
 import { Suspense } from "react";
-import { StakeholderInviteClient } from "./StakeholderInviteClient";
+import { StakeholderInviteCanonPage } from "./StakeholderInviteCanonPage";
 
 export default function StakeholderInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="p-8 text-center text-aistroyka-text-tertiary" role="status">
+        <div className="canon-glass p-8 text-center text-[var(--canon-text-muted)]" role="status">
           Loading…
         </div>
       }
     >
-      <StakeholderInviteClient />
+      <StakeholderInviteCanonPage />
     </Suspense>
   );
 }

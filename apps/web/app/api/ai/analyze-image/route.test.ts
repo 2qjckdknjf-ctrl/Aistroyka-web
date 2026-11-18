@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
+vi.mock("@/lib/tenant", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/tenant")>(),
+  getTenantContextFromRequest: vi.fn().mockResolvedValue({ tenantId: "t1", userId: "u1", role: "member", subscriptionTier: "free" }),
+}));
+
 function jsonRequest(body: object) {
   return new Request("http://test/api/ai/analyze-image", {
     method: "POST",

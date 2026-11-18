@@ -32,12 +32,13 @@ export async function updateSession(request: NextRequest) {
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         }),
         user: null,
+        supabase: null,
       };
     }
     if (process.env.NODE_ENV === "production") {
       console.error("[auth] updateSession: missing Supabase env in production");
     }
-    return { response, user: null };
+    return { response, user: null, supabase: null };
   }
 
   const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = getPublicEnv();
@@ -69,5 +70,5 @@ export async function updateSession(request: NextRequest) {
     // getUser() can throw in Edge or when auth server fails; do not crash middleware
   }
 
-  return { response, user };
+  return { response, user, supabase };
 }

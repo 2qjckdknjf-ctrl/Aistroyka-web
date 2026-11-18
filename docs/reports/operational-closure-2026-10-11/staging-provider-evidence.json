@@ -1,0 +1,19 @@
+{
+  "workflow_run": 38128324110,
+  "source_sha": "2e2f07da689454d60ab0f6b6130c329d192ff81f",
+  "gate_step_conclusion": "success",
+  "result": {
+    "canonical_gate": "scripts/smoke/ai_live_provider.sh",
+    "runtime": "apps/web/cloudflare_workers",
+    "provider_configured": true,
+    "live_provider_call_attempted": true,
+    "live_provider_call_succeeded": true,
+    "llm_success_count": 1,
+    "fallback_count": 0,
+    "missing_key_count": 0,
+    "fallback_rate": "0%",
+    "provider": "vision_router",
+    "model": "gpt-4o-mini",
+    "error_kind": null
+  }
+}

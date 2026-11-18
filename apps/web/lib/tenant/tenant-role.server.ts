@@ -4,16 +4,13 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pickPrimaryTenantMembership } from "./tenant-membership-priority";
 import type { TenantRoleDb } from "./tenant.types";
 
-const MEMBER_DB_ROLES = ["admin", "member", "viewer", "stakeholder"] as const;
-
-function isMemberDbRole(r: string): r is (typeof MEMBER_DB_ROLES)[number] {
-  return (MEMBER_DB_ROLES as readonly string[]).includes(r);
-}
-
 /**
- * Returns tenant role for the user's primary tenant (tenant owner → owner; else first tenant_members row).
+ * Returns tenant role for the user's primary tenant.
+ * Owned tenant (`tenants.user_id`) wins; otherwise the strongest membership
+ * (internal roles beat stakeholder so dual-role users keep cabinet access).
  */
 export async function getActiveTenantRoleForUser(
   supabase: SupabaseClient,
@@ -21,13 +18,6 @@ export async function getActiveTenantRoleForUser(
 ): Promise<TenantRoleDb | null> {
   const { data: ownTenant } = await supabase.from("tenants").select("id").eq("user_id", userId).maybeSingle();
   if (ownTenant?.id) return "owner";
-  const { data: member } = await supabase
-    .from("tenant_members")
-    .select("role")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
-  const r = member?.role;
-  if (typeof r === "string" && isMemberDbRole(r)) return r;
-  return null;
+  const { data: members } = await supabase.from("tenant_members").select("tenant_id, role").eq("user_id", userId);
+  return pickPrimaryTenantMembership(members ?? [])?.role ?? null;
 }

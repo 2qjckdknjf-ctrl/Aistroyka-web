@@ -58,13 +58,21 @@ export async function POST(request: Request) {
       userId: ctx.userId,
     });
   }
-  const { report_id: reportId, task_id: taskId, worker_note: workerNoteRaw } = parsed.data;
+  const {
+    report_id: reportId,
+    task_id: taskId,
+    worker_note: workerNoteRaw,
+    actual_volume: actualVolume,
+    planned_volume: plannedVolume,
+  } = parsed.data;
   const workerNote =
     typeof workerNoteRaw === "string" ? workerNoteRaw.trim().slice(0, 2000) || undefined : undefined;
   const supabase = await createClientFromRequest(request);
   const result = await submitReport(supabase, ctx, reportId, ctx.traceId, {
     taskId: taskId?.trim() || undefined,
     workerNote: workerNote ?? null,
+    actualVolume: actualVolume ?? null,
+    plannedVolume: plannedVolume ?? null,
   });
   if (!result.ok) {
     const status =

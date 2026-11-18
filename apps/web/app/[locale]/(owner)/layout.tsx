@@ -6,8 +6,15 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 
-export default async function OwnerCabinetLayout({ children }: { children: React.ReactNode }) {
-  await assertPlatformOwnerPageAccess();
+export default async function OwnerCabinetLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  await assertPlatformOwnerPageAccess({ locale, returnPath: `/${locale}/owner` });
   return (
     <div className="min-h-screen bg-aistroyka-bg-primary text-aistroyka-text-primary">
       <header className="border-b border-aistroyka-border-subtle bg-aistroyka-surface px-aistroyka-4 py-aistroyka-3">

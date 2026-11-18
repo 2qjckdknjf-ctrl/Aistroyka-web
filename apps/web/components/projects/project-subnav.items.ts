@@ -24,6 +24,6 @@ export function getProjectSubnavItems(projectId: string): ProjectSubnavItem[] {
 }
 
 export function isProjectSubnavItemActive(item: ProjectSubnavItem, activeTab: string): boolean {
-  if (item.tab === null) return activeTab === "workers";
+  if (item.tab === null) return activeTab === "overview";
   return activeTab === item.tab;
 }

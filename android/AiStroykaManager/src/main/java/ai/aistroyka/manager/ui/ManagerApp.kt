@@ -104,7 +104,7 @@ fun ManagerApp() {
                         "detail" -> DetailScreen(vm)
                         else -> LoginScreen(vm)
                     }
-                    if (showGuide) {
+                    if (showGuide && state.screen != "login") {
                         FirstLaunchGuide(
                             onDismiss = {
                                 prefs.edit().putBoolean(MANAGER_FIRST_LAUNCH_KEY, true).apply()
@@ -149,7 +149,9 @@ private fun FirstLaunchGuide(onDismiss: () -> Unit) {
                 Text(text = "2. ${stringResource(R.string.manager_guide_step_2)}")
                 Text(text = "3. ${stringResource(R.string.manager_guide_step_3)}")
                 Button(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pilotAutomatorTag("pilot_manager_guide_start"),
                     onClick = onDismiss
                 ) {
                     Text(stringResource(R.string.manager_guide_start))
@@ -283,7 +285,11 @@ private fun HomeScreen(vm: ManagerViewModel) {
             Text(stringResource(R.string.manager_reports_inbox))
         }
         Spacer(Modifier.height(12.dp))
-        TextButton(onClick = { vm.refreshBootstrap() }, enabled = !state.busy) {
+        TextButton(
+            onClick = { vm.refreshBootstrap() },
+            enabled = !state.busy,
+            modifier = Modifier.pilotAutomatorTag("pilot_manager_refresh")
+        ) {
             Text(stringResource(R.string.action_refresh))
         }
     }
@@ -605,7 +611,7 @@ private fun DetailScreen(vm: ManagerViewModel) {
             }
             state.actionMessage?.let {
                 Spacer(Modifier.height(16.dp))
-                Text(it, color = MaterialTheme.colorScheme.primary)
+                Text(it, color = ManagerSemanticColors.success())
             }
             if (state.busy) {
                 Spacer(Modifier.height(16.dp))

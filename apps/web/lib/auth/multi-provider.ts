@@ -1,11 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type IdentityProvider = "apple" | "telegram";
+export type IdentityProvider = "apple" | "telegram" | "google";
 
 export type IdentityRow = {
   id: string;
   user_id: string;
   provider: IdentityProvider;
+  identity_id: string | null;
   provider_user_id: string;
   email: string | null;
   username: string | null;
@@ -20,6 +21,7 @@ export type AuthMethodSummary = {
   email: boolean;
   apple: boolean;
   telegram: boolean;
+  google: boolean;
   linkedCount: number;
 };
 
@@ -34,7 +36,7 @@ export async function getUserIdentities(
   const db = supabase as DbLike;
   const { data, error } = await db
     .from("user_identities")
-    .select("id, user_id, provider, provider_user_id, email, username, full_name, avatar_url, metadata, created_at, updated_at")
+    .select("id, user_id, provider, identity_id, provider_user_id, email, username, full_name, avatar_url, metadata, created_at, updated_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (error || !data) return [];
@@ -42,16 +44,31 @@ export async function getUserIdentities(
 }
 
 export function summarizeAuthMethods(userEmail: string | undefined, identities: IdentityRow[]): AuthMethodSummary {
-  const methods = new Set<"email" | "apple" | "telegram">();
+  const methods = new Set<"email" | "apple" | "telegram" | "google">();
   if ((userEmail ?? "").trim().length > 0) methods.add("email");
   for (const identity of identities) {
-    if (identity.provider === "apple") methods.add("apple");
-    if (identity.provider === "telegram") methods.add("telegram");
+    switch (identity.provider) {
+      case "apple":
+        methods.add("apple");
+        break;
+      case "telegram":
+        methods.add("telegram");
+        break;
+      case "google":
+        methods.add("google");
+        break;
+      default: {
+        const _exhaustive: never = identity.provider;
+        void _exhaustive;
+        break;
+      }
+    }
   }
   return {
     email: methods.has("email"),
     apple: methods.has("apple"),
     telegram: methods.has("telegram"),
+    google: methods.has("google"),
     linkedCount: methods.size,
   };
 }
@@ -61,6 +78,7 @@ export async function linkIdentityRow(
   row: {
     user_id: string;
     provider: IdentityProvider;
+    identity_id?: string | null;
     provider_user_id: string;
     email?: string | null;
     username?: string | null;
@@ -85,6 +103,7 @@ export async function linkIdentityRow(
     {
       user_id: row.user_id,
       provider: row.provider,
+      identity_id: row.identity_id ?? null,
       provider_user_id: row.provider_user_id,
       email: row.email ?? null,
       username: row.username ?? null,
@@ -105,11 +124,23 @@ export async function unlinkIdentityRow(
   provider: IdentityProvider
 ): Promise<boolean> {
   const db = supabase as DbLike;
-  const { error } = await db
+  const { data, error } = await db
     .from("user_identities")
     .delete()
     .eq("user_id", userId)
-    .eq("provider", provider);
+    .eq("provider", provider)
+    .select("id");
+  return !error && Array.isArray(data) && data.length > 0;
+}
+
+export async function unlinkSupabaseAuthProvider(
+  supabase: SupabaseClient,
+  provider: Exclude<IdentityProvider, "telegram">
+): Promise<boolean> {
+  const { data } = await supabase.auth.getUser();
+  const identity = data.user?.identities?.find((item) => item.provider === provider);
+  if (!identity) return true;
+  const { error } = await supabase.auth.unlinkIdentity(identity);
   return !error;
 }
 

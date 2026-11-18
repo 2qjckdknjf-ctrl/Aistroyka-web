@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, Button, Badge } from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface Row {
   id: string;
@@ -116,7 +117,7 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-info p-4">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-info p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -262,6 +263,6 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
           </ul>
         )}
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-import { Button, Card, Input } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import { detectLaunchRole, type ActivationStatusResponse, type LaunchStepKey } from "@/lib/help/launch-steps";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type GuideAction = {
   id: string;
@@ -208,7 +209,7 @@ export function AIGuidePanel() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="fixed bottom-5 right-5 z-30 rounded-full bg-aistroyka-accent px-4 py-3 text-aistroyka-subheadline font-semibold text-white shadow-lg hover:opacity-95"
+        className="fixed bottom-5 right-5 z-30 rounded-full bg-aistroyka-accent px-4 py-3 text-aistroyka-subheadline font-semibold text-aistroyka-text-inverse shadow-lg hover:opacity-95"
         aria-expanded={open}
         aria-controls="ai-guide-panel"
       >
@@ -217,7 +218,7 @@ export function AIGuidePanel() {
 
       {open ? (
         <div id="ai-guide-panel">
-          <Card className="fixed bottom-20 right-5 z-30 w-[min(92vw,28rem)] border-aistroyka-accent/30 bg-aistroyka-surface p-4 shadow-2xl">
+          <DashboardGlassCard className="fixed bottom-20 right-5 z-30 w-[min(92vw,28rem)] border-aistroyka-accent/30 p-4 shadow-2xl">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("title")}</h3>
@@ -366,7 +367,7 @@ export function AIGuidePanel() {
               </div>
             </div>
           ) : null}
-          </Card>
+          </DashboardGlassCard>
         </div>
       ) : null}
     </>

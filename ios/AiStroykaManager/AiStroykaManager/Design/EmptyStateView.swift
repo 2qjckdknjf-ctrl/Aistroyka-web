@@ -16,18 +16,21 @@ struct EmptyStateView: View {
         VStack(spacing: 12) {
             Image(systemName: "tray")
                 .font(.largeTitle)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(ManagerV43.textSecondary)
             Text(title)
                 .font(.headline)
+                .foregroundStyle(ManagerV43.textPrimary)
             if let subtitle = subtitle {
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(ManagerV43.textSecondary)
                     .multilineTextAlignment(.center)
             }
             if let actionTitle = actionTitle, let action = action {
                 Button(actionTitle, action: action)
                     .buttonStyle(.borderedProminent)
+                    .tint(.accentColor)
+                    .foregroundStyle(AistroykaCanonColors.onPrimary)
             }
         }
         .padding()

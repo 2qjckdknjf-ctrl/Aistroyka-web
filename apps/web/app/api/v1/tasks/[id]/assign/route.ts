@@ -12,6 +12,7 @@ import {
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
 import { withRequestIdAndTiming } from "@/lib/observability";
+import { boundedProductWrite, taskAssignmentAuditDetails } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,7 @@ export async function POST(
     }
   }
 
-  let body: { worker_id?: string; assignee_id?: string } = {};
+  let body: { worker_id?: string; assignee_id?: string; user_id?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -77,7 +78,7 @@ export async function POST(
       userId: ctx.userId,
     });
   }
-  const workerId = (body.worker_id ?? body.assignee_id)?.trim();
+  const workerId = (body.worker_id ?? body.assignee_id ?? body.user_id)?.trim();
   if (!workerId) {
     return withRequestIdAndTiming(request, NextResponse.json({ error: "worker_id or assignee_id required" }, { status: 400 }), {
       route: routeKey,
@@ -101,15 +102,21 @@ export async function POST(
   }
 
   if (ctx.tenantId && ctx.userId) {
-    await emitAudit(supabase, {
-      tenant_id: ctx.tenantId,
-      user_id: ctx.userId,
-      trace_id: ctx.traceId ?? null,
-      action: "task_assignment",
-      resource_type: "task",
-      resource_id: taskId,
-      details: { assigned_to: workerId },
-    });
+    await boundedProductWrite(() =>
+      emitAudit(supabase, {
+        tenant_id: ctx.tenantId!,
+        user_id: ctx.userId!,
+        trace_id: ctx.traceId ?? null,
+        action: "task_assignment",
+        resource_type: "task",
+        resource_id: taskId,
+        details: taskAssignmentAuditDetails({
+          client: ctx.clientProfile,
+          role: ctx.role,
+          assignedTo: workerId,
+        }),
+      }),
+    );
   }
 
   const { data: task } = ctx.tenantId ? await getTaskById(supabase, ctx, taskId) : { data: null };

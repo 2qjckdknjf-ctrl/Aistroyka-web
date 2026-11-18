@@ -2,8 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
+vi.mock("@/lib/platform/jobs/job.recovery",()=>({recoverExpiredMaintenanceClaims:vi.fn().mockResolvedValue({requeued:0,dead:0})}));
 vi.mock("@/lib/platform/jobs/job.service", () => ({ enqueueJob: vi.fn(), processJobs: vi.fn() }));
 vi.mock("@/lib/api/cron-auth", () => ({ requireCronSecretIfEnabled: vi.fn().mockReturnValue(null) }));
+vi.mock("@/lib/api/require-platform-admin-legacy-route", () => ({
+  blockAuthenticatedNonPlatformCronCaller: vi.fn().mockResolvedValue(null),
+}));
 
 describe("POST /api/v1/admin/jobs/cron-tick", () => {
   it("returns 403 when cron secret required and missing", async () => {
@@ -15,6 +19,17 @@ describe("POST /api/v1/admin/jobs/cron-tick", () => {
     vi.mocked(requireCronSecretIfEnabled).mockReturnValue(null);
   });
 
+  it("returns 403 when authenticated tenant admin invokes cron tick", async () => {
+    const { blockAuthenticatedNonPlatformCronCaller } = await import("@/lib/api/require-platform-admin-legacy-route");
+    const { NextResponse } = await import("next/server");
+    vi.mocked(blockAuthenticatedNonPlatformCronCaller).mockResolvedValueOnce(
+      NextResponse.json({ error: "Platform owner access required", code: "platform_admin_required" }, { status: 403 })
+    );
+    const req = new Request("https://x/api/v1/admin/jobs/cron-tick", { method: "POST" });
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+  });
+
   it("schedules per tenant and runs processJobs", async () => {
     const tenants = [{ id: "t1" }, { id: "t2" }];
     const admin = {
@@ -24,6 +39,8 @@ describe("POST /api/v1/admin/jobs/cron-tick", () => {
     };
     const { getAdminClient } = await import("@/lib/supabase/admin");
     const { enqueueJob, processJobs } = await import("@/lib/platform/jobs/job.service");
+    const {recoverExpiredMaintenanceClaims}=await import("@/lib/platform/jobs/job.recovery");
+    vi.mocked(recoverExpiredMaintenanceClaims).mockResolvedValueOnce({requeued:1,dead:0}).mockResolvedValueOnce({requeued:1,dead:0});
     vi.mocked(getAdminClient).mockReturnValue(admin as any);
     vi.mocked(enqueueJob).mockImplementation(async (_a, p) => ({ id: p.tenant_id } as any));
     vi.mocked(processJobs).mockResolvedValue({ processed: 2, success: 2, failed: 0, dead: 0 });
@@ -33,7 +50,7 @@ describe("POST /api/v1/admin/jobs/cron-tick", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({ ok: true, scheduled: 4, processed: 2, tenants: 2 });
+    expect(body).toEqual({ ok: true, scheduled: 4, recovered: 2, exhausted: 0, processed: 2, tenants: 2 });
     expect(enqueueJob).toHaveBeenCalledTimes(4);
     expect(processJobs).toHaveBeenCalledWith(admin, expect.stringMatching(/^cron-tick-\d+$/), expect.objectContaining({
       limit: 20,

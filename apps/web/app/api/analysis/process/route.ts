@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError } from "@/lib/tenant";
+import { authorize } from "@/lib/tenant/tenant.policy";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getServerConfig } from "@/lib/config/server";
 import { processOneJob } from "@/lib/ai/runOneJob";
@@ -21,11 +23,21 @@ function legacy(res: NextResponse): NextResponse {
  */
 export async function POST(request: Request) {
   const start = Date.now();
-  const supabase = await createClient();
-  const user = await getSessionUser(supabase);
-  if (!user) {
-    return withRequestIdAndTiming(request, legacy(NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
+  let ctx;
+  try {
+    ctx = await getTenantContextFromRequest(request);
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError || e instanceof TenantForbiddenError) {
+      return legacy(NextResponse.json({ ok: false, error: e.message }, { status: e instanceof TenantForbiddenError ? 403 : 401 }));
+    }
+    throw e;
   }
+  if (!authorize(ctx, "analysis:trigger")) {
+    return legacy(NextResponse.json({ ok: false, error: "Insufficient rights" }, { status: 403 }));
+  }
+  const supabase = await createClientFromRequest(request);
+  const user = { id: ctx.userId };
 
   const admin = getAdminClient();
   if (!admin) {
@@ -40,7 +52,23 @@ export async function POST(request: Request) {
 
   const aiUrl = getServerConfig().AI_ANALYSIS_URL || undefined;
   const traceId = request.headers.get("x-request-id")?.trim() || undefined;
-  const result = await processOneJob(admin, aiUrl, { traceId });
+  const aiRequestHeaders = new Headers();
+  if (aiUrl) {
+    const target = new URL(aiUrl);
+    const sourceOrigin = new URL(request.url).origin;
+    const productionOrigins = new Set(["https://aistroyka.ai", "https://www.aistroyka.ai"]);
+    const trustedOrigin = target.origin === sourceOrigin ||
+      (productionOrigins.has(target.origin) && productionOrigins.has(sourceOrigin));
+    if (trustedOrigin &&
+        ["/api/v1/ai/analyze-image", "/api/ai/analyze-image"].includes(target.pathname)) {
+      for (const name of ["authorization", "cookie"]) {
+        const value = request.headers.get(name);
+        if (value) aiRequestHeaders.set(name, value);
+      }
+    }
+  }
+  const result = await processOneJob(admin, aiUrl, { traceId,
+    tenantId: ctx.tenantId, callerClient: supabase, aiRequestHeaders });
 
   if (!result.ok) {
     if (result.reason === "no_url") {

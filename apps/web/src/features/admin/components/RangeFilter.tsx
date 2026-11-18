@@ -38,7 +38,7 @@ export function RangeFilter({
           onClick={() => onChange(p.value, rangeToDates(p.value))}
           className={`rounded px-2 py-1 text-aistroyka-subheadline ${
             value === p.value
-              ? "bg-aistroyka-accent text-white"
+              ? "bg-aistroyka-accent text-aistroyka-text-inverse"
               : "bg-aistroyka-surface-raised text-aistroyka-text-secondary hover:bg-aistroyka-border-subtle"
           }`}
         >

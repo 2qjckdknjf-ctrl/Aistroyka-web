@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   Badge,
   Button,
   Skeleton,
@@ -18,6 +17,7 @@ import {
   TableCell,
 } from "@/components/ui";
 import type { GovernanceCaseWithProjects } from "@/lib/domain/governance/governance.types";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 interface ProjectOption {
   id: string;
@@ -62,8 +62,9 @@ function statusBadge(st: string, t: (key: string) => string) {
   return <span className="text-xs font-mono text-aistroyka-text-secondary">{label}</span>;
 }
 
-export function GovernanceCasesClient() {
+export function GovernanceCasesClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const t = useTranslations("governancePage");
+  const isCanon = skin === "canon";
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
@@ -124,10 +125,10 @@ export function GovernanceCasesClient() {
 
   if (casesQuery.isPending) {
     return (
-      <Card className="p-4">
+      <CanonSurface isCanon={isCanon} className="p-4">
         <Skeleton className="h-8 w-64 mb-4" />
         <Skeleton className="h-48 w-full" />
-      </Card>
+      </CanonSurface>
     );
   }
 
@@ -143,7 +144,7 @@ export function GovernanceCasesClient() {
       </div>
 
       {showCreate ? (
-        <Card className="p-4 space-y-4 border border-aistroyka-border-subtle">
+        <CanonSurface isCanon={isCanon} className="p-4 space-y-4 border border-aistroyka-border-subtle">
           <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
             {t("createTitle")}
           </h2>
@@ -227,10 +228,10 @@ export function GovernanceCasesClient() {
           >
             {createMut.isPending ? t("creatingCase") : t("createCase")}
           </Button>
-        </Card>
+        </CanonSurface>
       ) : null}
 
-      <Card className="overflow-hidden">
+      <CanonSurface isCanon={isCanon} contentClassName="overflow-hidden">
         <Table aria-label={t("tableAria")}>
           <TableHead>
             <TableRow>
@@ -284,7 +285,7 @@ export function GovernanceCasesClient() {
             )}
           </TableBody>
         </Table>
-      </Card>
+      </CanonSurface>
     </div>
   );
 }

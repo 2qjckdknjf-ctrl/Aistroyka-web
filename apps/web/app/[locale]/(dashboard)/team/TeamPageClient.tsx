@@ -13,12 +13,14 @@ export function TeamPageClient({
   canManage,
   currentUserId,
   teamFeaturesAvailable = true,
+  skin = "default",
 }: {
   members: Member[];
   invitations: Invitation[];
   canManage: boolean;
   currentUserId: string;
   teamFeaturesAvailable?: boolean;
+  skin?: "default" | "canon";
 }) {
   const t = useTranslations("team");
   const router = useRouter();
@@ -91,18 +93,34 @@ export function TeamPageClient({
   };
 
   const inviteDisabled = canManage && !teamFeaturesAvailable;
+  const isCanon = skin === "canon";
+  const sectionClass = isCanon ? "canon-glass p-4" : "card";
+  const headingClass = isCanon
+    ? "text-lg font-semibold text-[var(--canon-text-primary)]"
+    : "text-lg font-semibold text-aistroyka-text-primary";
+  const labelClass = isCanon
+    ? "mb-1 block text-sm font-medium text-[var(--canon-text-secondary)]"
+    : "mb-1 block text-sm font-medium text-aistroyka-text-primary";
+  const inputClass = isCanon ? "canon-field" : "input-field";
+  const primaryBtnClass = isCanon ? "canon-gold-btn" : "btn-primary";
+  const secondaryBtnClass = isCanon ? "canon-ghost-btn !text-sm" : "btn-secondary text-sm";
+  const memberRowClass = isCanon
+    ? "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--canon-border-glass)] bg-[rgba(255,255,255,0.04)] px-4 py-2.5"
+    : "flex flex-wrap items-center justify-between gap-2 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised/80 px-4 py-2.5";
 
   return (
     <div className="space-y-8">
       {canManage && (
-        <section className={`card ${inviteDisabled ? "opacity-75" : ""}`}>
-          <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("invite")}</h2>
+        <section className={`${sectionClass} ${inviteDisabled ? "opacity-75" : ""}`}>
+          <h2 className={headingClass}>{t("invite")}</h2>
           {inviteDisabled && (
-            <p className="mt-2 text-sm text-aistroyka-warning">{t("migrationRequiredTitle")}</p>
+            <p className={`mt-2 text-sm ${isCanon ? "text-[var(--canon-warning)]" : "text-aistroyka-warning"}`}>
+              {t("migrationRequiredTitle")}
+            </p>
           )}
           <form onSubmit={handleInvite} className="mt-4 flex flex-wrap items-end gap-3">
             <div className="min-w-[200px] flex-1">
-              <label htmlFor="team-invite-email" className="mb-1 block text-sm font-medium text-aistroyka-text-primary">
+              <label htmlFor="team-invite-email" className={labelClass}>
                 {t("email")}
               </label>
               <input
@@ -111,60 +129,78 @@ export function TeamPageClient({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("invitePlaceholder")}
-                className="input-field"
+                className={inputClass}
               />
             </div>
             <div className="w-36">
-              <label htmlFor="team-invite-role" className="mb-1 block text-sm font-medium text-aistroyka-text-primary">
+              <label htmlFor="team-invite-role" className={labelClass}>
                 {t("role")}
               </label>
               <select
                 id="team-invite-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "admin" | "member" | "viewer")}
-                className="input-field"
+                className={inputClass}
               >
                 <option value="viewer">{t("viewer")}</option>
                 <option value="member">{t("member")}</option>
                 <option value="admin">{t("admin")}</option>
               </select>
             </div>
-            <button type="submit" disabled={loading || inviteDisabled} className="btn-primary">
+            <button type="submit" disabled={loading || inviteDisabled} className={primaryBtnClass}>
               {loading ? "…" : t("invite")}
             </button>
           </form>
-          {message && <p className="mt-3 text-sm text-aistroyka-success">{message}</p>}
+          {message && (
+            <p className={`mt-3 text-sm ${isCanon ? "text-[var(--canon-success)]" : "text-aistroyka-success"}`}>
+              {message}
+            </p>
+          )}
           {inviteLink && (
             <div className="mt-3 space-y-2">
-              <p className="text-xs text-aistroyka-text-tertiary">{inviteLink}</p>
-              <button type="button" onClick={copyLink} className="btn-secondary">
+              <p className={`text-xs ${isCanon ? "text-[var(--canon-text-muted)]" : "text-aistroyka-text-tertiary"}`}>
+                {inviteLink}
+              </p>
+              <button type="button" onClick={copyLink} className={secondaryBtnClass}>
                 {t("copyLink")}
               </button>
             </div>
           )}
-          {error && <p className="mt-2 text-sm text-aistroyka-error" role="alert">{error}</p>}
+          {error && (
+            <p
+              className={`mt-2 text-sm ${isCanon ? "text-[var(--canon-danger)]" : "text-aistroyka-error"}`}
+              role="alert"
+            >
+              {error}
+            </p>
+          )}
         </section>
       )}
 
-      <section className="card">
-        <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("members")}</h2>
+      <section className={sectionClass}>
+        <h2 className={headingClass}>{t("members")}</h2>
         {members.length === 0 ? (
-          <p className="mt-2 text-sm text-aistroyka-text-tertiary">{t("noMembers")}</p>
+          <p className={`mt-2 text-sm ${isCanon ? "text-[var(--canon-text-muted)]" : "text-aistroyka-text-tertiary"}`}>
+            {t("noMembers")}
+          </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {members.map((m) => (
-              <li
-                key={m.user_id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised/80 px-4 py-2.5"
-              >
-                <span className="font-mono text-sm text-aistroyka-text-secondary">{m.user_id.slice(0, 8)}…</span>
-                <span className="text-sm text-aistroyka-text-primary">{roleLabel(m.role)}</span>
+              <li key={m.user_id} className={memberRowClass}>
+                <span
+                  className={`font-mono text-sm ${isCanon ? "text-[var(--canon-text-secondary)]" : "text-aistroyka-text-secondary"}`}
+                >
+                  {m.user_id.slice(0, 8)}…
+                </span>
+                <span className={isCanon ? "text-sm text-[var(--canon-text-primary)]" : "text-sm text-aistroyka-text-primary"}>
+                  {roleLabel(m.role)}
+                </span>
                 {canManage && !m.is_owner && m.user_id !== currentUserId && (
                   <button
                     type="button"
                     onClick={() => handleRevoke(m.user_id)}
                     disabled={revoking === m.user_id}
-                    className="btn-secondary text-sm"
+                    className={secondaryBtnClass}
                   >
                     {revoking === m.user_id ? "…" : t("revoke")}
                   </button>
@@ -176,20 +212,23 @@ export function TeamPageClient({
       </section>
 
       {canManage && (
-        <section className="card">
-          <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("invitations")}</h2>
+        <section className={sectionClass}>
+          <h2 className={headingClass}>{t("invitations")}</h2>
           {invitations.length === 0 ? (
-            <p className="mt-2 text-sm text-aistroyka-text-tertiary">{t("noInvitations")}</p>
+            <p className={`mt-2 text-sm ${isCanon ? "text-[var(--canon-text-muted)]" : "text-aistroyka-text-tertiary"}`}>
+              {t("noInvitations")}
+            </p>
           ) : (
             <ul className="mt-3 space-y-2">
               {invitations.map((inv) => (
-                <li
-                  key={inv.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised/80 px-4 py-2.5"
-                >
-                  <span className="text-sm text-aistroyka-text-primary">{inv.email}</span>
-                  <span className="text-sm text-aistroyka-text-secondary">{roleLabel(inv.role)}</span>
-                  <span className="text-xs text-aistroyka-text-tertiary">
+                <li key={inv.id} className={memberRowClass}>
+                  <span className={isCanon ? "text-sm text-[var(--canon-text-primary)]" : "text-sm text-aistroyka-text-primary"}>
+                    {inv.email}
+                  </span>
+                  <span className={isCanon ? "text-sm text-[var(--canon-text-secondary)]" : "text-sm text-aistroyka-text-secondary"}>
+                    {roleLabel(inv.role)}
+                  </span>
+                  <span className={isCanon ? "text-xs text-[var(--canon-text-muted)]" : "text-xs text-aistroyka-text-tertiary"}>
                     {new Date(inv.expires_at).toLocaleDateString()}
                   </span>
                 </li>

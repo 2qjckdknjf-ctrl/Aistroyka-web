@@ -1,15 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 import { getTenantContextFromRequest } from "./tenant.context";
 
+type MemberRow = { tenant_id: string; role: string };
+
 const mocks = vi.hoisted(() => {
   let tenantsCalls = 0;
   let tenantMembersCalls = 0;
-  let memberRole = "stakeholder";
+  let memberRows: MemberRow[] = [{ tenant_id: "tenant-1", role: "stakeholder" }];
 
-  function reset(role = "stakeholder") {
+  function reset(roleOrRows: string | MemberRow[] = "stakeholder") {
     tenantsCalls = 0;
     tenantMembersCalls = 0;
-    memberRole = role;
+    memberRows =
+      typeof roleOrRows === "string"
+        ? [{ tenant_id: "tenant-1", role: roleOrRows }]
+        : roleOrRows;
   }
 
   const supabase = {
@@ -30,15 +35,32 @@ const mocks = vi.hoisted(() => {
 
       if (table === "tenant_members") {
         tenantMembersCalls += 1;
-        const result =
-          tenantMembersCalls === 1
-            ? { data: { tenant_id: "tenant-1" } }
-            : { data: { role: memberRole } };
-        const tenantMembersQuery = {
+        const call = tenantMembersCalls;
+        let scopedTenantId: string | null = null;
+        const tenantMembersQuery: {
+          select: ReturnType<typeof vi.fn>;
+          eq: ReturnType<typeof vi.fn>;
+          limit: ReturnType<typeof vi.fn>;
+          maybeSingle: ReturnType<typeof vi.fn>;
+          then: (onFulfilled: (value: unknown) => unknown, onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
+        } = {
           select: vi.fn(() => tenantMembersQuery),
-          eq: vi.fn(() => tenantMembersQuery),
+          eq: vi.fn((column: string, value: string) => {
+            if (column === "tenant_id") scopedTenantId = value;
+            return tenantMembersQuery;
+          }),
           limit: vi.fn(() => tenantMembersQuery),
-          maybeSingle: vi.fn().mockResolvedValue(result),
+          maybeSingle: vi.fn().mockImplementation(async () => {
+            const row =
+              (scopedTenantId ? memberRows.find((r) => r.tenant_id === scopedTenantId) : null) ??
+              memberRows[0] ?? { tenant_id: "tenant-1", role: "unknown" };
+            return { data: call === 1 ? row : { role: row.role } };
+          }),
+          then: (onFulfilled, onRejected) =>
+            Promise.resolve({
+              data: call === 1 ? memberRows : { role: memberRows[0]?.role },
+              error: null,
+            }).then(onFulfilled, onRejected),
         };
         return tenantMembersQuery;
       }
@@ -85,6 +107,21 @@ describe("getTenantContextFromRequest", () => {
       tenantId: null,
       userId: "user-1",
       role: null,
+    });
+  });
+
+  it("uses the contractor workspace when the user is also a stakeholder elsewhere", async () => {
+    mocks.reset([
+      { tenant_id: "portal-tenant", role: "stakeholder" },
+      { tenant_id: "ops-tenant", role: "member" },
+    ]);
+
+    const ctx = await getTenantContextFromRequest(new Request("https://test/api/v1/projects"));
+
+    expect(ctx).toMatchObject({
+      tenantId: "ops-tenant",
+      userId: "user-1",
+      role: "member",
     });
   });
 });

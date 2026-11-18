@@ -26,13 +26,15 @@ if [[ -z "$EMAIL" || -z "$PASSWORD" ]]; then
   exit 2
 fi
 
-COOKIEJAR="$(mktemp)"
-cleanup() { rm -f "$COOKIEJAR"; }
+SFS_TMP="$(mktemp -d)"
+COOKIEJAR="$SFS_TMP/cookies.txt"
+cleanup() { rm -rf "$SFS_TMP"; }
 trap cleanup EXIT
 
-code="$(curl -sS -c "$COOKIEJAR" -o /tmp/sfs-login.json -w '%{http_code}' -X POST "$BASE_URL/api/auth/login" \
+SMOKE_LOGIN_EMAIL="$EMAIL" SMOKE_LOGIN_PASSWORD="$PASSWORD" smoke_python3 -c 'import json,os; print(json.dumps({"email":os.environ["SMOKE_LOGIN_EMAIL"],"password":os.environ["SMOKE_LOGIN_PASSWORD"],"traceId":"stakeholder-finance-sanity"}))' > "$SFS_TMP/login-request.json"
+code="$(curl -sS -c "$COOKIEJAR" -o "$SFS_TMP/login.json" -w '%{http_code}' -X POST "$BASE_URL/api/auth/login" \
   -H 'Content-Type: application/json' \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"traceId\":\"stakeholder-finance-sanity\"}")"
+  --data-binary "@$SFS_TMP/login-request.json")"
 if [[ "$code" != "200" ]]; then
   echo "FAIL: login HTTP $code"
   exit 1
@@ -45,7 +47,7 @@ if [[ "$role" != "stakeholder" ]]; then
   exit 2
 fi
 
-plist_code="$(curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' -o /tmp/sfs-portal-list.json -w '%{http_code}' "$BASE_URL/api/v1/portal/projects")"
+plist_code="$(curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' -o "$SFS_TMP/portal-list.json" -w '%{http_code}' "$BASE_URL/api/v1/portal/projects")"
 if [[ "$plist_code" == "404" ]]; then
   echo "BLOCKED: GET /api/v1/portal/projects returned 404 — portal API not served on this host (redeploy OpenNext worker or fix routing)."
   exit 3
@@ -55,7 +57,7 @@ if [[ "$plist_code" != "200" ]]; then
   exit 1
 fi
 
-pid="$(smoke_python3 -c 'import json,sys; j=json.load(sys.stdin); a=j.get("data") or []; print(a[0]["id"] if a else "")' < /tmp/sfs-portal-list.json)"
+pid="$(smoke_python3 -c 'import json,sys; j=json.load(sys.stdin); a=j.get("data") or []; print(a[0]["id"] if a else "")' < "$SFS_TMP/portal-list.json")"
 if [[ -z "$pid" ]]; then
   echo "BLOCKED: no portal projects for this user (enable client portal + membership)."
   exit 2
@@ -81,36 +83,11 @@ if [[ "$estimate_code" != "403" ]]; then
   exit 1
 fi
 
-curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' -o /tmp/sfs-portal-proj.json "$BASE_URL/api/v1/portal/projects/$pid"
-smoke_python3 <<'PY'
-import json, sys
-
-DENY_KEYS = frozenset({
-    "project_cost_items", "planned_amount", "actual_amount", "margin",
-    "profitability", "budget_pressure", "cost_overrun", "subcontractor_cost",
-    "internal_cost_item_id", "ai_finance_risk",
-})
-
-def walk(obj, path):
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            kl = k.lower()
-            if kl in DENY_KEYS or "internal_cost" in kl:
-                print(f"FAIL: forbidden key {path}{k}")
-                sys.exit(1)
-            walk(v, path + k + ".")
-    elif isinstance(obj, list):
-        for i, x in enumerate(obj):
-            walk(x, path + str(i) + ".")
-
-raw = open("/tmp/sfs-portal-proj.json").read()
-try:
-    j = json.loads(raw)
-except json.JSONDecodeError:
-    print("FAIL: portal project response is not JSON")
-    sys.exit(1)
-walk(j, "")
-print("PASS: stakeholder costs denied; portal JSON keys OK")
-PY
+portal_code="$(curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' -o "$SFS_TMP/portal-proj.json" -w '%{http_code}' "$BASE_URL/api/v1/portal/projects/$pid")"
+if [[ "$portal_code" != "200" ]]; then
+  echo "FAIL: portal project projection expected HTTP200, got $portal_code"
+  exit 1
+fi
+smoke_python3 "$SCRIPT_DIR/customer_portal_payload.py" --project-id "$pid" < "$SFS_TMP/portal-proj.json"
 
 echo "PASS: stakeholder finance sanity ($BASE_URL, project $pid)"

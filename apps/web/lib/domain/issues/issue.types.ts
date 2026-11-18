@@ -15,6 +15,8 @@ export interface ProjectIssue {
   resolved_by: string | null;
   created_at: string;
   updated_at: string;
+  evidence_upload_session_id?: string | null;
+  evidence_url?: string | null;
 }
 
 export interface CreateIssueInput {
@@ -23,6 +25,7 @@ export interface CreateIssueInput {
   description?: string | null;
   task_id?: string | null;
   milestone_id?: string | null;
+  evidence_upload_session_id?: string | null;
 }
 
 export interface UpdateIssueInput {
@@ -31,4 +34,5 @@ export interface UpdateIssueInput {
   status?: IssueStatus;
   task_id?: string | null;
   milestone_id?: string | null;
+  evidence_upload_session_id?: string | null;
 }

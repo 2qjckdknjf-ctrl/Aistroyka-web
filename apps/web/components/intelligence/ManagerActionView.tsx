@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import type {
   ProjectIntelligenceData,
   ActionRecommendationData,
@@ -116,10 +117,7 @@ export function ManagerActionView({
 
   if (actions.length === 0) {
     return (
-      <section
-        className="rounded-lg border border-aistroyka-border-subtle bg-white p-4"
-        aria-label={tDetail("managerActions")}
-      >
+      <DashboardGlassCard aria-label={tDetail("managerActions")}>
         <h3 className="text-base font-semibold text-aistroyka-text-primary">
           {tDetail("intelligenceActions")}
         </h3>
@@ -132,15 +130,12 @@ export function ManagerActionView({
         >
           {tDetail("viewProjectArrow")}
         </Link>
-      </section>
+      </DashboardGlassCard>
     );
   }
 
   return (
-    <section
-      className="rounded-lg border border-aistroyka-border-subtle bg-white p-4"
-      aria-label={tDetail("managerActions")}
-    >
+    <DashboardGlassCard aria-label={tDetail("managerActions")}>
       <h3 className="text-base font-semibold text-aistroyka-text-primary mb-3">
         {tDetail("whatNeedsAttention")}
       </h3>
@@ -177,6 +172,6 @@ export function ManagerActionView({
           </li>
         ))}
       </ul>
-    </section>
+    </DashboardGlassCard>
   );
 }

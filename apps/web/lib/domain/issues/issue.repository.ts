@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
 import type { ProjectIssue, CreateIssueInput, UpdateIssueInput } from "./issue.types";
 
 const ISSUE_SELECT =
-  "id, project_id, tenant_id, title, description, status, task_id, milestone_id, created_by, resolved_at, resolved_by, created_at, updated_at";
+  "id, project_id, tenant_id, title, description, status, task_id, milestone_id, created_by, resolved_at, resolved_by, created_at, updated_at, evidence_upload_session_id";
 
 export async function listByProject(
   supabase: SupabaseClient,
@@ -59,6 +60,7 @@ export async function create(
       task_id: input.task_id ?? null,
       milestone_id: input.milestone_id ?? null,
       created_by: userId,
+      evidence_upload_session_id: input.evidence_upload_session_id?.trim() || null,
     })
     .select(ISSUE_SELECT)
     .single();
@@ -84,6 +86,9 @@ export async function update(
   }
   if (input.task_id !== undefined) payload.task_id = input.task_id;
   if (input.milestone_id !== undefined) payload.milestone_id = input.milestone_id;
+  if (input.evidence_upload_session_id !== undefined) {
+    payload.evidence_upload_session_id = input.evidence_upload_session_id;
+  }
 
   const { data, error } = await supabase
     .from("project_issues")
@@ -109,4 +114,41 @@ export async function countOpenByProject(
     .in("status", ["open", "in_review"]);
   if (error) return 0;
   return count ?? 0;
+}
+
+/** Display URL from a finalized `issue_evidence` upload session. Private caller-RLS signing. */
+export async function attachEvidenceUrls(
+  supabase: SupabaseClient,
+  issues: ProjectIssue[]
+): Promise<ProjectIssue[]> {
+  const sessionIds = [
+    ...new Set(
+      issues
+        .map((issue) => issue.evidence_upload_session_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    ),
+  ];
+  if (sessionIds.length === 0) {
+    return issues.map((issue) => ({ ...issue, evidence_url: issue.evidence_url ?? null }));
+  }
+
+  const { data } = await supabase
+    .from("upload_sessions")
+    .select("id, object_path, status")
+    .in("id", sessionIds);
+
+  const pathBySessionId = new Map<string, string>();
+  for (const row of data ?? []) {
+    const session = row as { id: string; object_path?: string | null; status?: string | null };
+    if (session.status === "finalized" && typeof session.object_path === "string" && session.object_path) {
+      pathBySessionId.set(session.id, session.object_path);
+    }
+  }
+
+  return Promise.all(issues.map(async issue => {
+    const sessionId = issue.evidence_upload_session_id;
+    const objectPath = sessionId ? pathBySessionId.get(sessionId) : undefined;
+    return { ...issue, evidence_url: objectPath && sessionId
+      ? await privateMediaDisplayUrl(supabase, { tenantId: issue.tenant_id, uploadSessionId: sessionId }) : null };
+  }));
 }

@@ -2,8 +2,12 @@ package ai.aistroyka.worker.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 object WorkerSemanticColors {
+    private val SuccessGreen = Color(0xFF34C759)
+    private val WarningOrange = Color(0xFFFF9500)
+
     @Composable
     fun pageBackground() = MaterialTheme.colorScheme.background
 
@@ -11,7 +15,10 @@ object WorkerSemanticColors {
     fun error() = MaterialTheme.colorScheme.error
 
     @Composable
-    fun success() = MaterialTheme.colorScheme.primary
+    fun success() = SuccessGreen
+
+    @Composable
+    fun warning() = WarningOrange
 
     @Composable
     fun primary() = MaterialTheme.colorScheme.primary

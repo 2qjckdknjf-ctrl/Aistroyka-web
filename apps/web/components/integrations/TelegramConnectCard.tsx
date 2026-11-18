@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function getStatus(): Promise<{ linked: boolean; botConfigured: boolean }> {
   const res = await fetch("/api/v1/integrations/telegram/link", { credentials: "include" });
@@ -49,9 +50,9 @@ export function TelegramConnectCard({ className }: { className?: string }) {
 
   if (q.isPending) {
     return (
-      <Card className={className}>
+      <DashboardGlassCard className={className}>
         <p className="text-sm text-aistroyka-text-tertiary">{t("loadingUpdates")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -61,15 +62,15 @@ export function TelegramConnectCard({ className }: { className?: string }) {
 
   if (!botConfigured) {
     return (
-      <Card className={`p-4 border-l-4 border-l-aistroyka-text-tertiary ${className ?? ""}`}>
+      <DashboardGlassCard className={`p-4 border-l-4 border-l-aistroyka-text-tertiary ${className ?? ""}`}>
         <h3 className="font-semibold text-aistroyka-text-primary">{t("telegramAlertsTitle")}</h3>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("telegramNotConfigured")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   return (
-    <Card className={`p-4 border-l-4 border-l-aistroyka-info ${className ?? ""}`}>
+    <DashboardGlassCard className={`p-4 border-l-4 border-l-aistroyka-info ${className ?? ""}`}>
       <h3 className="font-semibold text-aistroyka-text-primary">{t("telegramAlertsTitle")}</h3>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("telegramAlertsHint")}</p>
       {linked ? (
@@ -110,6 +111,6 @@ export function TelegramConnectCard({ className }: { className?: string }) {
           </Button>
         ) : null}
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

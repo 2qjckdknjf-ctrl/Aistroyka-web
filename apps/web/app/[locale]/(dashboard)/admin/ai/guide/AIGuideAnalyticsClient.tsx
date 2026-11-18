@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type AnalyticsResponse = {
   range: string;
@@ -36,10 +37,10 @@ type Area = (typeof AREA_OPTIONS)[number];
 
 function Kpi({ title, value }: { title: string; value: string | number }) {
   return (
-    <Card className="p-4">
+    <DashboardGlassCard className="p-4">
       <p className="text-aistroyka-caption text-aistroyka-text-secondary">{title}</p>
       <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{value}</p>
-    </Card>
+    </DashboardGlassCard>
   );
 }
 
@@ -196,7 +197,7 @@ export function AIGuideAnalyticsClient() {
 
   return (
     <section className="space-y-6">
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t("filterRange")}:</span>
           {RANGES.map((r) => (
@@ -216,10 +217,10 @@ export function AIGuideAnalyticsClient() {
             </Button>
           </div>
         </div>
-      </Card>
+      </DashboardGlassCard>
 
-      {loading ? <Card className="p-4 text-aistroyka-text-secondary">{t("loading")}</Card> : null}
-      {error ? <Card className="border-aistroyka-danger/40 p-4 text-aistroyka-danger">{error}</Card> : null}
+      {loading ? <DashboardGlassCard className="p-4 text-aistroyka-text-secondary">{t("loading")}</DashboardGlassCard> : null}
+      {error ? <DashboardGlassCard className="border-aistroyka-danger/40 p-4 text-aistroyka-danger">{error}</DashboardGlassCard> : null}
 
       {data ? (
         <>
@@ -232,7 +233,7 @@ export function AIGuideAnalyticsClient() {
             <Kpi title={t("kpiCompletionRate")} value={`${data.totals.completionRate}%`} />
           </section>
 
-          <Card className="p-4">
+          <DashboardGlassCard className="p-4">
             <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionDailyTrend")}</h2>
             <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
               {t("dailyTrendHint", { range: data.range, area: formatAreaKey(data.area) })}
@@ -263,10 +264,10 @@ export function AIGuideAnalyticsClient() {
                 })
               )}
             </div>
-          </Card>
+          </DashboardGlassCard>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card className="p-4">
+            <DashboardGlassCard className="p-4">
               <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionByRole")}</h2>
               <div className="mt-4 space-y-3">
                 {data.byRole.length === 0 ? (
@@ -283,9 +284,9 @@ export function AIGuideAnalyticsClient() {
                   ))
                 )}
               </div>
-            </Card>
+            </DashboardGlassCard>
 
-            <Card className="p-4">
+            <DashboardGlassCard className="p-4">
               <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionByLocale")}</h2>
               <div className="mt-4 space-y-3">
                 {data.byLocale.length === 0 ? (
@@ -302,11 +303,11 @@ export function AIGuideAnalyticsClient() {
                   ))
                 )}
               </div>
-            </Card>
+            </DashboardGlassCard>
           </section>
 
           <section className="grid gap-4 lg:grid-cols-2">
-            <Card className="p-4">
+            <DashboardGlassCard className="p-4">
               <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionByModuleArea")}</h2>
               <div className="mt-4 space-y-3">
                 {data.byArea.length === 0 ? (
@@ -323,9 +324,9 @@ export function AIGuideAnalyticsClient() {
                   ))
                 )}
               </div>
-            </Card>
+            </DashboardGlassCard>
 
-            <Card className="p-4">
+            <DashboardGlassCard className="p-4">
               <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionConversion")}</h2>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[440px] text-left">
@@ -357,10 +358,10 @@ export function AIGuideAnalyticsClient() {
                   </tbody>
                 </table>
               </div>
-            </Card>
+            </DashboardGlassCard>
           </section>
 
-          <Card className="p-4">
+          <DashboardGlassCard className="p-4">
             <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionTopActions")}</h2>
             <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">{t("topActionsHint")}</p>
             <div className="mt-4 overflow-x-auto">
@@ -391,7 +392,7 @@ export function AIGuideAnalyticsClient() {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </DashboardGlassCard>
         </>
       ) : null}
     </section>

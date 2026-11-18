@@ -8,6 +8,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
+import { shouldShowLoginStepDebug } from "@/lib/auth/login-step-debug";
 
 const SIGN_IN_TIMEOUT_MS = 25_000;
 const LOGIN_ENDPOINT = "/api/v1/auth/login";
@@ -26,8 +27,10 @@ function LoginForm() {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/dashboard";
+  const resetSuccess = searchParams?.get("reset") === "success";
   const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +83,7 @@ function LoginForm() {
         log("signIn", "error", isAuth ? "auth" : "server", data.message);
         const msg = (data.message ?? "").toLowerCase();
         if (isTimeout || (data.message ?? "").includes("timed out")) {
-          setError(data.message ?? "Request timed out. Please try again.");
+          setError(data.message ?? t("requestTimedOutShort"));
         } else if (isAuth && (msg.includes("invalid") || msg.includes("credentials"))) {
           setError(t("invalidCredentials"));
         } else if (isAuth && (msg.includes("email not confirmed") || msg.includes("confirm"))) {
@@ -113,7 +116,7 @@ function LoginForm() {
       const errMsg = thrown instanceof Error ? thrown.message : String(thrown);
       log("signIn", "error", isAbort ? "timeout" : "unknown", errMsg);
       if (isAbort) {
-        setError("Request timed out. Please check your connection and try again.");
+        setError(t("requestTimedOut"));
       } else if (errMsg && errMsg.length < 200 && !errMsg.toLowerCase().includes("password")) {
         setError(errMsg);
       } else {
@@ -140,6 +143,9 @@ function LoginForm() {
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("login")}</h1>
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>
           </div>
+          {resetSuccess ? (
+            <Alert message={t("passwordUpdated")} style="success" className="mb-aistroyka-4" />
+          ) : null}
           {envOk === false && (
             <Alert
               message="Supabase env missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. in .env.local or Cloudflare build env)."
@@ -188,11 +194,19 @@ function LoginForm() {
               enterKeyHint="go"
               required
             />
+            <p className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm"
+              >
+                {t("forgotPassword")}
+              </Link>
+            </p>
             {error && (
               <div className="space-y-2">
                 <Alert message={error} style="error" />
                 <Button type="button" variant="secondary" className="w-full" onClick={() => doSignIn()}>
-                  Retry
+                  {tCommon("retry")}
                 </Button>
               </div>
             )}
@@ -202,11 +216,12 @@ function LoginForm() {
               </Button>
             )}
           </form>
-          {showEmailForm ? (
+          {showEmailForm && shouldShowLoginStepDebug() ? (
             <p
               className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
               aria-live="polite"
               aria-atomic="true"
+              data-testid="login-step-debug"
             >
               {t("loginStep")}: {step}
             </p>

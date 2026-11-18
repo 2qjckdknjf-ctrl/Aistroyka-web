@@ -1,7 +1,58 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-06-26  
-**Canonical main SHA:** `2fe776f298d4a94eccfa8bc5745968692b77fb0f`
+Наблюдение 2026-10-30: main `ff7d0894` после #480 STREAM-010, #481 RULE-015, #482 CLIENT-005A idempotency, #483 RECON-017 Finding Ledger. Hosted DDL applied (caption segments earlier; completeness evaluations; intake_draft unique; tender findings). Closures: [STREAM-010](reports/ais-stream-010-closure-2026-10-30/RESULT.md), [RULE-015](reports/ais-rule-015-closure-2026-10-30/RESULT.md), [005A idempotency](reports/ais-client-005a-idempotency-closure-2026-10-30/RESULT.md), [RECON-017](reports/ais-recon-017-closure-2026-10-30/RESULT.md). Остаются live Gemini/Worker fixtures и OWNER_GATE legal/store/billing. Следующее локальное: Manager UI for completeness/recon, Graph invalidate-on-revoke, RECON takeoff automation later. Снимки ниже сохраняют свои даты.
+
+Наблюдение 2026-10-28: protected conveyor + Stage2a + MATERIAL-008 закрыли #446/#447/#457/#448/#449/#458/#453/#455/#459/#454/#461/#463–#474; hosted grants/`platform_job_id`/human-review/quantity A01–A05/material drafts applied. Durable report-media + Graph + C04 + 005A + Stage2a + MATERIAL-008 на main. [A05](reports/stage2a-a05-commercial-quantity-bind-2026-10-28/RESULT.md), [MATERIAL-008](reports/ais-material-008-draft-slice-2026-10-28/RESULT.md). Остаются live Gemini/Worker fixtures и OWNER_GATE legal/store/billing. CORRECTION-009 (#476) closed. Следующее локальное тогда: AIS-MEM-016. Исторический снимок.
+
+Наблюдение 2026-10-13: origin/main #445 e0c9f51a; staging/apex/www health e0c9f51, db ok. [Свежий аудит](audit/deep-2026-10-13/REPORT.md) и [таблица 71 требования](audit/deep-2026-10-13/requirements.csv) учитывают latest PR350 b5e84774 и объединённый workflow v2.6. Исторический снимок; не отменяет 2026-10-28.
+
+Наблюдение 2026-10-12: main #440 `0891b08`; свежий origin/main остаётся источником текущего кода. #437 на staging `fac7a17` прошёл 13 реальных проверок PNG/Proof Pack/PDF/revocation, тестовый набор полностью очищен. Production run 38190089187 SUCCESS; apex/www обслуживают `fac7a17`. #433/#434 не являются успешным доказательством оригиналов: их регрессия исправлена #437. [Runtime proof](reports/private-original-runtime-2026-10-12/RESULT.md).
+
+#435 реализует явную публикацию/отзыв выбранного фото в Manager: 7 Shared checks, Debug build, live simulator 1/1 и server readback PASS; previous-head three-app smoke PASS. #435 защищённо объединён на 4d3ddf75 после CI 38190538632/three-app smoke 38190538635 SUCCESS; runtime проверяется отдельно. #438 исправляет транспорт существующего async executor; 38 тестов PASS; живой scoped job завершён с одним связанным media/job/tenant result и strict provider gate exit 0/fallback 0. Durable audit #439 подтверждён fresh event/readback, staging/apex/www b47742e. Worker → Manager → отдельный Customer API flow 12/12 PASS; recipient fallback #440 protected merged/deployed, fresh fallback 13/13 и assigned manager 15/15 PASS. Runtime staging/apex/www 0891b08. [Async proof](reports/async-vision-live-2026-10-12/RESULT.md). [Native proof](reports/manager-native-publication-2026-10-12/RESULT.md).
+
+Далее: полный Worker/report/publication сценарий, source-linked Vision/Graph/video, затем reviewed preproject extraction. 11-source/10-ID receipts сохраняются; DDL в этом срезе не применялся. Physical iPhone wired/Developer Mode, Debug build PASS; UI automation initialization blocked (0 tests); store/legal/billing/time gates и 74 смешанных PR остаются открытыми. Сохранённые папки не переписываются. [STATUS](../STATUS.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md). Старые снимки ниже являются историей.
+
+---
+
+
+# Historical pointer snapshot — 2026-10-03 (superseded)
+
+**Last updated:** 2026-10-03  
+**Main tip:** `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7` (`0e3b1ed`)  
+**Production / staging:** `buildStamp.sha7=0e3b1ed` **MATCH** (health observed 2026-10-03)  
+**Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**  
+**Active audit:** `docs/audit/AISTROYKA_100_PERCENT_COMPLETION_AUDIT_2026-10-03.md`  
+**PR #350:** draft docs backlog HEAD `b7db4208` — reconciled into amendment/DAG; not a runtime certification  
+
+The 2026-08-24 “100% Readiness RC” block below is **historical**. Do not treat `3838726a` or `a7144249` as current main or production.
+
+---
+
+# Historical section — 2026-08-24 (superseded as current pointer)
+
+**Last updated (historical):** 2026-08-24  
+**Main tip (historical):** `3838726ab3521e19671118ef847936ee62ea5605` (`3838726a`)  
+**100% Readiness RC tag:** `v1.0.0-rc.1` @ `a7144249` (tag unchanged; main advanced post-tag)  
+**Runtime match (historical):** staging deploy **PENDING** post-#240 merge — verify via `buildStamp.sha7`  
+**Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**
+
+## 0. 100% Readiness program (current)
+
+| Field | Value |
+|-------|-------|
+| Active phases closed | 5–11 CONDITIONAL YES; 12 launch **NO** |
+| Merged to main | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) tenant priority · [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) auth + Day-0 pack |
+| Open docs PR | [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) |
+| Execution log | `docs/reports/AISTROYKA_100_PERCENT_EXECUTION_LOG.md` |
+| STATUS | `STATUS.md` |
+| Phase 12 launch | **NO** — real client intake not filed |
+| Post-merge verify | `verify_forgot_password_route.sh` + Day-0 rehearsal after staging deploy |
+
+---
+
+**Historical baseline below** (Product Design audit 2026-08-09 @ `02baa6a…`) — retained as snapshot evidence.
+
+**Last updated (historical section):** 2026-08-09
 
 ## 1. Purpose
 
@@ -15,9 +66,12 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Field | Value |
 |-------|-------|
-| **main commit** | `2fe776f298d4a94eccfa8bc5745968692b77fb0f` |
-| **date** | 2026-06-26 |
+| **audited baseline** | `02baa6a379ca9ff30735d35e53aea5198e972d45` (Product Design audit source/runtime MATCH) |
+| **current origin/main tip** | `02baa6a379ca9ff30735d35e53aea5198e972d45` — equals audited baseline **until** PR #215 merges |
+| **date** | 2026-08-09 (tip includes PR #214; open docs PR #215 not yet on main) |
 | **repo** | `2qjckdknjf-ctrl/Aistroyka-web` |
+| **runtime match (audit)** | apex/www/staging `buildStamp.sha7=02baa6a` — MATCH at audit time |
+| **Open docs PR** | #215 Ready / not merged — after merge, set canonical tip to the merge SHA (distinct from audited baseline) |
 
 ### Latest merged post-baseline slices (on main)
 
@@ -48,8 +102,21 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | #145 | Truth index housekeeping after PR #144 (docs-only) |
 | #146 | iOS simulator evidence report for issue #112 (docs-only) — first real iOS native evidence: simulator build PASS + login-surface UITest smoke PASS |
 
+## 2b. Product Design audit pack (2026-08-09)
+
+| Field | Value |
+|-------|-------|
+| Pack | `docs/audit/product-design-current-main-2026-08-09/` (`00`–`08` + evidence) |
+| Audited baseline | `02baa6a379ca9ff30735d35e53aea5198e972d45` |
+| Verdict | `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL` |
+| Counts | P0:0 / P1:6 / P2:8 / P3:3 |
+| Design wave | Wave C **in progress** |
+| Slice 01 | Prompt only under `docs/ops/CURSOR_PRODUCT_DESIGN_SLICE_01_IMPLEMENTATION_PROMPT_2026-08-09.md` — **implementation not started** |
+| PR | #215 Ready; merge SHA will differ from audited baseline after merge |
+
 ## 3. What is verified
 
+- **Current-main Product Design audit (2026-08-09):** published pack + Slice 01 prompt on PR #215; audited against `02baa6a…` (not claiming PR #215 merged).
 - **CI/build/test on main after PR #146:** green in operator validation (install, lint, contracts, i18n:check, `I18N_CHECK_ALL=1` i18n:check, tests, build, cf:build).
 - **Test count (post PR #146):** 1546/1546 passing in full suite run.
 - **Security headers slice (PR #120 scope):** API header slice PASS; verified with staging/production smoke at time of that slice (see PR #120 evidence; not re-run by this index).
@@ -80,8 +147,9 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Area | Current status | Evidence | Next safe step |
 |------|----------------|----------|----------------|
-| **Web main** | Post-baseline reconciliation + polish slices merged | main `2fe776f2`; PRs #120–#146 | Continue small scoped slices; full validation per PR |
-| **Production runtime** | Deployed SHA **not assumed** equal to latest main | Confirm via Cloudflare/Vercel + `/api/v1/health` buildStamp | Run deploy/smoke only per `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md` when operator-approved |
+| **Web main** | Current tip `02baa6a…` (includes #214); older June post-baseline slices remain historical | main `02baa6a…`; Product Design audit pack on PR #215 | Merge #215 when authorized; then Slice 01 only with separate auth |
+| **Product Design** | Audit handoff Ready on PR #215; remediation not started | `docs/audit/product-design-current-main-2026-08-09/`; Slice 01 ops prompt | Fresh approve corrected head → merge docs → Slice 01 Draft later |
+| **Production runtime** | Audited MATCH to `02baa6a` at audit time; re-confirm after any later deploy | `/api/v1/health` `buildStamp.sha7` | Run deploy/smoke only per `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md` when operator-approved |
 | **Security headers** | API slice PASS (#120); page regression tests added (#133); issue #114 **CLOSED** | PR #120, #132, #133; `apps/web/middleware.security-headers.test.ts` | No further issue #114 slices unless new evidence-backed gap |
 | **Governance** | Remediated; protected merge process verified | PR #125; issue #110 closed; `enforce_admins: true` | Non-author APPROVED + CI before every main merge |
 | **Reports export UI** | Polish merged (#127) | PR #127; issue #118 | No backend/CSV/role changes without explicit audit |
@@ -119,14 +187,18 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 ## 8. Current safe backlog (prioritized)
 
-1. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit. Issue #112 mobile: fresh audit (#140) + readiness refresh (#141) + evidence plan (#144) + first real iOS native evidence (#146: simulator build + login-surface UITest PASS, partial) merged; **OPEN** pending remaining evidence — iOS Layer B live E2E and Android debug assemble + instrumented launch — backed by Xcode/Android SDK/device/emulator/TestFlight/Google Play/CI.
-2. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
-3. **~~Homepage `MOCK_METRICS` removal~~** — **DONE** (PR #138; fake numeric metrics removed, qualitative cards, pilot-first CTAs preserved).
-4. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment + PR #138 homepage cleanup).
-5. **~~#114 middleware/security~~** — **CLOSED** (PR #132 audit + PR #133 regression tests).
-6. **~~#116 docs truth~~** — initial index merged (#128); ongoing housekeeping only.
-7. **~~#117 stale branch archival~~** — plan (#129), dry-run (#130), execution (#131) complete; no broad merges.
+1. **PR #215 Product Design audit handoff** — finish review-fix corrections; fresh independent approval on corrected head; merge when authorized (docs/evidence only).
+2. **Product Design Remediation Slice 01** — only after #215 merge + separate implementation authorization (PD-P1-01, PD-P1-03 a11y, PD-P2-01/02).
+3. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit. Issue #112 mobile: fresh audit (#140) + readiness refresh (#141) + evidence plan (#144) + first real iOS native evidence (#146: simulator build + login-surface UITest PASS, partial) merged; **OPEN** pending remaining evidence — iOS Layer B live E2E and Android debug assemble + instrumented launch — backed by Xcode/Android SDK/device/emulator/TestFlight/Google Play/CI.
+4. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
+5. **~~Homepage `MOCK_METRICS` removal~~** — **DONE** (PR #138; fake numeric metrics removed, qualitative cards, pilot-first CTAs preserved).
+6. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment + PR #138 homepage cleanup).
+7. **~~#114 middleware/security~~** — **CLOSED** (PR #132 audit + PR #133 regression tests).
+8. **~~#116 docs truth~~** — initial index merged (#128); ongoing housekeeping only.
+9. **~~#117 stale branch archival~~** — plan (#129), dry-run (#130), execution (#131) complete; no broad merges.
 
 ---
 
 *For deployment topology and canonical paths, see `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`. For live/staging smoke policy, see `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md`.*
+
+Next report-result gap: [hard audit](audit/2026-10-12-report-media-result-hard-audit.md). Reuse current provider/source/queue contracts; no duplicate execution or fake source entities. Physical readiness: [report](reports/customer-physical-gallery-2026-10-12/RESULT.md).

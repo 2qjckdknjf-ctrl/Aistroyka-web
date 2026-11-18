@@ -21,11 +21,9 @@ export const TYPE = {
   link: "text-aistroyka-subheadline text-aistroyka-text-secondary hover:underline",
 } as const;
 
-/** Card: use @/components/ui Card when possible */
-export const CARD =
-  "rounded-aistroyka-card border border-aistroyka-border-subtle bg-aistroyka-surface p-aistroyka-4 sm:p-aistroyka-6";
-export const CARD_MUTED =
-  "rounded-aistroyka-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-aistroyka-4 sm:p-aistroyka-6";
+/** Card: Liquid Glass class (prefer DashboardGlassCard for new panels) */
+export const CARD = "card";
+export const CARD_MUTED = "surface-glass-muted rounded-aistroyka-card p-aistroyka-4 sm:p-aistroyka-6";
 
 /** Status (use Badge from @/components/ui when possible) */
 export const STATUS = {

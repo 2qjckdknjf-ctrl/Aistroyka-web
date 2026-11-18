@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { DateRangePicker } from "@/components/ui";
 import { getSavedViews, saveView, deleteSavedView, type SavedView } from "@/lib/cockpit/savedViews";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface FilterBarProps {
   projects: { id: string; name: string }[];
@@ -96,7 +97,7 @@ export function FilterBar({
   }, [setParams]);
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-3">
+    <DashboardGlassCard contentClassName="flex flex-wrap items-center gap-3 px-4 py-3">
       {showProject && (
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-project" className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("project")}</label>
@@ -205,6 +206,6 @@ export function FilterBar({
           </div>
         </div>
       )}
-    </div>
+    </DashboardGlassCard>
   );
 }

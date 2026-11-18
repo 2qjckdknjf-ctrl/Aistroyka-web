@@ -7,6 +7,7 @@ import { createClient, createClientFromRequest, ServiceRoleForbiddenError } from
 import { getPermissionsForContext } from "@/lib/authz/authz.service";
 import { getUserScopes } from "@/lib/authz/authz.repository";
 import { TenantForbiddenError } from "./tenant.guard";
+import { pickPrimaryTenantMembership } from "./tenant-membership-priority";
 import type { TenantContextOrAbsent, ClientProfile } from "./tenant.types";
 
 const DEFAULT_CLIENT: ClientProfile = "web";
@@ -16,6 +17,7 @@ const CLIENT_VALUES: ClientProfile[] = [
   "ios_lite",
   "ios_worker",
   "ios_manager",
+  "ios_customer",
   "android_full",
   "android_lite",
   "android_worker",
@@ -36,7 +38,8 @@ function getTraceId(request: Request): string {
 
 /**
  * Derives tenant context from the request: user via Supabase server client,
- * then first tenant_members row for that user. If no user or no membership, returns absent context.
+ * then the user's primary tenant_members row (internal roles beat stakeholder).
+ * If no user or no membership, returns absent context.
  */
 export async function getTenantContextFromRequest(request: Request): Promise<TenantContextOrAbsent> {
   const traceId = getTraceId(request);
@@ -92,8 +95,8 @@ export async function getTenantContextFromRequest(request: Request): Promise<Ten
 async function getActiveTenantId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
   const { data: ownTenant } = await supabase.from("tenants").select("id").eq("user_id", userId).maybeSingle();
   if (ownTenant?.id) return ownTenant.id;
-  const { data: member } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle();
-  return member?.tenant_id ?? null;
+  const { data: members } = await supabase.from("tenant_members").select("tenant_id, role").eq("user_id", userId);
+  return pickPrimaryTenantMembership(members ?? [])?.tenant_id ?? null;
 }
 
 const ROLES = ["owner", "admin", "member", "viewer", "stakeholder"] as const;

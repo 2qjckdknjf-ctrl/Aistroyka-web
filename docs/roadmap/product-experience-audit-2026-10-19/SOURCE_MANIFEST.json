@@ -1,0 +1,51 @@
+{
+  "audit_date": "2026-10-19",
+  "integration_date": "2026-10-20",
+  "source_sha": "04ec74bf955c29799ab535c043a33c1f9296c309",
+  "original_archive": {
+    "filename": "AISTROYKA_V2_Audit_Package_2026-10-19.zip",
+    "sha256": "a35a7d31399b241e6ea96f6fdf497c163fbe4eb864d0b0b5757484d143f0a520"
+  },
+  "immutable_snapshots": [
+    {
+      "file": "tickets.snapshot.json",
+      "sha256": "542455c4d97496688c1f04c683f44c29c4061c1457df32131fdd20365f066a3f"
+    },
+    {
+      "file": "findings.snapshot.json",
+      "sha256": "d913be36abeba44fbc445cf949c22cb6e7da7a966a1d4ab3aa8a59da744f4552"
+    }
+  ],
+  "narrative_transport": [
+    {
+      "source": "AISTROYKA_V2_Mega_Plan_RU.md",
+      "original_sha256": "70515b7b8cd1307361f5bd8e03712dc254ea2c168cb75b875ac465bf6f092ae4",
+      "repository_file": "docs/roadmap/product-experience-audit-2026-10-19/MEGA_PLAN_RU.md",
+      "changes": "Dated integration note, portable links/archival-image references; MEGA_PLAN adds per-package mapping pointers. No source audit JSON mutations."
+    },
+    {
+      "source": "AISTROYKA_V2_Audit_Report_RU.md",
+      "original_sha256": "58db2c4771bdd6f3e660af5cb4a722b0b71ace1ccc6e5cccf26844d9647e64f0",
+      "repository_file": "docs/roadmap/product-experience-audit-2026-10-19/AUDIT_REPORT_RU.md",
+      "changes": "Dated integration note, portable links/archival-image references; MEGA_PLAN adds per-package mapping pointers. No source audit JSON mutations."
+    },
+    {
+      "source": "AISTROYKA_V2_Context_RU.md",
+      "original_sha256": "cff5ec2888eca4b085fc9cddd832dd68977a1a84d9acc84f6f6604cba7778102",
+      "repository_file": "docs/roadmap/product-experience-audit-2026-10-19/AUDIT_CONTEXT_RU.md",
+      "changes": "Dated integration note, portable links/archival-image references; MEGA_PLAN adds per-package mapping pointers. No source audit JSON mutations."
+    },
+    {
+      "source": "AISTROYKA_V2_MagicPath_Design_Brief_RU.md",
+      "original_sha256": "5a679c87d27fe028731d1dbce0bf7f5f6d9f536c63ac5354435449b12dcc7101",
+      "repository_file": "docs/roadmap/product-experience-audit-2026-10-19/MAGICPATH_DESIGN_BRIEF_RU.md",
+      "changes": "Dated integration note, portable links/archival-image references; MEGA_PLAN adds per-package mapping pointers. No source audit JSON mutations."
+    },
+    {
+      "source": "AISTROYKA_V2_Public_Walkthrough_RU.md",
+      "original_sha256": "c5cee239d036e8160b9ee7b1715adf152288c9bf0a447000c855042d369f4eec",
+      "repository_file": "docs/roadmap/product-experience-audit-2026-10-19/PUBLIC_WALKTHROUGH_RU.md",
+      "changes": "Dated integration note, portable links/archival-image references; MEGA_PLAN adds per-package mapping pointers. No source audit JSON mutations."
+    }
+  ]
+}

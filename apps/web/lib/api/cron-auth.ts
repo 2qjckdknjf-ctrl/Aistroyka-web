@@ -12,10 +12,13 @@ export const CRON_UNAUTHORIZED_CODE = "cron_unauthorized";
 export const CRON_MISCONFIGURED_CODE = "cron_secret_misconfigured";
 
 export function isCronSecretRequired(): boolean {
+  // A legacy staging flag must not disable a cross-tenant cron boundary in
+  // a deployed production-mode Next runtime (staging shares the live DB).
+  if (process.env.NODE_ENV === "production") return true;
   const explicit = process.env.REQUIRE_CRON_SECRET;
   if (explicit === "true") return true;
   if (explicit === "false") return false;
-  return process.env.NODE_ENV === "production";
+  return false;
 }
 
 export function requireCronSecretIfEnabled(request: Request): NextResponse | null {
@@ -24,7 +27,7 @@ export function requireCronSecretIfEnabled(request: Request): NextResponse | nul
   if (!expected) {
     return NextResponse.json(
       {
-        error: "Cron secret is required (REQUIRE_CRON_SECRET=true) but CRON_SECRET is not set. Set CRON_SECRET in environment.",
+        error: "Cron secret is required for this runtime but CRON_SECRET is not set. Set CRON_SECRET in environment.",
         code: CRON_MISCONFIGURED_CODE,
       },
       { status: 503 }

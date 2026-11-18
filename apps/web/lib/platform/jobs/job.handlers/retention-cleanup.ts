@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Job } from "../job.types";
+import { JobPayloadError } from "../job.errors";
 import { emitAudit } from "@/lib/observability/audit.service";
 
 /**
@@ -8,8 +9,10 @@ import { emitAudit } from "@/lib/observability/audit.service";
  */
 export async function handleRetentionCleanup(supabase: SupabaseClient, job: Job): Promise<void> {
   const payload = job.payload as { tenant_id?: string };
-  const tenantId = payload?.tenant_id ?? job.tenant_id;
-  if (!tenantId) return;
+  const tenantId = job.tenant_id;
+  if (!tenantId || (payload?.tenant_id != null && payload.tenant_id !== tenantId)) {
+    throw new JobPayloadError("Retention tenant scope mismatch");
+  }
 
   const { data: policy } = await supabase
     .from("data_retention_policies")

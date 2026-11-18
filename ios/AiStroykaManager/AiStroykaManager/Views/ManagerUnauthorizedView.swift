@@ -33,11 +33,12 @@ struct ManagerUnauthorizedView: View {
                 Task { await sessionState.signOut() }
             }
             .buttonStyle(.borderedProminent)
+            .tint(ManagerSemanticColors.primary)
             .accessibilityIdentifier("pilot_manager_unauthorized_sign_out")
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(ManagerSemanticColors.pageBackground)
         .accessibilityIdentifier("pilot_manager_unauthorized")
     }
 }

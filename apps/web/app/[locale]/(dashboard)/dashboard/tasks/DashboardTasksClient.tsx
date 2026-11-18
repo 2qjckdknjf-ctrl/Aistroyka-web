@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
-  Card,
   Table,
   TableHead,
   TableBody,
@@ -18,12 +18,23 @@ import {
   Button,
   Modal,
   Input,
-  Textarea,
   Select,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { FilterBar } from "@/components/cockpit/FilterBar";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { DashboardTaskDetailClient } from "./[id]/DashboardTaskDetailClient";
+import {
+  TASK_BOARD_COLUMNS,
+  groupTasksByBoardColumn,
+  isTaskOverdue,
+  parseTasksWorkspaceView,
+  sortTasksForPhonePriority,
+  taskStatusBadgeVariant,
+  type TaskBoardColumnId,
+  type TasksWorkspaceView,
+} from "./tasks-workspace.utils";
 
 interface TaskRow {
   id: string;
@@ -36,24 +47,55 @@ interface TaskRow {
   report_id?: string | null;
   report_status?: string | null;
   created_at?: string;
+  priority?: string | null;
 }
 
-function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" {
-  switch (s) {
-    case "done":
-      return "success";
-    case "cancelled":
-      return "danger";
-    case "in_progress":
-      return "warning";
+function priorityLabelKey(priority: string): "priorityLow" | "priorityMedium" | "priorityHigh" {
+  switch (priority) {
+    case "low":
+      return "priorityLow";
+    case "high":
+      return "priorityHigh";
+    case "medium":
+      return "priorityMedium";
     default:
-      return "neutral";
+      return "priorityMedium";
   }
 }
 
-export function DashboardTasksClient() {
+function columnLabelKey(column: TaskBoardColumnId): "pending" | "inProgress" | "done" | "cancelled" {
+  switch (column) {
+    case "pending":
+      return "pending";
+    case "in_progress":
+      return "inProgress";
+    case "done":
+      return "done";
+    case "cancelled":
+      return "cancelled";
+    default: {
+      const _exhaustive: never = column;
+      return _exhaustive;
+    }
+  }
+}
+
+export function DashboardTasksClient({
+  skin = "default",
+  onRegisterCreateHandler,
+}: {
+  skin?: "default" | "canon";
+  onRegisterCreateHandler?: (openCreate: () => void) => void;
+}) {
   const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const view = skin === "canon" ? "board" : parseTasksWorkspaceView(searchParams?.get("view"));
+  const selectedTaskId = searchParams?.get("task")?.trim() || null;
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
   const STATUS_OPTIONS = [
     { value: "", label: tDetail("all") },
     { value: "pending", label: tDetail("pending") },
@@ -70,6 +112,40 @@ export function DashboardTasksClient() {
   const [assignTaskId, setAssignTaskId] = useState<string | null>(null);
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState<string>("");
+
+  useEffect(() => {
+    if (onRegisterCreateHandler) {
+      onRegisterCreateHandler(() => setCreateOpen(true));
+    }
+  }, [onRegisterCreateHandler]);
+
+  const setWorkspaceParam = useCallback(
+    (key: "view" | "task", value: string | null) => {
+      const next = new URLSearchParams(searchParams?.toString() ?? "");
+      if (!value || (key === "view" && value === "list")) {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
+
+  const setView = useCallback(
+    (nextView: TasksWorkspaceView) => {
+      setWorkspaceParam("view", nextView === "list" ? null : nextView);
+    },
+    [setWorkspaceParam],
+  );
+
+  const selectTask = useCallback(
+    (taskId: string | null) => {
+      setWorkspaceParam("task", taskId);
+    },
+    [setWorkspaceParam],
+  );
 
   const fetchTasks = useCallback(() => {
     const qs = new URLSearchParams();
@@ -119,39 +195,61 @@ export function DashboardTasksClient() {
   }, [fetchTasks]);
 
   useEffect(() => {
-    if (assignTaskId) {
-      const task = data.find((t) => t.id === assignTaskId);
-      const projectId = task?.project_id;
-      if (projectId) {
-        fetch(`/api/v1/projects/${projectId}/workers?limit=100`, { credentials: "include" })
-          .then((r) => (r.ok ? r.json() : { data: [] }))
-          .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
-      } else {
-        fetch("/api/v1/workers", { credentials: "include" })
-          .then((r) => (r.ok ? r.json() : { data: [] }))
-          .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
-      }
-    } else {
+    if (!assignTaskId && !createOpen) {
       setWorkers([]);
       setAssigningWorkerId("");
+      return;
     }
-  }, [assignTaskId, data]);
+    const task = assignTaskId ? data.find((t) => t.id === assignTaskId) : null;
+    const projectId = task?.project_id ?? searchParams?.get("project_id")?.trim() ?? undefined;
+
+    if (projectId) {
+      fetch(`/api/v1/projects/${projectId}/workers?limit=100`, { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
+    } else {
+      fetch("/api/v1/workers", { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
+    }
+  }, [assignTaskId, createOpen, data, searchParams]);
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const project_id = (form.querySelector('[name="project_id"]') as HTMLSelectElement)?.value;
     const title = (form.querySelector('[name="title"]') as HTMLInputElement)?.value?.trim();
+    const description = (form.querySelector('[name="description"]') as HTMLInputElement)?.value?.trim();
+    const due_at = (form.querySelector('[name="due_at"]') as HTMLInputElement)?.value;
+    const assign_to = (form.querySelector('[name="assign_to"]') as HTMLSelectElement)?.value;
+    const priority = (form.querySelector('[name="priority"]') as HTMLSelectElement)?.value;
     if (!project_id || !title) return;
     fetch("/api/v1/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ project_id, title, report_required: true }),
+      body: JSON.stringify({
+        project_id,
+        title,
+        description: description || undefined,
+        due_at: due_at || undefined,
+        report_required: true,
+        priority: priority || undefined,
+      }),
     })
-      .then((r) => {
+      .then(async (r) => {
         if (!r.ok) throw new Error(r.statusText);
-        return r.json();
+        const json = (await r.json()) as { data?: { id?: string } };
+        const taskId = json.data?.id;
+        if (taskId && assign_to) {
+          await fetch(`/api/v1/tasks/${taskId}/assign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ worker_id: assign_to }),
+          });
+        }
+        return json;
       })
       .then(() => {
         setCreateOpen(false);
@@ -189,7 +287,7 @@ export function DashboardTasksClient() {
 
   const exportCsv = () => {
     const headers = ["ID", "Title", "Project", "Status", "Assigned", "Due", "Report", "Created"];
-    const rows = data.slice(0, 500).map((r) => [
+    const rows = displayData.slice(0, 500).map((r) => [
       r.id,
       r.title,
       r.project_id ?? "",
@@ -202,150 +300,439 @@ export function DashboardTasksClient() {
     exportTableToCsv(headers, rows, "tasks.csv");
   };
 
+  const boardGroups = useMemo(() => {
+    const scope = searchParams?.get("scope");
+    const scoped =
+      scope === "overdue"
+        ? data.filter((r) => isTaskOverdue(r.status, r.due_date, todayIso))
+        : data;
+    return groupTasksByBoardColumn(scoped);
+  }, [data, searchParams, todayIso]);
+  const phonePriorityTasks = useMemo(() => {
+    const scope = searchParams?.get("scope");
+    const scoped =
+      scope === "overdue"
+        ? data.filter((r) => isTaskOverdue(r.status, r.due_date, todayIso))
+        : data;
+    return sortTasksForPhonePriority(scoped, todayIso);
+  }, [data, searchParams, todayIso]);
+
+  const displayData = useMemo(() => {
+    const scope = searchParams?.get("scope");
+    if (scope === "overdue") {
+      return data.filter((r) => isTaskOverdue(r.status, r.due_date, todayIso));
+    }
+    return data;
+  }, [data, searchParams, todayIso]);
+
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   const page = parseInt(params.page, 10) || 1;
   const pageSize = parseInt(params.pageSize, 10) || 25;
 
-  return (
+  const renderTaskActions = (r: TaskRow) => (
     <>
-      <FilterBar
-        projects={projects}
-        workers={workersForFilter}
-        showProject={true}
-        showWorker={true}
-        showDateRange={true}
-        showStatus={true}
-        statusOptions={STATUS_OPTIONS}
-        showSearch={true}
-        searchPlaceholder={tDetail("searchTasks")}
-        showSavedViews={false}
+      {r.status === "pending" || r.status === "in_progress" ? (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => patchStatus(r.id, "done")} className="mr-1 text-xs">
+            {tDetail("done")}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => patchStatus(r.id, "cancelled")} className="text-xs">
+            {tDetail("cancel")}
+          </Button>
+        </>
+      ) : null}
+      {!r.assigned_to && (
+        <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="ml-1 text-xs">
+          {tDetail("assign")}
+        </Button>
+      )}
+    </>
+  );
+
+  const listTable = (
+    <>
+      <Table aria-label={tDetail("tasks")}>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("assigned")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("due")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {displayData.map((r) => {
+            const selected = selectedTaskId === r.id;
+            const overdue = isTaskOverdue(r.status, r.due_date, todayIso);
+            return (
+              <TableRow
+                key={r.id}
+                className={selected ? "bg-aistroyka-accent-light/40" : undefined}
+              >
+                <TableCell>
+                  <button
+                    type="button"
+                    onClick={() => selectTask(r.id)}
+                    className="hidden text-left font-medium text-aistroyka-accent hover:underline lg:inline"
+                  >
+                    {r.title}
+                    {r.priority ? (
+                      <span className="ml-2 text-aistroyka-caption text-aistroyka-text-secondary">
+                        {tDetail("priority")}: {tDetail(priorityLabelKey(r.priority))}
+                      </span>
+                    ) : null}
+                  </button>
+                  <Link
+                    href={`/dashboard/tasks/${r.id}`}
+                    className="font-medium text-aistroyka-accent hover:underline lg:hidden"
+                  >
+                    {r.title}
+                  </Link>
+                  {overdue ? (
+                    <Badge variant="danger" className="ml-2 align-middle">
+                      {tDetail("overdue")}
+                    </Badge>
+                  ) : null}
+                </TableCell>
+                <TableCell>
+                  {r.project_id ? (
+                    <Link href={`/dashboard/projects/${r.project_id}`} className="text-aistroyka-text-secondary hover:underline">
+                      {r.project_id.slice(0, 8)}…
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={taskStatusBadgeVariant(r.status)}>{r.status}</Badge>
+                </TableCell>
+                <TableCell>
+                  {r.assigned_to ? (
+                    <Link href={`/dashboard/workers/${r.assigned_to}`} className="text-aistroyka-caption text-aistroyka-text-secondary hover:underline">
+                      {r.assigned_to.slice(0, 8)}…
+                    </Link>
+                  ) : (
+                    <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="text-xs">
+                      {tDetail("assign")}
+                    </Button>
+                  )}
+                </TableCell>
+                <TableCell className="tabular-nums text-aistroyka-text-secondary">
+                  {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}
+                </TableCell>
+                <TableCell>
+                  {r.report_id ? (
+                    <Link href={`/dashboard/daily-reports/${r.report_id}`} className="text-aistroyka-caption text-aistroyka-accent hover:underline">
+                      {tDetail("report")}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+                <TableCell>{renderTaskActions(r)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+      <TablePagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={total}
+        onPageChange={(p) => setParam("page", String(p))}
+        onPageSizeChange={(s) => {
+          setParam("pageSize", String(s));
+          setParam("page", "1");
+        }}
+        pageSizeOptions={[25, 50, 100]}
       />
-      <Card className="p-0 overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("tasks")}</h2>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={exportCsv} className="text-sm">
-              {tDetail("exportCsv")}
-            </Button>
-            <Button onClick={() => setCreateOpen(true)} className="text-sm">
-              {tDetail("createTask")}
-            </Button>
-          </div>
-        </div>
-        {loading && data.length === 0 ? (
-          <div className="p-4">
-            <Skeleton lines={6} />
-          </div>
-        ) : data.length === 0 ? (
-          <div className="p-8">
-            <EmptyState
-              icon={<span className="text-2xl">📋</span>}
-              title={tDetail("noTasks")}
-              subtitle={tDetail("createTaskOrAdjustFilters")}
-              action={
-                <Button onClick={() => setCreateOpen(true)}>{tDetail("createTask")}</Button>
+    </>
+  );
+
+  const phoneCards = (
+    <ul className="space-y-2 p-3 lg:hidden">
+      {phonePriorityTasks.map((r) => {
+        const overdue = isTaskOverdue(r.status, r.due_date, todayIso);
+        return (
+          <li key={r.id}>
+            <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised/60 p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <Link href={`/dashboard/tasks/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">
+                  {r.title}
+                </Link>
+                <Badge variant={taskStatusBadgeVariant(r.status)}>{r.status}</Badge>
+              </div>
+              <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
+                {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}
+                {overdue ? ` · ${tDetail("overdue")}` : ""}
+                {r.priority ? ` · ${tDetail("priority")}: ${tDetail(priorityLabelKey(r.priority))}` : ""}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1">{renderTaskActions(r)}</div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+
+  const boardView = (
+    <div className={skin === "canon" ? "canon-kanban-board" : "flex gap-3 overflow-x-auto p-3 pb-4"}>
+      {TASK_BOARD_COLUMNS.map((column) => {
+        const columnTasks = boardGroups[column];
+        const columnTone =
+          column === "pending"
+            ? "canon-kanban-column--todo"
+            : column === "in_progress"
+              ? "canon-kanban-column--progress"
+              : column === "done"
+                ? "canon-kanban-column--done"
+                : "canon-kanban-column--review";
+        return (
+          <section
+            key={column}
+            className={
+              skin === "canon"
+                ? `canon-kanban-column ${columnTone} flex flex-col`
+                : "flex w-[min(18rem,85vw)] shrink-0 flex-col rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30"
+            }
+            aria-label={tDetail(columnLabelKey(column))}
+          >
+            <header
+              className={
+                skin === "canon"
+                  ? "flex items-center justify-between gap-2 border-b border-[var(--canon-border-glass)] px-3 py-2"
+                  : "flex items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-3 py-2"
               }
-            />
-          </div>
-        ) : (
-          <>
-            <Table aria-label={tDetail("tasks")}>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
-                  <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
-                  <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
-                  <TableHeaderCell>{tDetail("assigned")}</TableHeaderCell>
-                  <TableHeaderCell>{tDetail("due")}</TableHeaderCell>
-                  <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
-                  <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>
-                      <Link href={`/dashboard/tasks/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">
-                        {r.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      {r.project_id ? (
-                        <Link href={`/dashboard/projects/${r.project_id}`} className="text-aistroyka-text-secondary hover:underline">
-                          {r.project_id.slice(0, 8)}…
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {r.assigned_to ? (
-                        <Link href={`/dashboard/workers/${r.assigned_to}`} className="text-aistroyka-caption text-aistroyka-text-secondary hover:underline">
-                          {r.assigned_to.slice(0, 8)}…
-                        </Link>
-                      ) : (
-                        <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="text-xs">
-                          {tDetail("assign")}
-                        </Button>
-                      )}
-                    </TableCell>
-                    <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                      {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {r.report_id ? (
-                        <Link href={`/dashboard/daily-reports/${r.report_id}`} className="text-aistroyka-caption text-aistroyka-accent hover:underline">
-                          {tDetail("report")}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {r.status === "pending" || r.status === "in_progress" ? (
+            >
+              <h3
+                className={
+                  skin === "canon"
+                    ? "text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]"
+                    : "text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary"
+                }
+              >
+                {skin === "canon" ? tDetail(columnLabelKey(column)) : tDetail(columnLabelKey(column))}
+              </h3>
+              <span
+                className={
+                  skin === "canon"
+                    ? "text-xs tabular-nums text-[var(--canon-text-secondary)]"
+                    : "tabular-nums text-aistroyka-caption text-aistroyka-text-secondary"
+                }
+              >
+                {columnTasks.length}
+              </span>
+            </header>
+            <ul className="flex max-h-[min(70vh,36rem)] flex-col gap-2 overflow-y-auto p-2">
+              {columnTasks.length === 0 ? (
+                <li
+                  className={
+                    skin === "canon"
+                      ? "px-1 py-4 text-center text-xs text-[var(--canon-text-muted)]"
+                      : "px-1 py-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+                  }
+                >
+                  {tDetail("boardColumnEmpty")}
+                </li>
+              ) : (
+                columnTasks.map((r) => {
+                  const selected = selectedTaskId === r.id;
+                  const overdue = isTaskOverdue(r.status, r.due_date, todayIso);
+                  return (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        onClick={() => selectTask(r.id)}
+                        className={
+                          skin === "canon"
+                            ? `canon-kanban-card w-full ${selected ? "canon-kanban-card--selected" : ""}`
+                            : `w-full rounded-[var(--aistroyka-radius-md)] border p-3 text-left transition-colors ${
+                                selected
+                                  ? "border-aistroyka-accent bg-aistroyka-accent-light/50"
+                                  : "border-aistroyka-border-subtle bg-aistroyka-bg-primary hover:border-aistroyka-accent/40"
+                              }`
+                        }
+                      >
+                        <p
+                          className={
+                            skin === "canon"
+                              ? "font-medium text-[var(--canon-text-primary)]"
+                              : "font-medium text-aistroyka-text-primary"
+                          }
+                        >
+                          {r.title}
+                        </p>
+                        <p
+                          className={
+                            skin === "canon"
+                              ? "mt-1 text-xs text-[var(--canon-text-muted)]"
+                              : "mt-1 text-aistroyka-caption text-aistroyka-text-secondary"
+                          }
+                        >
+                          {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}
+                          {overdue ? ` · ${tDetail("overdue")}` : ""}
+                        </p>
+                      </button>
+                      {skin !== "canon" ? (
                         <>
-                          <Button variant="secondary" size="sm" onClick={() => patchStatus(r.id, "done")} className="mr-1 text-xs">
-                            {tDetail("done")}
-                          </Button>
-                          <Button variant="secondary" size="sm" onClick={() => patchStatus(r.id, "cancelled")} className="text-xs">
-                            {tDetail("cancel")}
-                          </Button>
+                          <div className="mt-1 flex flex-wrap gap-1 px-1">{renderTaskActions(r)}</div>
+                          <Link
+                            href={`/dashboard/tasks/${r.id}`}
+                            className="mt-1 inline-block px-1 text-aistroyka-caption text-aistroyka-accent hover:underline lg:hidden"
+                          >
+                            {tDetail("openFullTask")}
+                          </Link>
                         </>
                       ) : null}
-                      {!r.assigned_to && (
-                        <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="ml-1 text-xs">
-                          {tDetail("assign")}
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <TablePagination
-              page={page}
-              pageSize={pageSize}
-              totalCount={total}
-              onPageChange={(p) => setParam("page", String(p))}
-              onPageSizeChange={(s) => {
-                setParam("pageSize", String(s));
-                setParam("page", "1");
-              }}
-              pageSizeOptions={[25, 50, 100]}
-            />
-          </>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+
+  const cardShellClass = skin === "canon" ? "canon-glass overflow-hidden" : undefined;
+
+  return (
+    <>
+      {skin !== "canon" ? (
+        <FilterBar
+          projects={projects}
+          workers={workersForFilter}
+          showProject={true}
+          showWorker={true}
+          showDateRange={true}
+          showStatus={true}
+          statusOptions={STATUS_OPTIONS}
+          showSearch={true}
+          searchPlaceholder={tDetail("searchTasks")}
+          showSavedViews={false}
+        />
+      ) : null}
+      <div
+        className={`grid gap-4 ${
+          selectedTaskId && skin !== "canon" ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""
+        }`}
+      >
+        {skin === "canon" ? (
+          <div className={cardShellClass}>
+            {loading && data.length === 0 ? (
+              <div className="p-4">
+                <Skeleton lines={6} />
+              </div>
+            ) : data.length === 0 ? (
+              <div className="p-8">
+                <EmptyState
+                  icon={<span className="text-2xl">📋</span>}
+                  title={tDetail("noTasks")}
+                  subtitle={tDetail("createTaskOrAdjustFilters")}
+                  action={<Button onClick={() => setCreateOpen(true)}>{tDetail("createTask")}</Button>}
+                />
+              </div>
+            ) : (
+              boardView
+            )}
+          </div>
+        ) : (
+        <DashboardGlassCard contentClassName="p-0 overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
+            <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("tasks")}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                role="group"
+                aria-label={tDetail("tasksViewMode")}
+                className="flex rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle p-0.5"
+              >
+                <button
+                  type="button"
+                  aria-pressed={view === "list"}
+                  onClick={() => setView("list")}
+                  className={`min-h-aistroyka-touch rounded-[var(--aistroyka-radius-md)] px-3 text-aistroyka-caption font-medium ${
+                    view === "list"
+                      ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                      : "text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
+                  }`}
+                >
+                  {tDetail("tasksViewList")}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={view === "board"}
+                  onClick={() => setView("board")}
+                  className={`min-h-aistroyka-touch rounded-[var(--aistroyka-radius-md)] px-3 text-aistroyka-caption font-medium ${
+                    view === "board"
+                      ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                      : "text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
+                  }`}
+                >
+                  {tDetail("tasksViewBoard")}
+                </button>
+              </div>
+              <Button variant="secondary" onClick={exportCsv} className="text-sm">
+                {tDetail("exportCsv")}
+              </Button>
+              <Button onClick={() => setCreateOpen(true)} className="text-sm">
+                {tDetail("createTask")}
+              </Button>
+            </div>
+          </div>
+          {loading && data.length === 0 ? (
+            <div className="p-4">
+              <Skeleton lines={6} />
+            </div>
+          ) : data.length === 0 ? (
+            <div className="p-8">
+              <EmptyState
+                icon={<span className="text-2xl">📋</span>}
+                title={tDetail("noTasks")}
+                subtitle={tDetail("createTaskOrAdjustFilters")}
+                action={<Button onClick={() => setCreateOpen(true)}>{tDetail("createTask")}</Button>}
+              />
+            </div>
+          ) : view === "board" ? (
+            boardView
+          ) : (
+            <>
+              <div className="hidden lg:block">{listTable}</div>
+              {phoneCards}
+            </>
+          )}
+        </DashboardGlassCard>
         )}
-      </Card>
+
+        {selectedTaskId && skin !== "canon" ? (
+          <aside className="hidden min-w-0 lg:block" aria-label={tDetail("tasks")}>
+            <div className="sticky top-20 space-y-3">
+              <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
+                <Link
+                  href={`/dashboard/tasks/${selectedTaskId}`}
+                  className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                >
+                  {tDetail("openFullTask")}
+                </Link>
+                <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                  {tDetail("closeTaskInspector")}
+                </Button>
+              </DashboardGlassCard>
+              <DashboardTaskDetailClient taskId={selectedTaskId} />
+            </div>
+          </aside>
+        ) : null}
+      </div>
 
       {createOpen && (
         <Modal open={true} title={tDetail("createTask")} onClose={() => setCreateOpen(false)}>
@@ -366,6 +753,33 @@ export function DashboardTasksClient() {
                 {tDetail("title")}
               </label>
               <Input name="title" required placeholder={tDetail("taskTitle")} />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("descriptionOptional")}
+              </label>
+              <Input name="description" placeholder={tDetail("descriptionOptional")} />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("dueDate")}
+              </label>
+              <Input name="due_at" type="date" />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("priority")}
+              </label>
+              <Select name="priority" defaultValue="medium">
+                <option value="low">{tDetail("priorityLow")}</option>
+                <option value="medium">{tDetail("priorityMedium")}</option>
+                <option value="high">{tDetail("priorityHigh")}</option>
+              </Select>
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("worker")}
+              </label>
+              <Select name="assign_to">
+                <option value="">{tDetail("unassigned")}</option>
+                {workers.map((w) => (
+                  <option key={w.user_id} value={w.user_id}>
+                    {w.user_id.slice(0, 8)}…
+                  </option>
+                ))}
+              </Select>
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>

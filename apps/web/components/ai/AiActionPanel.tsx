@@ -15,6 +15,7 @@ import { AiErrorBanner } from "./AiErrorBanner";
 import { LowConfidenceNotice } from "./LowConfidenceNotice";
 import { CopyRequestIdButton } from "./CopyRequestIdButton";
 import { CopilotChatPanel } from "@/lib/features/ai/components/CopilotChatPanel";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type TabId = "summary" | "explain_risk" | "copilot";
 
@@ -184,7 +185,7 @@ export function AiActionPanel({
     (result.groundedness_passed === false || result.retrieval_low_confidence === true);
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+    <DashboardGlassCard>
       <h3 className="mb-3 text-aistroyka-font-title3 font-semibold text-aistroyka-text-primary">
         {tDetail("aiCopilot")}
       </h3>
@@ -331,6 +332,6 @@ export function AiActionPanel({
       )}
         </>
       )}
-    </div>
+    </DashboardGlassCard>
   );
 }

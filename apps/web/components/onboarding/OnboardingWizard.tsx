@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const STEPS = ["persona", "company"] as const;
 const PERSONA_OPTIONS = [
@@ -82,7 +83,7 @@ export function OnboardingWizard({
   }
 
   return (
-    <Card className="mx-auto max-w-xl p-6">
+    <DashboardGlassCard className="mx-auto max-w-xl p-6">
       <div className="mb-6 flex items-center gap-2 text-aistroyka-caption text-aistroyka-text-tertiary">
         <span>{t("step")}</span>
         <span>{stepIndex + 1} / {STEPS.length}</span>
@@ -176,6 +177,6 @@ export function OnboardingWizard({
           {loading ? t("saving") : isLast ? t("finish") : t("next")}
         </Button>
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

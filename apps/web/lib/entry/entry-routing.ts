@@ -26,6 +26,8 @@ const SAFE_PATH_PREFIXES = [
   "/billing",
   "/subscribe",
   "/admin",
+  "/platform-admin",
+  "/owner",
 ] as const;
 
 /** Regex: path starts with /{locale}/ where locale is valid */

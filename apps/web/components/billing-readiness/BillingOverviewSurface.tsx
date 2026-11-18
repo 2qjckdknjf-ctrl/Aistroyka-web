@@ -8,7 +8,8 @@
 
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { Card, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface BillingOverview {
   selectedPlan: {
@@ -55,19 +56,19 @@ export function BillingOverviewSurface() {
 
   if (isLoading) {
     return (
-      <Card className="mb-aistroyka-8">
+      <DashboardGlassCard className="mb-aistroyka-8">
         <Skeleton className="h-24 w-full rounded-[var(--aistroyka-radius-md)]" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (isError || !data) {
     return (
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-error">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-error">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
           {error instanceof Error ? error.message : t("loadFailed")}
         </p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -95,7 +96,7 @@ export function BillingOverviewSurface() {
   }
 
   return (
-    <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-border-subtle">
+    <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-border-subtle">
       <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("cardTitle")}</h3>
       <dl className="mt-2 space-y-1">
         <div>
@@ -116,6 +117,6 @@ export function BillingOverviewSurface() {
       <p className="mt-3 text-aistroyka-caption text-aistroyka-text-tertiary">
         {sandboxMode ? t("sandboxHint") : t("productionHint")}
       </p>
-    </Card>
+    </DashboardGlassCard>
   );
 }

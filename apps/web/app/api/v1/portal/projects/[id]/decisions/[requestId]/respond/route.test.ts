@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 import * as clientRequests from "@/lib/domain/client-requests/client-requests.service";
+import * as adminModule from "@/lib/supabase/admin";
+import * as notifications from "@/lib/domain/notifications/manager-notifications.repository";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClientFromRequest: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
-  getAdminClient: vi.fn().mockReturnValue(null),
+  getAdminClient: vi.fn(),
+}));
+
+vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
+  notifyProjectManagers: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/tenant", () => ({
@@ -29,11 +35,14 @@ vi.mock("@/lib/domain/client-requests/client-requests.service", () => ({
 }));
 
 describe("POST /api/v1/portal/projects/:id/decisions/:requestId/respond", () => {
+  const admin = { from: vi.fn() };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(adminModule.getAdminClient).mockReturnValue(admin as never);
   });
 
-  it("delegates to respondToClientRequest", async () => {
+  it("delegates to respondToClientRequest through the trusted service writer", async () => {
     vi.mocked(clientRequests.respondToClientRequest).mockResolvedValue({
       data: { title: "Approve layout" } as never,
       error: "",
@@ -46,11 +55,17 @@ describe("POST /api/v1/portal/projects/:id/decisions/:requestId/respond", () => 
     const res = await POST(req, { params: Promise.resolve({ id: "p1", requestId: "r1" }) });
     expect(res.status).toBe(200);
     expect(clientRequests.respondToClientRequest).toHaveBeenCalledWith(
-      expect.anything(),
+      admin,
       expect.anything(),
       "p1",
       "r1",
       expect.objectContaining({ decision: "approve" })
+    );
+    expect(notifications.notifyProjectManagers).toHaveBeenCalledWith(
+      admin,
+      "t1",
+      "p1",
+      expect.objectContaining({ type: "client_request_responded", target_id: "r1" })
     );
   });
 });

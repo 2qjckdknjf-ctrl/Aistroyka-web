@@ -4,11 +4,13 @@ export type AuditAction =
   | "login"
   | "invite"
   | "role_change"
+  | "task_created"
   | "task_assignment"
   | "report_submit"
   | "report_review"
   | "media_finalize"
   | "ai_analysis_complete"
+  | "ai_analysis_human_review"
   | "ai_copilot_stream_complete"
   | "ai_copilot_stream_error"
   | "ai_copilot_non_stream_complete"
@@ -93,6 +95,11 @@ export interface AiRuntimeAuditDetails {
   first_token_ms?: number | null;
   intelligence_diagnostics?: Record<string, unknown>;
   insights_count?: number;
+  /** Optional MEM-016 caption index after Whisper finalize (categorical only). */
+  caption_index_attempted?: boolean;
+  caption_index_indexed?: boolean;
+  caption_segments_inserted?: number;
+  segment_count?: number;
 }
 
 /** Emit AI runtime event to audit_logs. Best-effort; does not throw. */
@@ -134,6 +141,27 @@ export async function listAuditLogs(
     .gte("created_at", startStr)
     .order("created_at", { ascending: false })
     .limit(500);
+  if (error) return [];
+  return (data ?? []) as AuditLogRow[];
+}
+
+/** List audit events for one action (e.g. manager AI risk decisions). */
+export async function listAuditLogsByAction(
+  supabase: SupabaseClient,
+  tenantId: string,
+  action: string,
+  options: { resourceId?: string; limit?: number } = {}
+): Promise<AuditLogRow[]> {
+  const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
+  let query = supabase
+    .from("audit_logs")
+    .select("id, tenant_id, user_id, trace_id, action, resource_type, resource_id, details, created_at")
+    .eq("tenant_id", tenantId)
+    .eq("action", action);
+  if (options.resourceId?.trim()) {
+    query = query.eq("resource_id", options.resourceId.trim());
+  }
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
   if (error) return [];
   return (data ?? []) as AuditLogRow[];
 }

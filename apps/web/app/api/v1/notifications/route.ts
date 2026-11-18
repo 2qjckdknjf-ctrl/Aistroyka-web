@@ -61,6 +61,7 @@ export async function GET(request: Request) {
       read_at: row.read_at ?? undefined,
       target_type: row.target_type ?? undefined,
       target_id: row.target_id ?? undefined,
+      project_id: row.project_id ?? undefined,
     })),
     total,
   };

@@ -1,11 +1,12 @@
-import { Card } from "@/components/ui";
+
 import { Link } from "@/i18n/navigation";
 import { AdminAiRequestsClient } from "./AdminAiRequestsClient";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default function AdminAiRequestsPage() {
   return (
     <>
-      <Card className="mb-6 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-6 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
           Request ID explorer
         </h1>
@@ -17,7 +18,7 @@ export default function AdminAiRequestsPage() {
             ← Overview
           </Link>
         </p>
-      </Card>
+      </DashboardGlassCard>
       <AdminAiRequestsClient />
     </>
   );

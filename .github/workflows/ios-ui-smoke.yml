@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   uitest:
-    name: Worker + Manager UI smoke
+    name: Worker + Manager + Customer UI smoke
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -34,14 +34,18 @@ jobs:
 
       - name: Xcode / pick iPhone simulator
         id: sim
+        timeout-minutes: 10
         run: |
           xcodebuild -version
           xcrun simctl list devices available | head -50
           UDID="$(bash ios/scripts/ci-pick-iphone-simulator-udid.sh)"
           echo "destination=id=$UDID" >> "$GITHUB_OUTPUT"
           echo "Using id=$UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
 
       - name: AiStroykaWorker UI smoke
+        timeout-minutes: 20
         run: |
           set -eo pipefail
           xcodebuild test \
@@ -78,6 +82,21 @@ jobs:
             UDID="${UDID#id=}"
             xcrun simctl shutdown "$UDID" || true
             xcrun simctl boot "$UDID" || true
-            sleep 5
+            xcrun simctl bootstatus "$UDID" -b
             run_manager_smoke
           fi
+
+      - name: AiStroykaCustomer UI smoke
+        timeout-minutes: 20
+        run: |
+          set -eo pipefail
+          xcodebuild test \
+            -project ios/AiStroykaCustomer/AiStroykaCustomer.xcodeproj \
+            -scheme AiStroykaCustomer \
+            -destination '${{ steps.sim.outputs.destination }}' \
+            -parallel-testing-enabled NO \
+            -maximum-parallel-testing-workers 1 \
+            -only-testing:AiStroykaCustomerUITests/CustomerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+            SWIFT_STRICT_CONCURRENCY=minimal \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO

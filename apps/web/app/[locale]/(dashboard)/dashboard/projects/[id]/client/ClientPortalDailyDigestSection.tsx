@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type DigestPayload = {
   headline: string;
@@ -41,9 +42,9 @@ export function ClientPortalDailyDigestSection({ projectId }: { projectId: strin
 
   if (query.isPending) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-24" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -54,7 +55,7 @@ export function ClientPortalDailyDigestSection({ projectId }: { projectId: strin
   const data = query.data!;
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-accent p-4">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent p-4">
       <h3 className="font-semibold text-aistroyka-text-primary">{t("clientDailyDigestTitle")}</h3>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("clientDailyDigestHint")}</p>
       {data.lines.length === 0 ? (
@@ -78,6 +79,6 @@ export function ClientPortalDailyDigestSection({ projectId }: { projectId: strin
           ))}
         </ul>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { authorize, canManageProjects, canReadProjects, isPortalOnlyStakeholderRole } from "./tenant.policy";
+import {
+  authorize,
+  canManageProjects,
+  canReadProjects,
+  isPortalOnlyStakeholderRole,
+  isPortalOnlyTenantRole,
+} from "./tenant.policy";
 import type { TenantRoleDb } from "./tenant.types";
 
 const ctx = (role: TenantRoleDb) =>
@@ -31,6 +37,8 @@ describe("tenant policy", () => {
   });
   it("stakeholder is portal-only and receives no internal dashboard privileges", () => {
     const stakeholder = ctx("stakeholder");
+    expect(isPortalOnlyTenantRole("stakeholder")).toBe(true);
+    expect(isPortalOnlyTenantRole("member")).toBe(false);
     expect(isPortalOnlyStakeholderRole(stakeholder)).toBe(true);
     expect(canReadProjects(stakeholder)).toBe(false);
     expect(canManageProjects(stakeholder)).toBe(false);

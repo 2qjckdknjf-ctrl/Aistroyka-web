@@ -11,6 +11,7 @@ struct ProjectIntelligenceView: View {
     let projectName: String
 
     @State private var data: ProjectIntelligenceDataDTO?
+    @State private var graphContext: ConstructionGraphAIContext?
     @State private var isLoading = true
     @State private var errorMessage: String?
 
@@ -24,6 +25,7 @@ struct ProjectIntelligenceView: View {
                 intelligenceList(d)
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_intelligence_title", comment: ""))
         .accessibilityIdentifier("pilot_manager_intelligence")
         .refreshable { await loadAsync() }
@@ -69,6 +71,27 @@ struct ProjectIntelligenceView: View {
                     ForEach(hints, id: \.self) { Text($0).font(.subheadline) }
                 }
             }
+            if let graph = graphContext {
+                Section(NSLocalizedString("mgr_graph_ai_section", comment: "")) {
+                    Text(NSLocalizedString("mgr_graph_ai_disclaimer", comment: ""))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    LabeledContent(
+                        NSLocalizedString("mgr_graph_ai_nodes", comment: ""),
+                        value: "\(graph.summary.nodeCount)"
+                    )
+                    LabeledContent(
+                        NSLocalizedString("mgr_graph_ai_edges", comment: ""),
+                        value: "\(graph.summary.edgeCount)"
+                    )
+                    if graph.truncated {
+                        Text(NSLocalizedString("mgr_graph_ai_truncated", comment: ""))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .accessibilityIdentifier("pilot_manager_graph_ai_context")
+            }
             Section {
                 NavigationLink(destination: ProjectCopilotChatView(
                     projectId: projectId,
@@ -76,10 +99,14 @@ struct ProjectIntelligenceView: View {
                     intelligence: d
                 )) {
                     Label(NSLocalizedString("mgr_open_copilot", comment: ""), systemImage: "bubble.left.and.bubble.right")
+                        .accessibilityIdentifier("pilot_manager_open_copilot")
                 }
-                .accessibilityIdentifier("pilot_manager_open_copilot")
             }
         }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
     }
 
     private func load() {
@@ -99,6 +126,8 @@ struct ProjectIntelligenceView: View {
             setErrorMessage: { errorMessage = $0 }
         ) {
             data = try await ManagerCopilotService.projectIntelligence(projectId: projectId)
+            // Best-effort overlay summary; intelligence remains primary if graph unavailable.
+            graphContext = try? await ManagerAPI.projectGraphAIContext(projectId: projectId)
         }
     }
 }

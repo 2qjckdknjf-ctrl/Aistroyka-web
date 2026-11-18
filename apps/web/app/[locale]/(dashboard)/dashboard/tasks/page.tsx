@@ -1,17 +1,5 @@
-import { getTranslations } from "next-intl/server";
-import { SectionHeader } from "@/components/ui";
-import { DashboardTasksClient } from "./DashboardTasksClient";
+import { DashboardTasksCanonPage } from "@/components/canon/DashboardTasksCanonPage";
 
-export default async function DashboardTasksPage() {
-  const t = await getTranslations("nav");
-  const tPage = await getTranslations("dashboardPageMeta");
-  return (
-    <>
-      <SectionHeader
-        title={t("tasks")}
-        subtitle={tPage("tasksSubtitle")}
-      />
-      <DashboardTasksClient />
-    </>
-  );
+export default function DashboardTasksPage() {
+  return <DashboardTasksCanonPage />;
 }

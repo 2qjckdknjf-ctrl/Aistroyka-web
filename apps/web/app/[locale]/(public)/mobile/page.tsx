@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { SimpleMarketingPage } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -18,33 +19,21 @@ export default async function MobilePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.mobile");
+  const tV41 = await getTranslations("public.v41");
 
   const sections = ["managerApp", "workerApp", "fieldReporting", "fastWorkflows"] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-        {t("metaDescription")}
-      </p>
-      <div className="mt-12 space-y-8">
+    <SimpleMarketingPage title={t("title")} lead={t("metaDescription")} primaryLabel={tV41("launchPilot")}>
+      <section className="v41-page v41-section v43-module-grid">
         {sections.map((key) => (
-          <div
-            key={key}
-            className="card rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
-          >
-            <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-              {t(key)}
-            </h2>
-            <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {t(`${key}Desc`)}
-            </p>
-          </div>
+          <article key={key} className="v43-plan-card v41-glass">
+            <h2>{t(key)}</h2>
+            <p>{t(`${key}Desc`)}</p>
+          </article>
         ))}
-      </div>
-    </div>
+      </section>
+    </SimpleMarketingPage>
   );
 }
 

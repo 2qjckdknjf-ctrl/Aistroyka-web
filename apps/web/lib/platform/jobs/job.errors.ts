@@ -12,15 +12,15 @@ export class JobError extends Error {
 }
 
 export class JobPayloadError extends JobError {
-  constructor(message: string) {
-    super(message, "JOB_PAYLOAD_ERROR", false);
+  constructor(message: string, code: string = "JOB_PAYLOAD_ERROR") {
+    super(message, code, false);
     this.name = "JobPayloadError";
   }
 }
 
 export class JobHandlerError extends JobError {
-  constructor(message: string, retryable = true) {
-    super(message, "JOB_HANDLER_ERROR", retryable);
+  constructor(message: string, retryable = true, code: string = "JOB_HANDLER_ERROR") {
+    super(message, code, retryable);
     this.name = "JobHandlerError";
   }
 }

@@ -10,6 +10,8 @@ describe("handleUploadReconcile", () => {
     const admin = {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
       lt: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: [] }),
@@ -46,13 +48,15 @@ describe("handleUploadReconcile", () => {
     let updatePayload: unknown;
     const admin = {
       from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
+      select: vi.fn().mockImplementation(function (this: any) { return updatePayload ? Promise.resolve({data:rows,error:null}) : this; }),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
       lt: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: rows }),
       update: vi.fn().mockImplementation((p: unknown) => {
         updatePayload = p;
-        return { in: vi.fn().mockResolvedValue({}) };
+        return admin;
       }),
     };
     await handleUploadReconcile(admin as any, {

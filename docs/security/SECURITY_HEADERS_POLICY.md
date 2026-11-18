@@ -1,14 +1,16 @@
 # Security headers policy
 
-**Source of truth:** `apps/web/lib/security-headers.ts`  
-**Application:**
+**Source of truth (values):** `apps/web/lib/security-headers.ts`  
+**CJS shim for Next config:** `apps/web/lib/security-headers.js` (keep parity with TS)
+
+**Application (owners):**
 
 | Surface | Mechanism |
 |---------|-----------|
-| HTML pages | `apps/web/middleware.ts` (OpenNext `middleware/handler.mjs` on Workers) |
-| `/api/v1/*` (most routes) | `apps/web/worker-bootstrap.js` wraps Worker `fetch` — OpenNext **bypasses** middleware for these paths |
-| Short-circuit JSON (403, owner deny) | `middleware.ts` on synthetic `Response` |
-| Vercel / `next dev` fallback | `apps/web/next.config.js` `headers()` |
+| HTML pages + middleware redirects | **`apps/web/next.config.js` `headers()`** — sole owner of page/document security headers (CSP, XFO, nosniff, Referrer-Policy, Permissions-Policy, HSTS in production) |
+| `/api/v1/*` (most routes on Workers) | `apps/web/worker-bootstrap.js` wraps Worker `fetch` with `Headers.set` — OpenNext **bypasses** middleware for these paths; `next.config.js` also declares `/api/:path*` API headers |
+| Short-circuit JSON (403, owner deny) | `middleware.ts` applies **API** headers only via `applyApiSecurityHeadersToHeaders` |
+| Middleware page responses | Must **not** re-apply page security headers (dual owners produce Cloudflare joined duplicates such as `nosniff, nosniff`) |
 
 Do not route all traffic through a single catch-all middleware matcher on Workers; that regressed HTML SSR (prod incident 2026-06-17). Keep the pre-P0 split matcher (`api` excluded + `/api/v1/:path*`) and exclude all `/_next/*`.
 
@@ -21,6 +23,10 @@ Do not route all traffic through a single catch-all middleware matcher on Worker
 
 API responses omit CSP so JSON clients and mobile fetch are not blocked by document-oriented directives.
 
+## Dual-owner incident (2026-08)
+
+Production post-deploy smoke failed when both `next.config.js` and `middleware.ts` set the same page headers. Cloudflare/OpenNext joined identical values. Fix: keep `next.config.js` as the only page-header owner; middleware retains auth/session, locale, platform-admin gates, `X-Aistroyka-*`, `X-Auth-Redirect`, cache-control, and API hardening only.
+
 ## Verification
 
 ```bash
@@ -29,9 +35,13 @@ bash scripts/smoke/security_headers.sh
 
 # Staging
 SECURITY_HEADERS_BASE_URL=https://staging.aistroyka.ai bash scripts/smoke/security_headers.sh
+
+# Local mock (joined-duplicate regression)
+python3 scripts/smoke/security_headers_mock_host.py ok
+python3 scripts/smoke/security_headers_mock_host.py joined-duplicates
 ```
 
-Unit tests: `apps/web/lib/security-headers.test.ts`
+Unit/contract tests: `apps/web/lib/security-headers.test.ts`, `apps/web/lib/security-headers-ownership.test.ts`, `apps/web/middleware.security-headers.test.ts`, `apps/web/lib/ops/deploy-workflow.contract.test.ts`
 
 ## CI
 
@@ -40,6 +50,7 @@ Unit tests: `apps/web/lib/security-headers.test.ts`
 
 ## Change process
 
-1. Edit `security-headers.ts` only.
-2. Update `security-headers.js` CJS shim (required for any future next.config usage).
-3. Run unit tests + `security_headers.sh` against staging before merge.
+1. Edit `security-headers.ts` only for header **values**.
+2. Update `security-headers.js` CJS shim (required for `next.config.js`).
+3. Do **not** re-add page headers in `middleware.ts`.
+4. Run unit tests + `security_headers.sh` / mock-host modes against staging before merge.

@@ -81,6 +81,14 @@ describe("task.service", () => {
     expect(result.data[0].project_id).toBe("proj-a");
   });
 
+  it("does not collapse a query failure into an empty success snapshot", async () => {
+    vi.mocked(taskPolicy.canReadTasks).mockReturnValue(true);
+    vi.mocked(taskRepo.listTasksForUser).mockRejectedValue(new Error("Task list failed"));
+    const result = await listTasksForToday(supabase, ctx);
+    expect(result.data).toEqual([]);
+    expect(result.error).toBe("Task list failed");
+  });
+
   describe("createTask", () => {
     it("returns error when canManageTasks is false", async () => {
       vi.mocked(taskPolicy.canManageTasks).mockReturnValue(false);

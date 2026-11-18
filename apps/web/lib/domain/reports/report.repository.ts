@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getPublicConfig } from "@/lib/config";
+import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
 import type { Report } from "./report.types";
 
 export async function create(
@@ -45,7 +45,7 @@ export async function listForBootstrap(
 }
 
 const REPORT_SELECT =
-  "id, tenant_id, user_id, day_id, status, created_at, submitted_at, task_id, reviewed_at, reviewed_by, manager_note, worker_note";
+  "id, tenant_id, user_id, day_id, status, created_at, submitted_at, task_id, reviewed_at, reviewed_by, manager_note, worker_note, actual_volume, planned_volume";
 
 export async function getById(
   supabase: SupabaseClient,
@@ -83,18 +83,23 @@ export async function submit(
   reportId: string,
   tenantId: string,
   taskId?: string | null,
-  workerNote?: string | null
+  workerNote?: string | null,
+  volume?: { actual?: number | null; planned?: number | null }
 ): Promise<boolean> {
   const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
   if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
-  const { error } = await supabase
+  if (volume?.actual != null) updates.actual_volume = volume.actual;
+  if (volume?.planned != null) updates.planned_volume = volume.planned;
+  const { data, error } = await supabase
     .from("worker_reports")
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
-    .eq("status", "draft");
-  return !error;
+    .eq("status", "draft")
+    .select("id")
+    .maybeSingle();
+  return !error && Boolean(data);
 }
 
 /** Resubmit after changes_requested. Keeps reviewed_at/reviewed_by/manager_note for history. */
@@ -103,18 +108,23 @@ export async function resubmit(
   reportId: string,
   tenantId: string,
   taskId?: string | null,
-  workerNote?: string | null
+  workerNote?: string | null,
+  volume?: { actual?: number | null; planned?: number | null }
 ): Promise<boolean> {
   const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
   if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
-  const { error } = await supabase
+  if (volume?.actual != null) updates.actual_volume = volume.actual;
+  if (volume?.planned != null) updates.planned_volume = volume.planned;
+  const { data, error } = await supabase
     .from("worker_reports")
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
-    .eq("status", "changes_requested");
-  return !error;
+    .eq("status", "changes_requested")
+    .select("id")
+    .maybeSingle();
+  return !error && Boolean(data);
 }
 
 /** Resolve project_id for a report (from task_id or day_id). */
@@ -207,61 +217,16 @@ export async function listMediaByReportId(
 
 export type ReportMediaRowWithUrl = ReportMediaRow & { file_url: string | null };
 
-const MEDIA_BUCKET = "media";
-
-/** Same resolution as job `resolve-image-url`: `media.file_url` or public storage URL from finalized session. */
+/** Already-scoped attachment rows use caller RLS/private signing; legacy day rows may lack project_id. */
 export async function listMediaByReportIdWithUrls(
   supabase: SupabaseClient,
   reportId: string,
   tenantId: string
 ): Promise<ReportMediaRowWithUrl[]> {
   const rows = await listMediaByReportId(supabase, reportId, tenantId);
-  if (rows.length === 0) return [];
-
-  const mediaIds = rows.map((r) => r.media_id).filter((id): id is string => Boolean(id));
-  const sessionIds = rows.map((r) => r.upload_session_id).filter((id): id is string => Boolean(id));
-
-  const urlByMediaId = new Map<string, string>();
-  if (mediaIds.length > 0) {
-    const { data } = await supabase.from("media").select("id, file_url").in("id", mediaIds);
-    for (const row of data ?? []) {
-      const m = row as { id: string; file_url?: string | null };
-      if (m.id && typeof m.file_url === "string" && m.file_url) urlByMediaId.set(m.id, m.file_url);
-    }
-  }
-
-  const pathBySessionId = new Map<string, string>();
-  if (sessionIds.length > 0) {
-    const { data } = await supabase
-      .from("upload_sessions")
-      .select("id, object_path, status")
-      .in("id", sessionIds);
-    for (const row of data ?? []) {
-      const s = row as { id: string; object_path?: string | null; status?: string | null };
-      if (s.status === "finalized" && typeof s.object_path === "string" && s.object_path) {
-        pathBySessionId.set(s.id, s.object_path);
-      }
-    }
-  }
-
-  let baseUrl = "";
-  try {
-    baseUrl = getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "";
-  } catch {
-    baseUrl = "";
-  }
-
-  return rows.map((row) => {
-    let file_url: string | null = null;
-    if (row.media_id) {
-      file_url = urlByMediaId.get(row.media_id) ?? null;
-    }
-    if (!file_url && row.upload_session_id) {
-      const objectPath = pathBySessionId.get(row.upload_session_id);
-      if (objectPath && baseUrl) {
-        file_url = `${baseUrl}/storage/v1/object/public/${MEDIA_BUCKET}/${objectPath}`;
-      }
-    }
-    return { ...row, file_url };
-  });
+  return Promise.all(rows.map(async row => ({ ...row,
+    file_url: await privateMediaDisplayUrl(supabase, {
+      tenantId, mediaId: row.media_id, uploadSessionId: row.upload_session_id,
+    }),
+  })));
 }

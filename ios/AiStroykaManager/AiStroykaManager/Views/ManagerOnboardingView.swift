@@ -46,7 +46,7 @@ struct ManagerOnboardingView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.accentColor)
-                        .foregroundColor(.white)
+                        .foregroundColor(ManagerSemanticColors.onPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .accessibilityIdentifier("manager_onboarding_continue")
@@ -63,7 +63,7 @@ struct ManagerOnboardingView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(ManagerSemanticColors.pageBackground)
     }
 
     private func onboardingPage(tag: Int, titleKey: String, bodyKey: String) -> some View {
@@ -98,7 +98,7 @@ struct ManagerHowItWorksView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_how_title", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
     }

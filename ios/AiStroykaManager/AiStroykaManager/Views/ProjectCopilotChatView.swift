@@ -99,6 +99,7 @@ struct ProjectCopilotChatView: View {
             }
             .padding()
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(String(format: NSLocalizedString("mgr_copilot_title_fmt", comment: ""), projectName))
         .accessibilityIdentifier("pilot_manager_copilot")
         .onAppear {
@@ -118,7 +119,7 @@ struct ProjectCopilotChatView: View {
             if isUser { Spacer(minLength: 40) }
             Text(m.content)
                 .padding(10)
-                .background(isUser ? Color.accentColor.opacity(0.15) : Color(.secondarySystemBackground))
+                .background(isUser ? Color.accentColor.opacity(0.15) : ManagerSemanticColors.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             if !isUser { Spacer(minLength: 40) }
         }

@@ -1,4 +1,8 @@
-/** Security headers — single source of truth for middleware (pages + API). */
+/**
+ * Security header values — single source of truth.
+ * Page/HTML headers are applied only via next.config.js `headers()`.
+ * API headers are applied via middleware short-circuits + worker-bootstrap.js.
+ */
 
 export type SecurityHeader = { readonly key: string; readonly value: string };
 
@@ -6,7 +10,7 @@ export type SecurityHeaderProfile = "page" | "api";
 
 const BASE_CSP_DIRECTIVES = [
   "default-src 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://growth-os-sable-psi.vercel.app",
   "img-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
   "frame-ancestors 'none'",
@@ -35,11 +39,16 @@ export function getPageSecurityHeaders(isDevelopment = process.env.NODE_ENV === 
 }
 
 /** JSON/API routes: hardening without document CSP (avoids breaking clients). */
-export function getApiSecurityHeaders(): SecurityHeader[] {
+export function isPrivateDocumentOriginalPath(pathname: string): boolean {
+  const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+  return new RegExp(`^/api/v1/projects/${uuid}/documents/${uuid}/original$`, "i").test(pathname);
+}
+
+export function getApiSecurityHeaders(pathname = ""): SecurityHeader[] {
   return [
     { key: "X-Content-Type-Options", value: "nosniff" },
     { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-    { key: "X-Frame-Options", value: "DENY" },
+    { key: "X-Frame-Options", value: isPrivateDocumentOriginalPath(pathname) ? "SAMEORIGIN" : "DENY" },
     { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
   ];
 }
@@ -88,6 +97,6 @@ export function applySecurityHeadersToResponse(
 }
 
 /** Apply API hardening headers without document CSP (middleware short-circuit + OpenNext fallback). */
-export function applyApiSecurityHeadersToHeaders(headers: Headers): void {
-  getApiSecurityHeaders().forEach(({ key, value }) => headers.set(key, value));
+export function applyApiSecurityHeadersToHeaders(headers: Headers, pathname = ""): void {
+  getApiSecurityHeaders(pathname).forEach(({ key, value }) => headers.set(key, value));
 }

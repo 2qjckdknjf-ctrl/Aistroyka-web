@@ -1,0 +1,19 @@
+{
+  "application_tests_passed": 42,
+  "pglite_sql_checks_passed": 9,
+  "native_sql_checks_passed": 11,
+  "native_concurrent_source_races_passed": 2,
+  "typecheck": "PASS",
+  "live_duplicate_media_groups": 0,
+  "live_duplicate_upload_groups": 0,
+  "fresh_history_count": 198,
+  "verified_receipt_sources": 10,
+  "verified_remote_receipts": 9,
+  "migration_apply": "NOT_YET_APPLIED",
+  "migration_source": "apps/web/supabase/migrations/20261011230105_unique_published_evidence_sources.sql",
+  "migration_sha256": "19c8c5a94a805dab89ce96c505e28990f52669f7ad75234ccba13a71690240bf",
+  "stacked_main_sha": "d77dd28a6ae8c22ad1cef3657be934ae8d4521e9",
+  "combined_publication_gallery_tests_passed": 57,
+  "focus_during_write_regression": "PASS",
+  "disabled_portal_sharing_regression": "PASS"
+}

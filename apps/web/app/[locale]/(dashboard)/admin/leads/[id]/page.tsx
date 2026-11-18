@@ -1,15 +1,9 @@
-import { getTranslations } from "next-intl/server";
-import { SectionHeader } from "@/components/ui";
-import { AdminLeadDetailClient } from "./AdminLeadDetailClient";
+import { redirect } from "next/navigation";
+import { PLATFORM_ADMIN_BASE_PATH } from "@/lib/platform-admin/constants";
 
-export const dynamic = "force-dynamic";
+type Props = { params: Promise<{ id: string }> };
 
-export default async function AdminLeadDetailPage() {
-  const tPage = await getTranslations("dashboardPageMeta");
-  return (
-    <>
-      <SectionHeader title={tPage("leadDetailTitle")} subtitle={tPage("leadDetailSubtitle")} />
-      <AdminLeadDetailClient />
-    </>
-  );
+export default async function LegacyAdminLeadDetailRedirectPage({ params }: Props) {
+  const { id } = await params;
+  redirect(`${PLATFORM_ADMIN_BASE_PATH}/leads/${id}`);
 }

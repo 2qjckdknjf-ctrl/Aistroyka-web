@@ -5,11 +5,21 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getServerConfig } from "@/lib/config/server";
+import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
+import {
+  analyzeVideoDailyWork,
+  AIPolicyBlockedError,
+  AIVideoDailyFailedError,
+} from "@/lib/platform/ai/ai.service";
+import { getServerConfig, isGeminiConfigured } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
+import { mapDailyVideoToAnalysisResult } from "./map-daily-video-to-analysis";
+import {
+  classifyVisionFailure,
+  VisionProviderError,
+} from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
-const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
 const AI_RETRY_DELAY_MS = 2000;
 
 export type ProcessOneJobResult =
@@ -43,7 +53,8 @@ function logJobLifecycle(
  */
 async function callAiAnalysis(
   aiUrl: string,
-  params: { media_id: string; image_url: string; project_id: string }
+  params: { media_id: string; image_url: string; project_id: string },
+  requestHeaders?: HeadersInit
 ): Promise<AnalysisResult> {
   const { AI_REQUEST_TIMEOUT_MS, AI_RETRY_ATTEMPTS } = getServerConfig();
   const baseUrl = aiUrl.replace(/\/$/, "");
@@ -56,21 +67,36 @@ async function callAiAnalysis(
     try {
       const res = await fetch(baseUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...Object.fromEntries(new Headers(requestHeaders)), "Content-Type": "application/json" },
+        // Workerd rejects redirect:"error". Manual never forwards the caller's
+        // bearer token to a redirect destination; non-2xx remains a failed job.
+        redirect: "manual",
         body: JSON.stringify(params),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
+        if (res.headers.get("X-AI-Fallback-Reason")) {
+          throw new VisionProviderError({ message: "AI returned a degraded fallback", httpStatus: 503,
+            errorType: "provider_unavailable", retryable: true });
+        }
         const data: unknown = await res.json();
         if (!isAnalysisResult(data)) throw new Error("AI returned invalid analysis format");
         return data;
       }
 
-      const text = await res.text();
-      const err = new Error(`AI analysis failed: ${res.status} ${text}`);
-      if (res.status >= 500 && attempt < AI_RETRY_ATTEMPTS) {
+      // A refused redirect body is not needed for classification.
+      if (res.status >= 300 && res.status < 400) await res.body?.cancel().catch(() => {});
+      const classified = classifyVisionFailure({ message: `AI analysis failed: ${res.status}`, httpStatus: res.status });
+      const err = new VisionProviderError({
+        message: `AI analysis failed: ${res.status}`,
+        httpStatus: res.status,
+        errorType: classified.errorType,
+        retryable: classified.retryable,
+      });
+      const retryThisRound = classified.retryable && (res.status === 429 || res.status >= 500) && attempt < AI_RETRY_ATTEMPTS;
+      if (retryThisRound) {
         lastError = err;
         await sleep(AI_RETRY_DELAY_MS * attempt);
         continue;
@@ -78,6 +104,18 @@ async function callAiAnalysis(
       throw err;
     } catch (err) {
       clearTimeout(timeoutId);
+      if (err instanceof VisionProviderError) {
+        if (
+          err.retryable &&
+          (err.httpStatus === 429 || (err.httpStatus ?? 0) >= 500) &&
+          attempt < AI_RETRY_ATTEMPTS
+        ) {
+          lastError = err;
+          await sleep(AI_RETRY_DELAY_MS * attempt);
+          continue;
+        }
+        throw err;
+      }
       const isRetryable =
         err instanceof Error &&
         (err.name === "AbortError" ||
@@ -102,93 +140,116 @@ async function callAiAnalysis(
 async function markJobFailed(
   supabase: SupabaseClient,
   jobId: string,
+  tenantId: string,
+  executionToken: string,
   message: string,
   errorType: string
-): Promise<void> {
-  await supabase
-    .from("analysis_jobs")
-    .update({
-      status: "failed",
-      error_message: message,
-      error_type: errorType,
-      finished_at: new Date().toISOString(),
-    })
-    .eq("id", jobId)
-    .in("status", ["pending", "processing"]);
+): Promise<number> {
+  const { data, error } = await supabase.rpc("fail_session_analysis_job", {
+    p_job_id: jobId,
+    p_tenant_id: tenantId,
+    p_execution_token: executionToken,
+    p_error_message: message,
+    p_error_type: errorType,
+  });
+  if (error) {
+    throw error;
+  }
+  return typeof data === "number" ? data : 0;
 }
 
 /**
  * Process one job: dequeue → claim → AI → complete (or mark failed).
- * Uses RPCs dequeue_job(null, workerId), claim_job_execution(jobId, workerId), complete_analysis_job(...).
+ * Caller-visible candidates and tenant-scoped atomic claims; completion/failure use service RPCs.
  * Optional traceId is included in job logs when provided (e.g. from request x-request-id).
  */
 export async function processOneJob(
   supabase: SupabaseClient,
   aiAnalysisUrl: string | undefined,
-  options?: { traceId?: string }
+  options: { tenantId: string; callerClient: SupabaseClient; traceId?: string; aiRequestHeaders?: HeadersInit }
 ): Promise<ProcessOneJobResult> {
   const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
-  if (!aiAnalysisUrl?.trim()) {
-    return { ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" };
-  }
+  // Image jobs still need AI_ANALYSIS_URL; video jobs use Gemini and are checked after media type.
 
   // Keep worker_id nullable to stay compatible with live DBs that may enforce
   // a FK to a workers table not seeded by web-session users.
   const workerId: string | null = null;
 
-  const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_job", {
-    p_region_id: null,
-    p_worker_id: workerId,
-  });
-
-  if (dequeueError) {
-    return { ok: false, reason: "error", message: dequeueError.message };
+  const tenantId = options?.tenantId?.trim();
+  if (!tenantId || !options?.callerClient) {
+    return { ok: false, reason: "error", message: "Caller tenant scope is required" };
   }
-
-  const job = Array.isArray(jobRow) ? jobRow[0] : jobRow;
-  if (!job?.id) {
-    return { ok: false, reason: "no_job" };
+  const now = new Date().toISOString();
+  const retryDue = `next_retry_at.is.null,next_retry_at.lte.${now}`;
+  // Candidate visibility is checked with the user's RLS client, never service role.
+  const { data: candidates, error: candidateError } = await options.callerClient
+    .from("analysis_jobs").select("id, media_id, tenant_id")
+    .eq("tenant_id", tenantId).eq("status", "queued")
+    .is("execution_token", null).or(retryDue)
+    .order("started_at", { ascending: true })
+    .limit(5);
+  if (candidateError) return { ok: false, reason: "error", message: candidateError.message };
+  let job: { id: string; media_id: string; tenant_id: string; execution_token: string } | null = null;
+  for (const candidate of candidates ?? []) {
+    if (candidate.tenant_id !== tenantId) continue;
+    // Claim state and execution together. A competing worker wins or loses this UPDATE,
+    // and a loser must never call a failure RPC on the winner's job.
+    const { data: claimed, error } = await supabase.from("analysis_jobs")
+      .update({ status: "processing", started_at: now, execution_started_at: now,
+        execution_token: crypto.randomUUID(), worker_id: workerId })
+      .eq("id", candidate.id).eq("tenant_id", tenantId).eq("status", "queued")
+      .is("execution_token", null).or(retryDue)
+      .select("id, media_id, tenant_id, execution_token").maybeSingle();
+    if (error) return { ok: false, reason: "error", message: error.message };
+    if (claimed?.id && claimed.tenant_id === tenantId) { job = claimed; break; }
   }
+  if (!job) return { ok: false, reason: "no_job" };
 
   const jobId = job.id as string;
   const mediaId = job.media_id as string;
 
   const { data: media, error: mediaError } = await supabase
     .from("media")
-    .select("file_url, project_id, type")
+    .select("file_url, project_id, type, tenant_id")
     .eq("id", mediaId)
+    .eq("tenant_id", tenantId)
     .single();
 
-  if (mediaError || !media) {
+  if (mediaError || !media || media.tenant_id !== tenantId) {
     await markJobFailed(
       supabase,
       jobId,
+      tenantId,
+      job.execution_token,
       mediaError?.message ?? "Media not found",
       "validation_error"
     );
     return { ok: true, jobId, status: "failed" };
   }
 
-  const fileUrl = media.file_url as string;
   const projectId = media.project_id as string;
   const type = (media.type as string) || "image";
+  const isVideo = type === "video";
 
-  if (type === "video") {
-    await markJobFailed(supabase, jobId, VIDEO_NOT_IMPLEMENTED, "validation_error");
-    return { ok: true, jobId, status: "failed" };
-  }
-
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_job_execution", {
-    p_job_id: jobId,
-    p_worker_id: workerId,
-  });
-
-  if (claimError || !claimed) {
+  if (!isVideo && !aiAnalysisUrl?.trim()) {
     await markJobFailed(
       supabase,
       jobId,
-      claimError?.message ?? "Failed to claim execution",
-      "rpc_conflict"
+      tenantId,
+      job.execution_token,
+      "AI_ANALYSIS_URL is not set",
+      "validation_error"
+    );
+    return { ok: true, jobId, status: "failed" };
+  }
+  if (isVideo && !isGeminiConfigured()) {
+    await markJobFailed(
+      supabase,
+      jobId,
+      tenantId,
+      job.execution_token,
+      "Gemini is not configured for video analysis",
+      "validation_error"
     );
     return { ok: true, jobId, status: "failed" };
   }
@@ -197,14 +258,37 @@ export async function processOneJob(
   logJobLifecycle("job_started", { job_id: jobId, request_id: traceId });
 
   try {
-    const result = await callAiAnalysis(aiAnalysisUrl, {
-      media_id: mediaId,
-      image_url: fileUrl,
-      project_id: projectId,
-    });
+    const source = await resolveAIMediaImage(supabase, { tenantId, mediaId, projectIdClaim: projectId });
+    if (!source.ok || source.trustedProjectId !== projectId) {
+      const retryable = !source.ok && source.retryable;
+      throw new VisionProviderError({ message: retryable ? "Private media source temporarily unavailable" : "Private media source denied",
+        errorType: retryable ? "provider_unavailable" : "validation_error", retryable });
+    }
 
-    const { error: completeError } = await supabase.rpc("complete_analysis_job", {
+    let result: AnalysisResult;
+    if (isVideo) {
+      const daily = await analyzeVideoDailyWork(
+        supabase,
+        { tenantId, userId: null, traceId },
+        { videoUrl: source.imageUrl, projectId, mediaId }
+      );
+      result = mapDailyVideoToAnalysisResult(daily);
+    } else {
+      result = await callAiAnalysis(
+        aiAnalysisUrl!,
+        {
+          media_id: mediaId,
+          image_url: source.imageUrl,
+          project_id: projectId,
+        },
+        options.aiRequestHeaders
+      );
+    }
+
+    const { error: completeError } = await supabase.rpc("complete_session_analysis_job", {
       p_job_id: jobId,
+      p_tenant_id: tenantId,
+      p_execution_token: job.execution_token,
       p_stage: result.stage,
       p_completion_percent: Math.round(result.completion_percent),
       p_risk_level: result.risk_level,
@@ -222,19 +306,22 @@ export async function processOneJob(
     });
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
+    const classified =
+      err instanceof VisionProviderError
+        ? { errorType: err.errorType, retryable: err.retryable }
+        : err instanceof AIPolicyBlockedError
+          ? { errorType: "validation_error" as const, retryable: false }
+          : err instanceof AIVideoDailyFailedError
+            ? classifyVisionFailure(err.message)
+            : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
     const message = err instanceof Error ? err.message : "Analysis failed";
-    const errorCode = message.toLowerCase().includes("timeout")
-      ? "timeout"
-      : message.toLowerCase().includes("ai analysis failed")
-        ? "ai_failure"
-        : "unknown";
-    await markJobFailed(supabase, jobId, message, errorCode);
+    const attempts = await markJobFailed(supabase, jobId, tenantId, job.execution_token, message, classified.errorType);
     logJobLifecycle("job_failed", {
       job_id: jobId,
       duration_ms: Date.now() - startMs,
-      attempts: 1,
-      retryable: false,
-      error_code: errorCode,
+      attempts,
+      retryable: classified.retryable,
+      error_code: classified.errorType,
       request_id: traceId,
     });
     return { ok: true, jobId, status: "failed" };

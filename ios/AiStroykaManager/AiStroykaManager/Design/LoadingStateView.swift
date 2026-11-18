@@ -14,7 +14,7 @@ struct LoadingStateView: View {
             ProgressView()
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(ManagerV43.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

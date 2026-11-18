@@ -1,3 +1,5 @@
+import { isPrivateDocumentOriginalPath } from "./lib/security-headers.js";
+
 /**
  * Entry point for Cloudflare Worker. Runs before any other code so that
  * globalThis.require is overridden to stub middleware-manifest.json (dynamic
@@ -30,7 +32,7 @@ function withApiSecurityHeaders(response, pathname) {
   }
   const headers = new Headers(response.headers);
   for (const [key, value] of API_SECURITY_HEADERS) {
-    headers.set(key, value);
+    headers.set(key, key === "X-Frame-Options" && isPrivateDocumentOriginalPath(pathname) ? "SAMEORIGIN" : value);
   }
   return new Response(response.body, {
     status: response.status,

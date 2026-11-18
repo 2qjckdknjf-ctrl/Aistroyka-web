@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Card, Badge, Skeleton, ErrorState } from "@/components/ui";
+import { Badge, Skeleton, ErrorState } from "@/components/ui";
 import { recurringRuleStateBadgeClass } from "./statusBadgeStyles";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 type RuleRow = {
   id: string;
@@ -25,8 +26,9 @@ async function fetchRules(): Promise<{ rules: RuleRow[]; canToggle: boolean }> {
   return j.data;
 }
 
-export function RecurringOperationsPanel() {
+export function RecurringOperationsPanel({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["recurring-operations", "rules"], queryFn: fetchRules });
 
@@ -45,10 +47,10 @@ export function RecurringOperationsPanel() {
 
   if (q.isPending) {
     return (
-      <Card className="p-4">
+      <CanonSurface isCanon={isCanon} className="p-4">
         <Skeleton className="h-6 w-48 mb-3" />
         <Skeleton className="h-32 w-full" />
-      </Card>
+      </CanonSurface>
     );
   }
 
@@ -64,7 +66,7 @@ export function RecurringOperationsPanel() {
   const { rules, canToggle } = q.data ?? { rules: [], canToggle: false };
 
   return (
-    <Card className="p-4 border border-aistroyka-border-subtle">
+    <CanonSurface isCanon={isCanon} className="p-4 border border-aistroyka-border-subtle">
       <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("recurringOperations")}</h2>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">
         {tDetail("recurringOperationsHint")}
@@ -108,7 +110,7 @@ export function RecurringOperationsPanel() {
           ))}
         </ul>
       )}
-    </Card>
+    </CanonSurface>
   );
 }
 

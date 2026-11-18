@@ -12,7 +12,7 @@ export async function listByProject(
     .select("id, project_id, tenant_id, type, file_url, uploaded_at")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
-    .order("uploaded_at", { ascending: false });
+    .order("uploaded_at", { ascending: false }).order("id", { ascending: false });
   if (options?.limit && Number.isFinite(options.limit) && options.limit > 0) {
     query = query.limit(Math.min(Math.floor(options.limit), 200));
   }

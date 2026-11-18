@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, SectionHeader, EmptyState } from "@/components/ui";
+import { SectionHeader, EmptyState } from "@/components/ui";
 import { TrustBanner } from "./TrustBanner";
 import { IndicesCards } from "./IndicesCards";
 import { CausalHints } from "./CausalHints";

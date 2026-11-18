@@ -1,25 +1,6 @@
-import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
-import { SectionHeader } from "@/components/ui";
-import { AdminLeadsClient } from "./AdminLeadsClient";
+import { redirect } from "next/navigation";
+import { PLATFORM_ADMIN_BASE_PATH } from "@/lib/platform-admin/constants";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminLeadsPage() {
-  const tPage = await getTranslations("dashboardPageMeta");
-  return (
-    <>
-      <Link
-        href="/admin"
-        className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
-      >
-        {tPage("backToAdmin")}
-      </Link>
-      <SectionHeader
-        title={tPage("contactLeadsTitle")}
-        subtitle={tPage("contactLeadsSubtitle")}
-      />
-      <AdminLeadsClient />
-    </>
-  );
+export default function LegacyAdminLeadsRedirectPage() {
+  redirect(`${PLATFORM_ADMIN_BASE_PATH}/leads`);
 }

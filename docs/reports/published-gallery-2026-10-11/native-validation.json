@@ -1,0 +1,14 @@
+{
+  "shared_simulator_tests_passed": 7,
+  "shared_tests_failed": 0,
+  "customer_debug_simulator_build": "PASS",
+  "device_gallery_live": "NOT_YET_VERIFIED",
+  "store_upload": false,
+  "sources_sha256": {
+    "ios/Shared/Sources/Shared/APIClient.swift": "07140528f9508c90f2d7c3dc9d4327767555eae9a93ec04dab31b94ab760ce1b",
+    "ios/Shared/Sources/Shared/CustomerPublishedEvidence.swift": "031b9efe1ec66782512adc68d54c37d35890afa4654ee3f9262778e603895936",
+    "ios/Shared/Tests/SharedTests/CustomerPublishedEvidenceTests.swift": "daa3c51babadef4f16b2a0945c9a5707827d2db0e0d686a977eadbe17bb4e819",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/CustomerAPI.swift": "d5e7b735dc2bad712f1da32975ed29be1faadf3d7c085931062a4554202f73b9",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/Views/CustomerProjectDetailView.swift": "31aff8202ac5a8254c1bd6acd14b1414649b8c158f7b64053e225186314c7231"
+  }
+}

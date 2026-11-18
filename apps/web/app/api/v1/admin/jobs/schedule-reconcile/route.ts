@@ -7,7 +7,9 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
+import { recoverExpiredMaintenanceClaims } from "@/lib/platform/jobs/job.recovery";
 import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
+import { blockAuthenticatedNonPlatformCronCaller } from "@/lib/api/require-platform-admin-legacy-route";
 
 export const dynamic = "force-dynamic";
 
@@ -17,18 +19,30 @@ export async function POST(request: Request) {
   const cronErr = requireCronSecretIfEnabled(request);
   if (cronErr) return cronErr;
 
+  const platformErr = await blockAuthenticatedNonPlatformCronCaller(request);
+  if (platformErr) return platformErr;
+
   const admin = getAdminClient();
   if (!admin) {
     return NextResponse.json({ error: "Admin client not configured" }, { status: 503 });
   }
 
-  const { data: tenants } = await admin.from("tenants").select("id");
+  const { data: tenants, error } = await admin.from("tenants").select("id");
+  if (error) return NextResponse.json({ ok: false, error: "Maintenance scheduling lookup unavailable" }, { status: 503 });
   if (!tenants?.length) {
-    return NextResponse.json({ ok: true, enqueued: 0, tenants: 0 });
+    return NextResponse.json({ ok: true, enqueued: 0, recovered: 0, exhausted: 0, tenants: 0 });
   }
 
   let enqueued = 0;
+  let recovered = 0;
+  let exhausted = 0;
   for (const t of tenants as { id: string }[]) {
+    try {
+      const recovery = await recoverExpiredMaintenanceClaims(admin, t.id);
+      recovered += recovery.requeued;exhausted += recovery.dead;
+    } catch {
+      return NextResponse.json({ ok: false, error: "Maintenance recovery unavailable" }, { status: 503 });
+    }
     const job = await enqueueJob(admin, {
       tenant_id: t.id,
       user_id: null,
@@ -41,5 +55,5 @@ export async function POST(request: Request) {
     if (job) enqueued++;
   }
 
-  return NextResponse.json({ ok: true, enqueued, tenants: tenants.length });
+  return NextResponse.json({ ok: true, enqueued, recovered, exhausted, tenants: tenants.length });
 }

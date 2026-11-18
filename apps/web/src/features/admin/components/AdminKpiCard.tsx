@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function AdminKpiCard({
   title,
@@ -20,7 +20,7 @@ export function AdminKpiCard({
         ? "border-l-aistroyka-warning"
         : "border-l-aistroyka-accent";
   return (
-    <Card className={"border-l-4 " + borderClass}>
+    <DashboardGlassCard className={"border-l-4 " + borderClass}>
       <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{title}</p>
       <p className="mt-1 text-aistroyka-title2 font-semibold tabular-nums text-aistroyka-text-primary">
         {value}
@@ -28,6 +28,6 @@ export function AdminKpiCard({
       {subtitle ? (
         <p className="mt-0.5 text-aistroyka-caption text-aistroyka-text-secondary">{subtitle}</p>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }

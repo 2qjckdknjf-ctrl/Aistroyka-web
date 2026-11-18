@@ -6,6 +6,7 @@ import { getProjectSummary } from "@/lib/domain/projects/project-summary.reposit
 import * as mediaRepo from "@/lib/domain/media/media.repository";
 import * as documentRepo from "@/lib/domain/documents/document.repository";
 import * as clientRequestRepo from "@/lib/domain/client-requests/client-requests.repository";
+import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
 import type { Media } from "@/lib/domain/media/media.types";
 import type { ProjectProofPack, ProofMediaCategory, ProofPackShare } from "./proof-pack.types";
 
@@ -20,7 +21,7 @@ function mediaCategory(media: Media): ProofMediaCategory {
 }
 
 /** Public token surface: only media that reads as site/customer evidence. */
-function includeMediaInPublicProof(m: Media): boolean {
+export function includeMediaInPublicProof(m: Pick<Media, "type">): boolean {
   const t = (m.type ?? "").toLowerCase();
   if (!t.trim()) return false;
   if (/(internal|private|confidential|worker_only|manager_only)/.test(t)) return false;
@@ -31,7 +32,7 @@ export async function buildProjectProofPack(
   supabase: SupabaseClient,
   tenantId: string,
   projectId: string,
-  opts?: { audience?: "manager" | "public" }
+  opts?: { audience?: "manager" | "public"; shareToken?: string }
 ): Promise<ProjectProofPack | null> {
   const project = await projectRepo.getById(supabase, projectId, tenantId);
   if (!project) return null;
@@ -98,12 +99,14 @@ export async function buildProjectProofPack(
       tasks_done: summary.tasksDone,
       tasks_total: summary.tasksTotal,
     },
-    media: mediaForPack.map((item) => ({
+    media: await Promise.all(mediaForPack.map(async (item) => ({
       id: item.id,
       category: mediaCategory(item),
-      file_url: item.file_url,
+      file_url: audience === "public"
+        ? (opts?.shareToken ? `/api/v1/share/proof/${encodeURIComponent(opts.shareToken)}/media/${encodeURIComponent(item.id)}` : "")
+        : await privateMediaDisplayUrl(supabase, { tenantId, projectIdClaim: projectId, mediaId: item.id }) ?? "",
       uploaded_at: item.uploaded_at ?? null,
-    })),
+    }))),
     documents: documents
       .filter((doc) => doc.client_visible && doc.status !== "archived")
       .slice(0, 20)
@@ -187,6 +190,7 @@ export async function getProofPackByToken(
   }
   const pack = await buildProjectProofPack(supabase, data.tenant_id, data.project_id, {
     audience: "public",
+    shareToken: token,
   });
   return pack ? { data: pack, error: "" } : { data: null, error: "Not found" };
 }

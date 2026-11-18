@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { SimpleMarketingPage } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -29,51 +29,34 @@ export default async function IntegrationsPage({ params }: Props) {
   const t = await getTranslations("public.integrations");
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
-      </section>
-
-      <section className="mt-12">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Integration categories
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <SimpleMarketingPage
+      title={t("title")}
+      lead={t("heroTitle")}
+      primaryLabel={t("ctaEnterprise")}
+      primaryHref="/contact"
+      secondaryLabel={t("ctaWorkflow")}
+      secondaryHref="/contact"
+    >
+      <section className="v41-page v41-section">
+        <h2>{t("categoriesTitle")}</h2>
+        <div className="v43-module-grid">
           {CATEGORIES.map(({ key, status }) => (
-            <div
-              key={key}
-              className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4 shadow-[var(--aistroyka-shadow-e1)]"
-            >
-              <div className="font-semibold text-[var(--aistroyka-text-primary)]">{t(key)}</div>
-              <span className="mt-2 inline-block text-[var(--aistroyka-font-caption)] text-[var(--aistroyka-text-tertiary)]">
+            <article key={key} className="v43-plan-card v41-glass">
+              <h3>{t(key)}</h3>
+              <p className="v41-eyebrow">
                 {t(`status${status.charAt(0).toUpperCase()}${status.slice(1)}` as "statusPlanned" | "statusProgress" | "statusAvailable")}
-              </span>
-            </div>
+              </p>
+            </article>
           ))}
         </div>
       </section>
-
-      <section className="mt-16 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("archTitle")}
-        </h2>
-        <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("archBody")}
-        </p>
+      <section className="v41-page v41-section">
+        <article className="v43-plan-card v41-glass">
+          <h2>{t("archTitle")}</h2>
+          <p>{t("archBody")}</p>
+        </article>
       </section>
-
-      <section className="mt-12 flex min-w-0 flex-wrap gap-3 sm:gap-4">
-        <Link href="/contact" className="btn-primary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaEnterprise")}
-        </Link>
-        <Link href="/contact" className="btn-secondary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaWorkflow")}
-        </Link>
-      </section>
-    </div>
+    </SimpleMarketingPage>
   );
 }
 

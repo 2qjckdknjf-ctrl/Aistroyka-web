@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
+import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
 import { listByProject } from "@/lib/domain/media/media.repository";
 
 export const dynamic = "force-dynamic";
@@ -34,5 +35,8 @@ export async function GET(
   const url = new URL(request.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "12", 10) || 12, 50);
   const data = await listByProject(supabase, projectId, ctx.tenantId!, { limit });
-  return NextResponse.json({ data });
+  const display = await Promise.all(data.map(async row => ({ ...row,
+    file_url: await privateMediaDisplayUrl(supabase, { tenantId: ctx.tenantId!, projectIdClaim: projectId, mediaId: row.id }) ?? "",
+  })));
+  return NextResponse.json({ data: display }, { headers: { "Cache-Control": "private, no-store", "CDN-Cache-Control": "no-store" } });
 }

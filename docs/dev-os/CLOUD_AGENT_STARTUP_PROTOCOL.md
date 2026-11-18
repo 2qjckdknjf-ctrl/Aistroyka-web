@@ -4,6 +4,7 @@
 
 ## 1. Read order (do not skip)
 
+0. `START_HERE.md` + `docs/tasks/ACTIVE_WORK_REGISTRY.csv` — locate the existing implementation and current PR HEAD.
 1. `PROJECT_CONTEXT.md` — product rules, stack, non-negotiables
 2. `STATUS.md` — what is happening now
 3. `PROJECT_DASHBOARD.md` — mobile dashboard, warnings, open PRs

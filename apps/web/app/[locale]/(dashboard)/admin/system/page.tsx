@@ -1,8 +1,6 @@
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isAdmin } from "@/lib/auth/admin";
 import { getSystemMetrics } from "@/lib/observability/metrics";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +8,6 @@ export const dynamic = "force-dynamic";
 export default async function AdminSystemPage() {
   const tDetail = await getTranslations("dashboardDetail");
   const supabase = await createClient();
-  const allowed = await isAdmin(supabase);
-  if (!allowed) {
-    redirect("/dashboard");
-  }
 
   const metrics = await getSystemMetrics(supabase);
   if (!metrics) {

@@ -29,18 +29,20 @@ export interface JobRecord {
   updated_at: string;
 }
 
+export type JobClaim = Pick<JobRecord, "id" | "tenant_id" | "type" | "locked_by" | "locked_at" | "attempts">;
+
 export interface IQueueAdapter {
   enqueue(supabase: SupabaseClient, params: EnqueueParams): Promise<JobRecord | null>;
   claim(admin: SupabaseClient, workerId: string, limit: number, tenantId?: string | null): Promise<JobRecord[]>;
-  tryAcquireSlot(admin: SupabaseClient, tenantId: string): Promise<boolean>;
-  releaseSlot(admin: SupabaseClient, tenantId: string): Promise<void>;
-  markSuccess(admin: SupabaseClient, jobId: string): Promise<boolean>;
+  tryAcquireSlot(admin: SupabaseClient, claim: JobClaim): Promise<boolean>;
+  releaseSlot(admin: SupabaseClient, claim: JobClaim): Promise<void>;
+  markSuccess(admin: SupabaseClient, claim: JobClaim): Promise<boolean>;
   markFailedForRetry(
     admin: SupabaseClient,
-    jobId: string,
+    claim: JobClaim,
     lastError: string,
     lastErrorType: string,
     runAfter: Date
   ): Promise<boolean>;
-  markDead(admin: SupabaseClient, jobId: string, lastError: string, lastErrorType: string): Promise<boolean>;
+  markDead(admin: SupabaseClient, claim: JobClaim, lastError: string, lastErrorType: string): Promise<boolean>;
 }

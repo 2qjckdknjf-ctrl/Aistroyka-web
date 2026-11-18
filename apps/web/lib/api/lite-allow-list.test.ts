@@ -12,6 +12,11 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/admin/jobs", "GET", "android_full")).toBeNull();
   });
 
+  it("does not treat ios_customer as a lite worker client", () => {
+    expect(checkLiteAllowList("/api/v1/portal/projects", "GET", "ios_customer")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/admin/jobs", "GET", "ios_customer")).toBeNull();
+  });
+
   it("returns null for lite client GET /api/v1/projects (worker project list)", () => {
     expect(checkLiteAllowList("/api/v1/projects", "GET", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/projects", "GET", "android_lite")).toBeNull();
@@ -37,6 +42,10 @@ describe("checkLiteAllowList", () => {
   it("returns null for lite client on allowed path /api/v1/worker/*", () => {
     expect(checkLiteAllowList("/api/v1/worker/tasks/today", "GET", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/worker", "GET", "android_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/issues", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/issues", "POST", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/documents", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/site-join", "POST", "ios_lite")).toBeNull();
   });
 
   it("returns null for lite client on allowed path /api/v1/sync/*", () => {
@@ -62,8 +71,27 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1", "PATCH", "ios_lite")).not.toBeNull();
   });
 
+  it("returns null for lite task chat messages paths", () => {
+    expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1/messages", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1/messages", "POST", "android_worker")).toBeNull();
+    expect(
+      checkLiteAllowList("/api/v1/tasks/task-uuid-1/messages/msg-1", "DELETE", "ios_lite")
+    ).toBeNull();
+  });
+
   it("returns null for lite client on /api/v1/devices/*", () => {
     expect(checkLiteAllowList("/api/v1/devices/register", "POST", "ios_lite")).toBeNull();
+  });
+
+  it("returns null for lite user-scoped notifications inbox", () => {
+    expect(checkLiteAllowList("/api/v1/notifications", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/unread-count", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/read-all", "POST", "android_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/read-all", "PATCH", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/read", "PATCH", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/opened", "POST", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/opened", "POST", "android_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications", "POST", "ios_lite")).not.toBeNull();
   });
 
   it("returns null for lite activation + help paths (worker intelligence surfaces)", () => {
@@ -98,5 +126,17 @@ describe("checkLiteAllowList", () => {
 
   it("ignores non-/api/v1 paths", () => {
     expect(checkLiteAllowList("/api/health", "GET", "ios_lite")).toBeNull();
+  });
+
+  it("returns null for lite Stage2a quantity snapshot paths (A03)", () => {
+    expect(
+      checkLiteAllowList("/api/v1/projects/p1/quantities/snapshots", "GET", "ios_worker")
+    ).toBeNull();
+    expect(
+      checkLiteAllowList("/api/v1/projects/p1/quantities/snapshots", "POST", "android_lite")
+    ).toBeNull();
+    expect(
+      checkLiteAllowList("/api/v1/projects/p1/quantities/snapshots/extra", "GET", "ios_lite")
+    ).not.toBeNull();
   });
 });

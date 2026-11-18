@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
-import { forbidden } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { createClient, getSessionUser, safeGetSession } from "@/lib/supabase/server";
 import { getRequestClientIp, isIpBlockedByOwnerAllowlist } from "./client-ip";
 import { logOwnerGateEvent } from "./owner-access-log";
@@ -8,13 +8,21 @@ import { getPlatformOwnerGrant } from "./platform-owner-grant";
 import { evaluateOwnerSessionFreshness } from "./owner-session-policy";
 import { OWNER_SURFACE_COOKIE_NAME, verifyOwnerSurfaceCookieRaw } from "./owner-surface-cookie";
 
+function resolveReturnPath(locale: string, headerPath: string | null): string {
+  if (headerPath && headerPath.startsWith("/")) return headerPath;
+  return `/${locale}/platform-admin`;
+}
+
 /**
- * Server layout guard for `/owner` pages (middleware is primary; this is defense in depth).
+ * Server layout guard for platform-admin pages (middleware is primary; defense in depth).
  * Re-validates session freshness, surface ticket (when configured), and grant tier.
  */
-export async function assertPlatformOwnerPageAccess(): Promise<void> {
+export async function assertPlatformOwnerPageAccess(input: {
+  locale: string;
+  returnPath?: string;
+}): Promise<void> {
   const h = await headers();
-  const pathname = "/owner";
+  const pathname = resolveReturnPath(input.locale, input.returnPath ?? h.get("x-aistroyka-pathname"));
   const isApi = false;
   const clientIp = getRequestClientIp({ headers: h });
 
@@ -77,7 +85,7 @@ export async function assertPlatformOwnerPageAccess(): Promise<void> {
       clientIp,
       isApi,
     });
-    forbidden();
+    redirect(`/${input.locale}/login?next=${encodeURIComponent(pathname)}`);
   }
 
   const user = await getSessionUser(supabase);
@@ -90,7 +98,7 @@ export async function assertPlatformOwnerPageAccess(): Promise<void> {
       clientIp,
       isApi,
     });
-    forbidden();
+    redirect(`/${input.locale}/login?next=${encodeURIComponent(pathname)}`);
   }
 
   const grant = await getPlatformOwnerGrant(supabase, user.id);

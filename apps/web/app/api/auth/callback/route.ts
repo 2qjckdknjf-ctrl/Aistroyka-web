@@ -1,28 +1,31 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
   ensureOnboardingProfileExists,
   hasTenantMembership,
   linkIdentityRow,
+  type IdentityProvider,
 } from "@/lib/auth/multi-provider";
+import { toSafeRelativePath } from "@/lib/auth/password-recovery";
+import { recordLoginSuccess } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
-
-function toSafeRelativePath(input: string | null | undefined, fallback: string): string {
-  const value = (input ?? "").trim();
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
-}
 
 function localeFromPath(pathname: string): string {
   const match = pathname.match(/^\/(ru|en|es|it)(?=\/|$)/);
   return match?.[1] ?? "ru";
 }
 
+function oauthProvider(value: string | null): Exclude<IdentityProvider, "telegram"> | null {
+  return value === "apple" || value === "google" ? value : null;
+}
+
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const explicitNext = url.searchParams.get("next");
+  const isLinkIntent = url.searchParams.get("intent") === "link";
   const callbackPath = toSafeRelativePath(url.searchParams.get("callback"), "/en/dashboard");
   const locale = localeFromPath(callbackPath);
 
@@ -36,31 +39,72 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/login?error=oauth_exchange_failed`, request.url));
   }
 
+  const isRecovery = url.searchParams.get("recovery") === "1";
+  if (isRecovery) {
+    const recoveryPath = toSafeRelativePath(url.searchParams.get("callback"), `/${locale}/reset-password`);
+    return NextResponse.redirect(new URL(recoveryPath, request.url));
+  }
+
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
   if (!user) {
     return NextResponse.redirect(new URL(`/${locale}/login?error=oauth_no_user`, request.url));
   }
 
-  const provider = user.app_metadata?.provider;
-  if (provider === "apple") {
-    await linkIdentityRow(supabase, {
+  const requestedProvider = oauthProvider(url.searchParams.get("provider"));
+  const primaryProvider = oauthProvider(
+    typeof user.app_metadata?.provider === "string" ? user.app_metadata.provider : null
+  );
+  const provider = requestedProvider ?? primaryProvider;
+  const authIdentity = provider
+    ? user.identities?.find((identity) => identity.provider === provider)
+    : undefined;
+
+  if (provider && authIdentity) {
+    const identityData = authIdentity.identity_data ?? {};
+    const providerUserId =
+      typeof identityData.sub === "string" && identityData.sub.length > 0
+        ? identityData.sub
+        : authIdentity.identity_id || authIdentity.id;
+    const linkResult = await linkIdentityRow(supabase, {
       user_id: user.id,
-      provider: "apple",
-      provider_user_id: String(user.user_metadata?.sub ?? user.id),
-      email: user.email ?? null,
+      provider,
+      identity_id: authIdentity.identity_id || authIdentity.id,
+      provider_user_id: providerUserId,
+      email:
+        typeof identityData.email === "string"
+          ? identityData.email
+          : user.email ?? null,
       full_name:
-        typeof user.user_metadata?.full_name === "string"
-          ? user.user_metadata.full_name
-          : null,
+        typeof identityData.full_name === "string"
+          ? identityData.full_name
+          : typeof identityData.name === "string"
+            ? identityData.name
+            : typeof user.user_metadata?.full_name === "string"
+              ? user.user_metadata.full_name
+              : typeof user.user_metadata?.name === "string"
+                ? user.user_metadata.name
+                : null,
       avatar_url:
-        typeof user.user_metadata?.avatar_url === "string"
-          ? user.user_metadata.avatar_url
-          : null,
+        typeof identityData.avatar_url === "string"
+          ? identityData.avatar_url
+          : typeof identityData.picture === "string"
+            ? identityData.picture
+            : typeof user.user_metadata?.avatar_url === "string"
+              ? user.user_metadata.avatar_url
+              : typeof user.user_metadata?.picture === "string"
+                ? user.user_metadata.picture
+                : null,
       metadata: {
-        provider: "apple",
+        provider,
+        identity_id: authIdentity.identity_id || authIdentity.id,
       },
     });
+    if (!linkResult.ok && isLinkIntent) {
+      return NextResponse.redirect(new URL(`${callbackPath}?error=oauth_link_persist_failed`, request.url));
+    }
+  } else if (isLinkIntent && requestedProvider) {
+    return NextResponse.redirect(new URL(`${callbackPath}?error=oauth_identity_missing`, request.url));
   }
 
   await ensureOnboardingProfileExists(supabase, user.id, {
@@ -75,5 +119,8 @@ export async function GET(request: NextRequest) {
     ? `/${locale}/dashboard`
     : `/${locale}/dashboard?onboarding=1`;
   const next = toSafeRelativePath(explicitNext, fallbackTarget);
+  if (!isLinkIntent) {
+    await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"), getAdminClient());
+  }
   return NextResponse.redirect(new URL(next, request.url));
 }

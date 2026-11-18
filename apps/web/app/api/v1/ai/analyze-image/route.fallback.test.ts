@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { POST } from "./route";
 
-vi.mock("@/lib/tenant", () => ({ getTenantContextFromRequest: vi.fn() }));
+vi.mock("@/lib/tenant", async (importOriginal) => ({ ...await importOriginal<typeof import("@/lib/tenant")>(), getTenantContextFromRequest: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClientFromRequest: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
 vi.mock("@/lib/platform/rate-limit/rate-limit.service", () => ({
@@ -44,8 +44,9 @@ describe("POST /api/v1/ai/analyze-image — vision deterministic fallback", () =
     vi.stubEnv("AI_VISION_DETERMINISTIC_FALLBACK", "true");
     const tenant = await import("@/lib/tenant");
     vi.mocked(tenant.getTenantContextFromRequest).mockResolvedValue({
-      tenantId: null,
-      userId: null,
+      tenantId: "tenant-a",
+      userId: "user-1",
+      role: "member",
       subscriptionTier: "free",
     } as never);
     const server = await import("@/lib/supabase/server");

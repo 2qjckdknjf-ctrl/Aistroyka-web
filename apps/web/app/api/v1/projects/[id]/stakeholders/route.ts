@@ -47,6 +47,7 @@ export async function GET(
   const supabase = await createClientFromRequest(request);
   const { data, error } = await listStakeholders(supabase, ctx, projectId);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
+  if (error) return NextResponse.json({ error }, { status: 500 });
   return NextResponse.json({ data });
 }
 

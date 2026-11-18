@@ -29,7 +29,7 @@ test.describe("AI Copilot smoke", () => {
       test.skip();
       return;
     }
-    await page.goto(`/en/projects/${projectId}/ai`);
+    await page.goto(`/en/dashboard/projects/${projectId}?tab=ai`);
     await page.waitForLoadState("domcontentloaded");
     const summaryTab = page.getByRole("button", { name: /Summary/i });
     const explainTab = page.getByRole("button", { name: /Explain Risk/i });
@@ -60,7 +60,7 @@ test.describe("AI Copilot smoke", () => {
         body: JSON.stringify({ error: "rate limited", request_id: mockRequestId }),
       });
     });
-    await page.goto(`/en/projects/${projectId}/ai`);
+    await page.goto(`/en/dashboard/projects/${projectId}?tab=ai`);
     await page.waitForLoadState("domcontentloaded");
     await page.getByRole("button", { name: /^Run$/i }).click();
     await expect(page.getByRole("alert")).toBeVisible();
@@ -141,7 +141,7 @@ test.describe("AI Copilot smoke", () => {
       }
       await route.continue();
     });
-    await page.goto(`/en/projects/${projectId}/ai`);
+    await page.goto(`/en/dashboard/projects/${projectId}?tab=ai`);
     await page.waitForLoadState("domcontentloaded");
     await page.getByRole("button", { name: /Copilot/i }).click();
     await expect(page.getByPlaceholder(/Ask about risk/i)).toBeVisible();

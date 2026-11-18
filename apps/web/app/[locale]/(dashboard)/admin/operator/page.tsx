@@ -1,11 +1,12 @@
-import { Card } from "@/components/ui";
+
 import { Link } from "@/i18n/navigation";
 import { OperatorWorkbenchClient } from "./OperatorWorkbenchClient";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default function AdminOperatorPage() {
   return (
     <>
-      <Card className="mb-6 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-6 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
           Operator Workbench
         </h1>
@@ -17,7 +18,7 @@ export default function AdminOperatorPage() {
             ← Back to admin
           </Link>
         </p>
-      </Card>
+      </DashboardGlassCard>
       <OperatorWorkbenchClient />
     </>
   );

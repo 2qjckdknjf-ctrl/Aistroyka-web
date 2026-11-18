@@ -1,0 +1,99 @@
+{
+  "schema_version": "ag_v1",
+  "graph_id": "AG-REQ-AUTH-PROJECT-001-r1",
+  "requirement_id": "REQ-AUTH-PROJECT-001",
+  "requirement_revision": "r1",
+  "commit_sha": "cc40ccee6cda6a86473992b09845737790c5ada8",
+  "environment": "local",
+  "generated_at": "2026-10-05T13:00:00Z",
+  "tool_version": "advisory-ag_v1",
+  "origin": "docs/roma/fixtures",
+  "nodes": [
+    {
+      "id": "REQ-AUTH-PROJECT-001",
+      "type": "requirement",
+      "revision": "r1"
+    },
+    {
+      "id": "AC-OWN-PROJECT-ALLOW",
+      "type": "acceptance_criterion",
+      "requirement_id": "REQ-AUTH-PROJECT-001",
+      "text": "A member may analyze video for their own project."
+    },
+    {
+      "id": "AC-FOREIGN-PROJECT-DENY",
+      "type": "acceptance_criterion",
+      "requirement_id": "REQ-AUTH-PROJECT-001",
+      "text": "A member must not analyze video for a foreign project."
+    },
+    {
+      "id": "VC-OWN-PROJECT-TEST",
+      "type": "verification_contract",
+      "acceptance_criterion_id": "AC-OWN-PROJECT-ALLOW",
+      "kind": "test"
+    },
+    {
+      "id": "VC-FOREIGN-PROJECT-TEST",
+      "type": "verification_contract",
+      "acceptance_criterion_id": "AC-FOREIGN-PROJECT-DENY",
+      "kind": "test"
+    },
+    {
+      "id": "OBS-OWN-PROJECT",
+      "type": "observation",
+      "verification_contract_id": "VC-OWN-PROJECT-TEST",
+      "result": "pass"
+    },
+    {
+      "id": "OBS-FOREIGN-PROJECT",
+      "type": "observation",
+      "verification_contract_id": "VC-FOREIGN-PROJECT-TEST",
+      "result": "pass"
+    },
+    {
+      "id": "EV-OWN-PROJECT",
+      "type": "evidence",
+      "observation_id": "OBS-OWN-PROJECT",
+      "artifact_hash": "sha256:fixture-own-project",
+      "commit_sha": "cc40ccee6cda6a86473992b09845737790c5ada8",
+      "environment": "local",
+      "recorded_at": "2026-10-05T13:00:00Z",
+      "tool_version": "vitest",
+      "origin": "apps/web/app/api/v1/ai/analyze-video-daily/route.test.ts"
+    },
+    {
+      "id": "EV-FOREIGN-PROJECT",
+      "type": "evidence",
+      "observation_id": "OBS-FOREIGN-PROJECT",
+      "artifact_hash": "sha256:fixture-foreign-project",
+      "commit_sha": "cc40ccee6cda6a86473992b09845737790c5ada8",
+      "environment": "local",
+      "recorded_at": "2026-10-05T13:00:00Z",
+      "tool_version": "vitest",
+      "origin": "apps/web/app/api/v1/ai/analyze-video-daily/route.test.ts"
+    },
+    {
+      "id": "VER-INDEPENDENT",
+      "type": "verifier",
+      "independent": true
+    },
+    {
+      "id": "VRD-REQ-AUTH-PROJECT-001",
+      "type": "verdict",
+      "status": "PASS"
+    }
+  ],
+  "edges": [
+    { "from": "REQ-AUTH-PROJECT-001", "to": "AC-OWN-PROJECT-ALLOW" },
+    { "from": "REQ-AUTH-PROJECT-001", "to": "AC-FOREIGN-PROJECT-DENY" },
+    { "from": "AC-OWN-PROJECT-ALLOW", "to": "VC-OWN-PROJECT-TEST" },
+    { "from": "AC-FOREIGN-PROJECT-DENY", "to": "VC-FOREIGN-PROJECT-TEST" },
+    { "from": "VC-OWN-PROJECT-TEST", "to": "OBS-OWN-PROJECT" },
+    { "from": "VC-FOREIGN-PROJECT-TEST", "to": "OBS-FOREIGN-PROJECT" },
+    { "from": "OBS-OWN-PROJECT", "to": "EV-OWN-PROJECT" },
+    { "from": "OBS-FOREIGN-PROJECT", "to": "EV-FOREIGN-PROJECT" },
+    { "from": "EV-OWN-PROJECT", "to": "VER-INDEPENDENT" },
+    { "from": "EV-FOREIGN-PROJECT", "to": "VER-INDEPENDENT" },
+    { "from": "VER-INDEPENDENT", "to": "VRD-REQ-AUTH-PROJECT-001" }
+  ]
+}

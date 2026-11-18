@@ -1,0 +1,45 @@
+{
+  "checks": [
+    {
+      "table": "visual_evidence_records",
+      "exact_row_absent": true
+    },
+    {
+      "table": "worker_report_media",
+      "exact_row_absent": true
+    },
+    {
+      "table": "project_members",
+      "exact_row_absent": true
+    },
+    {
+      "table": "worker_reports",
+      "exact_row_absent": true
+    },
+    {
+      "table": "worker_tasks",
+      "exact_row_absent": true
+    },
+    {
+      "table": "media",
+      "exact_row_absent": true
+    },
+    {
+      "table": "media",
+      "exact_row_absent": true
+    },
+    {
+      "table": "tenant_members",
+      "exact_row_absent": true
+    },
+    {
+      "table": "projects",
+      "exact_row_absent": true
+    }
+  ],
+  "fixture_auth_absent": true,
+  "fixture_sessions_revoked": true,
+  "owner_task_session_local_revoked": true,
+  "storage_objects_written": 0,
+  "business_rows_untouched": true
+}

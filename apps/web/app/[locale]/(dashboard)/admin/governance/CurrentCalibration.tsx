@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui";
+
 import { Button } from "@/components/ui/Button";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Latest = {
   created_at: string;
@@ -18,12 +19,12 @@ export function CurrentCalibration({ latest }: { latest: Latest }) {
 
   if (!latest) {
     return (
-      <Card className="border-l-4 border-l-aistroyka-text-tertiary">
+      <DashboardGlassCard className="border-l-4 border-l-aistroyka-text-tertiary">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("currentCalibration")}</h2>
         <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           {tDetail("noCalibrationSnapshotYet")}
         </p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -31,7 +32,7 @@ export function CurrentCalibration({ latest }: { latest: Latest }) {
   const alpha = latest.smoothing_alpha != null ? latest.smoothing_alpha.toFixed(2) : "-";
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-accent">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("currentCalibration")}</h2>
       <dl className="mt-aistroyka-3 grid gap-aistroyka-2 text-aistroyka-subheadline sm:grid-cols-3">
         <div>
@@ -74,6 +75,6 @@ export function CurrentCalibration({ latest }: { latest: Latest }) {
           </div>
         )}
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

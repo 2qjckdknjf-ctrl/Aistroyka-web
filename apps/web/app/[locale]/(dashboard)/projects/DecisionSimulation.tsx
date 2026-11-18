@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { SimulationResult } from "@/lib/intelligence/simulation";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 function formatDeltaDays(d: number | null, tDetail: (key: string, values?: Record<string, string | number | Date>) => string): string {
   if (d == null) return "—";
@@ -13,20 +14,20 @@ export function DecisionSimulation({ result }: { result: SimulationResult | null
   const tDetail = useTranslations("dashboardDetail");
   if (result == null) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm text-aistroyka-text-secondary sm:p-6">
-        {tDetail("decisionSimulationEmpty")}
-      </div>
+      <DashboardGlassCard>
+        <p className="text-sm text-aistroyka-text-secondary">{tDetail("decisionSimulationEmpty")}</p>
+      </DashboardGlassCard>
     );
   }
 
   const { baseline, acceleration, degradation, deltaDaysAcceleration, deltaDaysDegradation, deltaHealthAcceleration, deltaHealthDegradation, deltaRiskAcceleration, deltaRiskDegradation } = result;
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm sm:p-6">
+    <DashboardGlassCard>
       <div className="font-medium text-aistroyka-text-primary">{tDetail("decisionSimulation")}</div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4">
+        <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-bg-primary/40 p-4">
           <div className="font-medium text-aistroyka-text-primary">{baseline.label}</div>
           <div className="mt-2 text-aistroyka-text-secondary">
             {tDetail("completion")}: {baseline.projectedCompletionDate ?? "—"}
@@ -36,7 +37,7 @@ export function DecisionSimulation({ result }: { result: SimulationResult | null
           </div>
           <div className="mt-1 text-xs text-aistroyka-text-tertiary">{tDetail("delay")}: {baseline.delayProbabilityLabel}</div>
         </div>
-        <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4">
+        <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-bg-primary/40 p-4">
           <div className="font-medium text-aistroyka-text-primary">{acceleration.label}</div>
           <div className="mt-2 text-aistroyka-text-secondary">
             {tDetail("completion")}: {acceleration.projectedCompletionDate ?? "—"}
@@ -46,7 +47,7 @@ export function DecisionSimulation({ result }: { result: SimulationResult | null
           </div>
           <div className="mt-1 text-xs text-aistroyka-text-tertiary">{tDetail("delay")}: {acceleration.delayProbabilityLabel}</div>
         </div>
-        <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4">
+        <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-bg-primary/40 p-4">
           <div className="font-medium text-aistroyka-text-primary">{degradation.label}</div>
           <div className="mt-2 text-aistroyka-text-secondary">
             {tDetail("completion")}: {degradation.projectedCompletionDate ?? "—"}
@@ -69,6 +70,6 @@ export function DecisionSimulation({ result }: { result: SimulationResult | null
           </li>
         </ul>
       </div>
-    </div>
+    </DashboardGlassCard>
   );
 }

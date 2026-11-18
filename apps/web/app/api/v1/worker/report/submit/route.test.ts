@@ -93,7 +93,7 @@ describe("POST /api/v1/worker/report/submit", () => {
       expect.objectContaining({ tenantId: "tenant-1", userId: "worker-1" }),
       "report-1",
       "trace-1",
-      { taskId: "task-1", workerNote: "note from worker" }
+      { taskId: "task-1", workerNote: "note from worker", actualVolume: null, plannedVolume: null }
     );
     expect(storeLiteIdempotency).toHaveBeenCalled();
     expect(await response.json()).toEqual({
@@ -101,6 +101,31 @@ describe("POST /api/v1/worker/report/submit", () => {
       jobIds: ["job-1", "job-2"],
       status: "queued",
     });
+  });
+
+  it("forwards actual and planned volume", async () => {
+    const response = await POST(
+      new Request("https://test/api/v1/worker/report/submit", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-idempotency-key": "k-vol",
+        },
+        body: JSON.stringify({
+          report_id: "report-2",
+          actual_volume: 36,
+          planned_volume: 48,
+        }),
+      })
+    );
+    expect(response.status).toBe(200);
+    expect(submitReport).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "report-2",
+      "trace-1",
+      { taskId: undefined, workerNote: null, actualVolume: 36, plannedVolume: 48 }
+    );
   });
 });
 

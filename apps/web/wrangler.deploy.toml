@@ -48,6 +48,8 @@ NEXT_PUBLIC_APP_URL = "https://aistroyka.ai"
 AI_ANALYSIS_URL = "https://aistroyka.ai/api/ai/analyze-image"
 # Align with working copilot model tier; gpt-4o may be unavailable on some OpenAI projects.
 OPENAI_VISION_MODEL = "gpt-4o-mini"
+# Phase 3 only — do NOT enable during Phase 1 admin domain bring-up:
+# OWNER_ALLOWED_HOSTS = "admin.aistroyka.ai"
 
 [env.production.assets]
 directory = ".open-next/assets"

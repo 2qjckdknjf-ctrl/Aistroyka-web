@@ -4,15 +4,12 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
-  Card,
-  SectionHeader,
-  Tabs,
-  Tab,
   TabPanel,
   Skeleton,
   EmptyState,
+  SectionHeader,
   Table,
   TableHead,
   TableBody,
@@ -23,15 +20,36 @@ import {
   Button,
 } from "@/components/ui";
 import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
-import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
-import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
+import { ProjectScheduleCanonPanel } from "@/components/canon/ProjectScheduleCanonPanel";
+import { ProjectDocumentsCanonPanel } from "@/components/canon/ProjectDocumentsCanonPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
+import { ProjectQuantitiesPanel } from "./ProjectQuantitiesPanel";
+import { ProjectPreprojectExtractionPanel } from "./ProjectPreprojectExtractionPanel";
+import { ProjectReconciliationFindingsPanel } from "./ProjectReconciliationFindingsPanel";
+import { ProjectTradeCompletenessPanel } from "./ProjectTradeCompletenessPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
+import { DefectsProjectTab } from "./DefectsProjectTab";
+import { ChangeOrdersManagerPanel } from "./ChangeOrdersManagerPanel";
+import { HandoverManagerPanel } from "./HandoverManagerPanel";
+import { ProjectReviewPackPanel } from "./ProjectReviewPackPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
-import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { AiActionPanel } from "@/components/ai/AiActionPanel";
+import {
+  CanonPageHeader,
+  CanonProjectTabBar,
+  ProjectCommandCenterOverview,
+} from "@/components/canon";
+import { ProjectVideoDailyAnalysisPanel } from "../../../projects/ProjectVideoDailyAnalysisPanel";
+import { ProjectFieldDailyLogPanel } from "../../../projects/ProjectFieldDailyLogPanel";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
-import { resolveProjectDetailTab } from "./project-detail-tabs";
+import type { TenantRoleDb } from "@/lib/tenant/tenant.types";
+import {
+  DEFAULT_PROJECT_DETAIL_TAB,
+  resolveProjectDetailTab,
+  type ProjectCommandTab,
+} from "./project-detail-tabs";
 
 const PAGE_SIZE = 10;
 
@@ -110,15 +128,31 @@ async function fetchProjectAi(projectId: string, page: number): Promise<{ data: 
 export function DashboardProjectDetailClient({
   projectId,
   canExportReports = false,
+  tenantRole = null,
 }: {
   projectId: string;
   canExportReports?: boolean;
+  tenantRole?: TenantRoleDb | null;
 }) {
-  const tPage = useTranslations("dashboardPageMeta");
+  const t = useTranslations("canon");
   const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const tabParam = searchParams?.get("tab");
-  const [activeTab, setActiveTab] = useState(resolveProjectDetailTab(tabParam));
+  const [activeTab, setActiveTab] = useState(() => resolveProjectDetailTab(tabParam));
+
+  const selectTab = (tab: ProjectCommandTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    if (tab === DEFAULT_PROJECT_DETAIL_TAB) {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
 
   useEffect(() => {
     setActiveTab(resolveProjectDetailTab(tabParam));
@@ -172,15 +206,15 @@ export function DashboardProjectDetailClient({
 
   if (loading && !project) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={4} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error || !project) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
           title={tDetail("projectNotFound")}
@@ -191,82 +225,51 @@ export function DashboardProjectDetailClient({
             </Link>
           }
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   return (
-    <>
-      <div className="mb-4">
-        <Link
-          href="/dashboard/projects"
-          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
-        >
+    <div className="space-y-6">
+      <nav className="text-sm text-[var(--canon-text-muted)]">
+        <Link href="/dashboard/projects" className="hover:text-[var(--canon-cyan)]">
           {tDetail("projects")}
         </Link>
-      </div>
-      <SectionHeader title={project.name} subtitle={tPage("projectOverviewSubtitle")} />
+        <span className="mx-2">/</span>
+        <span className="text-[var(--canon-text-secondary)]">{project.name}</span>
+      </nav>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6" aria-label={tDetail("projectSummary")}>
-        <Card className="border-l-4 border-l-aistroyka-accent">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("activeWorkers")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.activeWorkers}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-info">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("openReports")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.openReports}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-success">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("aiAnalyses")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.aiAnalyses}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-warning">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("pendingUploads")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">—</p>
-        </Card>
-      </section>
+      <CanonPageHeader
+        title={t("projectCommandCenter")}
+        subtitle={t("screen03Label")}
+        actions={
+          <>
+            <span className="canon-risk-badge canon-risk-badge--low">{t("statusInProgress")}</span>
+            <button type="button" className="canon-ghost-btn" aria-label={t("moreActions")}>⋯</button>
+            <Link
+              href={`/dashboard/tasks?project_id=${encodeURIComponent(projectId)}`}
+              className="canon-gold-btn"
+            >
+              {t("createTask")}
+            </Link>
+          </>
+        }
+      />
 
-      <TelegramConnectCard className="mb-6" />
+      <div className="canon-glass overflow-hidden">
+        <CanonProjectTabBar
+          projectId={projectId}
+          activeTab={activeTab}
+          onSelectTab={selectTab}
+        />
 
-      <ProjectSubnav projectId={projectId} activeTab={activeTab} onSelect={setActiveTab} />
-
-      <Card>
-        <Tabs aria-label={tDetail("projectSections")}>
-          <Tab id="tab-workers" selected={activeTab === "workers"} onSelect={() => setActiveTab("workers")} aria-controls="panel-workers">
-            {tDetail("workers")}
-          </Tab>
-          <Tab id="tab-contractors" selected={activeTab === "contractors"} onSelect={() => setActiveTab("contractors")} aria-controls="panel-contractors">
-            {tDetail("contractors")}
-          </Tab>
-          <Tab id="tab-reports" selected={activeTab === "reports"} onSelect={() => setActiveTab("reports")} aria-controls="panel-reports">
-            {tDetail("reports")}
-          </Tab>
-          <Tab id="tab-uploads" selected={activeTab === "uploads"} onSelect={() => setActiveTab("uploads")} aria-controls="panel-uploads">
-            {tDetail("uploads")}
-          </Tab>
-          <Tab id="tab-ai" selected={activeTab === "ai"} onSelect={() => setActiveTab("ai")} aria-controls="panel-ai">
-            {tDetail("ai")}
-          </Tab>
-          <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => setActiveTab("intelligence")} aria-controls="panel-intelligence">
-            {tDetail("intelligence")}
-          </Tab>
-          <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => setActiveTab("schedule")} aria-controls="panel-schedule">
-            {tDetail("schedule")}
-          </Tab>
-          <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => setActiveTab("documents")} aria-controls="panel-documents">
-            {tDetail("documents")}
-          </Tab>
-          <Tab id="tab-decisions" selected={activeTab === "decisions"} onSelect={() => setActiveTab("decisions")} aria-controls="panel-decisions">
-            {tDetail("decisions")}
-          </Tab>
-          <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
-            {tDetail("costs")}
-          </Tab>
-          <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => setActiveTab("estimate")} aria-controls="panel-estimate">
-            {tDetail("estimate")}
-          </Tab>
-        </Tabs>
-
+        <TabPanel id="panel-overview" selected={activeTab === "overview"} aria-labelledby="tab-overview">
+          <ProjectCommandCenterOverview
+            projectId={projectId}
+            projectName={project.name}
+            summary={summary}
+          />
+        </TabPanel>
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
           <ProjectWorkersPanel
             projectId={projectId}
@@ -301,31 +304,70 @@ export function DashboardProjectDetailClient({
         </TabPanel>
         <TabPanel id="panel-ai" selected={activeTab === "ai"} aria-labelledby="tab-ai">
           <ProjectAiPanel
+            projectId={projectId}
+            tenantId={project.tenant_id}
+            tenantRole={tenantRole}
             query={aiQuery}
             page={aiPage}
             onPageChange={setAiPage}
           />
         </TabPanel>
         <TabPanel id="panel-intelligence" selected={activeTab === "intelligence"} aria-labelledby="tab-intelligence">
-          <ProjectIntelligenceClient projectId={projectId} />
+          <ProjectIntelligenceClient projectId={projectId} skin="canon" />
         </TabPanel>
         <TabPanel id="panel-schedule" selected={activeTab === "schedule"} aria-labelledby="tab-schedule">
-          <ProjectSchedulePanel projectId={projectId} />
+          <ProjectScheduleCanonPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-documents" selected={activeTab === "documents"} aria-labelledby="tab-documents">
-          <ProjectDocumentsPanel projectId={projectId} />
+          <ProjectDocumentsCanonPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
           <ProjectDecisionsPanel projectId={projectId} />
         </TabPanel>
+        <TabPanel id="panel-defects" selected={activeTab === "defects"} aria-labelledby="tab-defects">
+          <DefectsProjectTab projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-change-orders" selected={activeTab === "change-orders"} aria-labelledby="tab-change-orders">
+          <ChangeOrdersManagerPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-handover" selected={activeTab === "handover"} aria-labelledby="tab-handover">
+          <HandoverManagerPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-review-pack" selected={activeTab === "review-pack"} aria-labelledby="tab-review-pack">
+          <ProjectReviewPackPanel projectId={projectId} />
+        </TabPanel>
         <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
-          <ProjectCostsPanel projectId={projectId} />
+          <ProjectCostsPanel projectId={projectId} skin="canon" />
         </TabPanel>
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
-          <ProjectEstimatePanel projectId={projectId} />
+          <ProjectEstimatePanel projectId={projectId} skin="canon" />
         </TabPanel>
-      </Card>
-    </>
+        <TabPanel id="panel-quantities" selected={activeTab === "quantities"} aria-labelledby="tab-quantities">
+          <ProjectQuantitiesPanel projectId={projectId} skin="canon" />
+        </TabPanel>
+        <TabPanel id="panel-preproject" selected={activeTab === "preproject"} aria-labelledby="tab-preproject">
+          <ProjectPreprojectExtractionPanel projectId={projectId} skin="canon" />
+        </TabPanel>
+        <TabPanel
+          id="panel-reconciliation"
+          selected={activeTab === "reconciliation"}
+          aria-labelledby="tab-reconciliation"
+        >
+          <ProjectReconciliationFindingsPanel projectId={projectId} skin="canon" />
+        </TabPanel>
+        <TabPanel
+          id="panel-completeness"
+          selected={activeTab === "completeness"}
+          aria-labelledby="tab-completeness"
+        >
+          <ProjectTradeCompletenessPanel projectId={projectId} skin="canon" />
+        </TabPanel>
+      </div>
+
+      {activeTab === "overview" ? (
+        <TelegramConnectCard className="mt-4 opacity-80" />
+      ) : null}
+    </div>
   );
 }
 
@@ -625,44 +667,79 @@ function ProjectUploadsPanel({
 }
 
 function ProjectAiPanel({
+  projectId,
+  tenantId,
+  tenantRole,
   query,
   page,
   onPageChange,
 }: {
+  projectId: string;
+  tenantId: string;
+  tenantRole: TenantRoleDb | null;
   query: { data?: { data: { id: string; media_id: string; status: string; created_at: string }[]; total: number }; isPending: boolean; isError: boolean };
   page: number;
   onPageChange: (p: number) => void;
 }) {
   const tDetail = useTranslations("dashboardDetail");
-  if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadAiJobs")}</p>;
-  const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
-  if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">🤖</span>} title={tDetail("ai")} subtitle={tDetail("noAiJobsForProjectYet")} />;
-  }
+  const tPage = useTranslations("dashboardPageMeta");
+  const tProject = useTranslations("projectDetail");
+
   return (
-    <div className="p-4">
-      <Table aria-label={tDetail("projectAiJobs")}>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>{tDetail("jobId")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((r) => (
-            <TableRow key={r.id}>
-              <TableCell className="font-mono text-sm">{r.id.slice(0, 8)}…</TableCell>
-              <TableCell className="font-mono text-sm">{r.media_id.slice(0, 8)}…</TableCell>
-              <TableCell>{r.status}</TableCell>
-              <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <TablePagination page={page} pageSize={PAGE_SIZE} totalCount={total} onPageChange={onPageChange} />
+    <div className="space-y-aistroyka-6 p-4">
+      <section>
+        <SectionHeader title={tPage("aiCopilotTitle")} subtitle={tPage("aiCopilotSubtitle")} />
+        <AiActionPanel projectId={projectId} tenantId={tenantId} />
+      </section>
+
+      <section>
+        <SectionHeader title={tProject("videoDailyTitle")} subtitle={tProject("videoDailySubtitle")} />
+        <DashboardGlassCard>
+          <ProjectVideoDailyAnalysisPanel projectId={projectId} />
+        </DashboardGlassCard>
+      </section>
+
+      <section>
+        <SectionHeader title={tProject("fieldDailyTitle")} subtitle={tProject("fieldDailySubtitle")} />
+        <DashboardGlassCard>
+          <ProjectFieldDailyLogPanel projectId={projectId} tenantRole={tenantRole} />
+        </DashboardGlassCard>
+      </section>
+
+      <section>
+        <SectionHeader title={tDetail("ai")} subtitle={tDetail("projectAiJobs")} />
+        {query.isPending ? (
+          <Skeleton className="h-48" />
+        ) : query.isError ? (
+          <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadAiJobs")}</p>
+        ) : (query.data?.total ?? 0) === 0 && (query.data?.data?.length ?? 0) === 0 ? (
+          <EmptyState icon={<span className="text-2xl">🤖</span>} title={tDetail("ai")} subtitle={tDetail("noAiJobsForProjectYet")} />
+        ) : (
+          <div>
+            <Table aria-label={tDetail("projectAiJobs")}>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>{tDetail("jobId")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(query.data?.data ?? []).map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-sm">{r.id.slice(0, 8)}…</TableCell>
+                    <TableCell className="font-mono text-sm">{r.media_id.slice(0, 8)}…</TableCell>
+                    <TableCell>{r.status}</TableCell>
+                    <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePagination page={page} pageSize={PAGE_SIZE} totalCount={query.data?.total ?? 0} onPageChange={onPageChange} />
+          </div>
+        )}
+      </section>
     </div>
   );
 }

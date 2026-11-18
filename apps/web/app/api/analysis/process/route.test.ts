@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn().mockResolvedValue({}),
-  getSessionUser: vi.fn().mockResolvedValue({ id: "test-user", email: undefined }),
+vi.mock("@/lib/tenant", async (original) => ({
+  ...await original<typeof import("@/lib/tenant")>(),
+  getTenantContextFromRequest: vi.fn().mockResolvedValue({ tenantId: "tenant-a", userId: "test-user", role: "member" }),
 }));
+vi.mock("@/lib/supabase/server", () => ({ createClientFromRequest: vi.fn().mockResolvedValue({}) }));
 
 vi.mock("@/lib/supabase/admin", () => ({
   getAdminClient: vi.fn().mockReturnValue({}),
@@ -14,14 +15,14 @@ vi.mock("@/lib/ai/runOneJob", () => ({ processOneJob: mockProcessOneJob }));
 
 describe("POST /api/analysis/process", () => {
   it("returns 401 when user is not authenticated", async () => {
-    const { getSessionUser } = await import("@/lib/supabase/server");
-    vi.mocked(getSessionUser).mockResolvedValueOnce(null);
+    const { getTenantContextFromRequest } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({ tenantId: null, userId: null, role: null } as never);
     const { POST } = await import("./route");
     const res = await POST(new Request("http://test/api/analysis/process", { method: "POST" }));
     expect(res.status).toBe(401);
     const data = (await res.json()) as { ok?: boolean; error?: string };
     expect(data.ok).toBe(false);
-    expect(data.error).toBe("Unauthorized");
+    expect(data.error).toBe("Authentication required");
   });
 
   it("returns 503 when processOneJob returns no_url", async () => {

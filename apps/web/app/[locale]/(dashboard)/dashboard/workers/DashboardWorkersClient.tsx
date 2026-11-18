@@ -10,13 +10,13 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
   Button,
 } from "@/components/ui";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface WorkerRow {
   user_id: string;
@@ -52,29 +52,29 @@ export function DashboardWorkersClient() {
 
   if (loading && !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={5} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (!data?.length) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">👷</span>}
           title={tDetail("noWorkersYet")}
           subtitle={tDetail("workerDayDataAppears")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -94,7 +94,7 @@ export function DashboardWorkersClient() {
   };
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
       <div className="p-2 flex justify-end">
         <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
       </div>
@@ -168,6 +168,6 @@ export function DashboardWorkersClient() {
           ))}
         </TableBody>
       </Table>
-    </Card>
+    </DashboardGlassCard>
   );
 }

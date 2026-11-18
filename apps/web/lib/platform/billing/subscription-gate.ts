@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getWorkspacePilotStatus } from "@/lib/platform/billing-readiness/billing-pilot.repository";
+import { pickPrimaryTenantMembership } from "@/lib/tenant/tenant-membership-priority";
 
 /**
  * Controls server-side dashboard subscription enforcement in `(dashboard)` layout.
@@ -49,13 +50,11 @@ async function resolveTenantIdForUser(
     .maybeSingle();
   if (ownTenant?.id) return ownTenant.id as string;
 
-  const { data: memberTenant } = await supabase
+  const { data: memberTenants } = await supabase
     .from("tenant_members")
-    .select("tenant_id")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
-  return (memberTenant?.tenant_id as string | undefined) ?? null;
+    .select("tenant_id, role")
+    .eq("user_id", userId);
+  return pickPrimaryTenantMembership(memberTenants ?? [])?.tenant_id ?? null;
 }
 
 export async function getActiveSubscriptionStateForUser(

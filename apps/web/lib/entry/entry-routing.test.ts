@@ -18,6 +18,9 @@ describe("sanitizeNextRoute", () => {
     expect(sanitizeNextRoute("/en/invite", BASE)).toBe("/en/invite");
     expect(sanitizeNextRoute("/en/billing", BASE)).toBe("/en/billing");
     expect(sanitizeNextRoute("/en/admin", BASE)).toBe("/en/admin");
+    expect(sanitizeNextRoute("/ru/platform-admin", BASE)).toBe("/ru/platform-admin");
+    expect(sanitizeNextRoute("/ru/platform-admin/testing", BASE)).toBe("/ru/platform-admin/testing");
+    expect(sanitizeNextRoute("/en/owner", BASE)).toBe("/en/owner");
   });
 
   it("accepts path without locale and prepends locale", () => {
@@ -29,6 +32,8 @@ describe("sanitizeNextRoute", () => {
   it("preserves query string for invite flow", () => {
     expect(sanitizeNextRoute("/en/invite/accept?token=abc", BASE)).toBe("/en/invite/accept?token=abc");
     expect(sanitizeNextRoute("/invite/accept?token=xyz", BASE, "en")).toBe("/en/invite/accept?token=xyz");
+    expect(sanitizeNextRoute("/ru/subscribe?plan=pro", BASE)).toBe("/ru/subscribe?plan=pro");
+    expect(sanitizeNextRoute("/subscribe?plan=starter", BASE, "en")).toBe("/en/subscribe?plan=starter");
   });
 
   it("rejects protocol-relative URLs (open redirect)", () => {
@@ -105,6 +110,16 @@ describe("resolvePostAuthEntry", () => {
   it("preserves invite accept deep link", () => {
     const r = resolvePostAuthEntry({ locale: "en", next: "/invite/accept?token=abc", baseUrl: BASE });
     expect(r.path).toBe("/en/invite/accept?token=abc");
+    expect(r.reason).toBe("explicit_next");
+  });
+
+  it("preserves platform-admin deep link after login", () => {
+    const r = resolvePostAuthEntry({
+      locale: "ru",
+      next: "/ru/platform-admin/testing",
+      baseUrl: "https://admin.aistroyka.ai/ru/login",
+    });
+    expect(r.path).toBe("/ru/platform-admin/testing");
     expect(r.reason).toBe("explicit_next");
   });
 });

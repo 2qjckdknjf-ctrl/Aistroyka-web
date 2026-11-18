@@ -162,6 +162,62 @@ describe("upload-session.service", () => {
       expect(repo.finalize).not.toHaveBeenCalled();
     });
 
+    it("rejects task_chat finalize without positive size_bytes", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "s1",
+        tenant_id: "t1",
+        user_id: "u1",
+        purpose: "task_chat",
+        status: "created",
+        object_path: null,
+        mime_type: null,
+        size_bytes: null,
+        created_at: "",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+      });
+      const { ok, error } = await finalizeUploadSession(
+        {} as any,
+        ctx,
+        "s1",
+        { object_path: "media/t1/s1/file.jpg", mime_type: "image/jpeg" }
+      );
+      expect(ok).toBe(false);
+      expect(error).toBe("Chat media size_bytes required");
+      expect(repo.finalize).not.toHaveBeenCalled();
+    });
+
+    it("accepts task_chat finalize with positive size_bytes", async () => {
+      vi.unstubAllEnvs();
+      vi.mocked(getAdminClient).mockReturnValue(null);
+      vi.mocked(repo.finalize).mockReset();
+      vi.mocked(repo.finalize).mockResolvedValue(true);
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "s1",
+        tenant_id: "t1",
+        user_id: "u1",
+        purpose: "task_chat",
+        status: "created",
+        object_path: null,
+        mime_type: null,
+        size_bytes: null,
+        created_at: "",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+      });
+      const { ok, error } = await finalizeUploadSession(
+        {} as any,
+        ctx,
+        "s1",
+        {
+          object_path: "media/t1/s1/file.jpg",
+          mime_type: "image/jpeg",
+          size_bytes: 2048,
+        }
+      );
+      expect(error, `expected ok, got error=${error}`).toBe("");
+      expect(ok).toBe(true);
+      expect(repo.finalize).toHaveBeenCalled();
+    });
+
     it("when verify on and strict off, storage error does not block finalize", async () => {
       vi.stubEnv("MEDIA_FINALIZE_VERIFY_OBJECT", "true");
       vi.stubEnv("MEDIA_FINALIZE_VERIFY_STRICT", "false");

@@ -1,0 +1,148 @@
+{
+  "meta": {
+    "version": "1.0",
+    "intakeCardDoc": "docs/launch/PILOT_INTAKE_CARD.md",
+    "lastUpdated": "2026-07-03",
+    "filledBy": "operator-demo"
+  },
+  "client": {
+    "companyName": "Demo Renovation Client LLC",
+    "legalIdentifier": "DEMO-001",
+    "mainSponsor": {
+      "name": "Alex Demo Sponsor",
+      "role": "Operations Director",
+      "phone": "+1-555-0100",
+      "email": "sponsor@example.com"
+    },
+    "preferredLanguage": "ru",
+    "timezone": "Europe/Moscow",
+    "notes": "Synthetic demo intake — not a real client."
+  },
+  "project": {
+    "name": "Demo Apartment Renovation",
+    "address": "123 Example Street, Demo City",
+    "type": "renovation",
+    "typeOther": "",
+    "startDate": "2026-07-10",
+    "endDate": "2026-08-07",
+    "expectedDurationWeeks": 4,
+    "siteInternetQuality": "medium",
+    "siteAccessNotes": "Site Wi-Fi available; cellular backup on lower floors."
+  },
+  "users": {
+    "ownerAdmin": {
+      "name": "Demo Owner Admin",
+      "email": "owner.admin@example.com",
+      "phone": "+1-555-0101",
+      "role": "owner"
+    },
+    "managers": [
+      {
+        "name": "Demo Manager One",
+        "email": "manager.one@example.com",
+        "phone": "+1-555-0102",
+        "iphoneAvailable": true,
+        "notes": "Primary site manager"
+      }
+    ],
+    "workers": [
+      {
+        "name": "Demo Worker Alpha",
+        "emailOrPhone": "worker.alpha@example.com",
+        "iphoneAvailable": true,
+        "androidOnly": false,
+        "assignedTasks": "Kitchen rough-in, bathroom prep",
+        "notes": ""
+      },
+      {
+        "name": "Demo Worker Beta",
+        "emailOrPhone": "worker.beta@example.com",
+        "iphoneAvailable": true,
+        "androidOnly": false,
+        "assignedTasks": "Flooring inspection",
+        "notes": ""
+      }
+    ],
+    "stakeholders": [
+      {
+        "name": "Demo Client Viewer",
+        "email": "client.viewer@example.com",
+        "role": "client_viewer",
+        "portalAccess": true,
+        "notes": "Property owner — portal only"
+      }
+    ]
+  },
+  "devices": {
+    "workersHaveIphone": true,
+    "managersHaveIphone": true,
+    "androidOnlyWorkers": false,
+    "androidOnlyWorkersConfirmed": true,
+    "testFlightAccessReady": true,
+    "appleIdsAvailable": true,
+    "internetOnSite": "medium",
+    "deviceBlockers": "None for demo"
+  },
+  "scope": {
+    "workerDailyReports": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "beforeAfterPhotoEvidence": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "managerApprovals": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "requestChangesResubmit": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "documentsActsContracts": { "included": false, "requiredForLaunch": false, "notes": "Optional week 2" },
+    "costsBudgetInternalManagers": { "included": true, "requiredForLaunch": false, "notes": "Internal manager only" },
+    "stakeholderClientPortal": { "included": true, "requiredForLaunch": false, "notes": "One viewer" },
+    "scheduleMilestones": { "included": true, "requiredForLaunch": false, "notes": "3 milestones" },
+    "aiIntelligenceProjectHealth": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "notifications": { "included": true, "requiredForLaunch": false, "notes": "Push optional" },
+    "androidSupport": { "included": false, "requiredForLaunch": false, "notes": "Deferred per P3" }
+  },
+  "environment": {
+    "target": "staging",
+    "realClientDataUsed": false,
+    "syntheticDemoDataUsed": true,
+    "productionMutationAuthorizedByOwner": false,
+    "productionTenantName": "",
+    "dataCleanupResetPlan": "Reset staging demo tenant after dry-run; no production mutation."
+  },
+  "support": {
+    "supportEmail": "pilot-support@example.com",
+    "supportWhatsAppTelegram": "",
+    "supportOwner": "AISTROYKA CS Lead",
+    "escalationContact": "owner@example.com",
+    "supportHours": "Mon–Fri 09:00–18:00 Europe/Moscow",
+    "emergencyIssueProtocol": "Email URGENT + escalation contact for P0 auth/submit outages"
+  },
+  "day0Checklist": {
+    "clientSelected": true,
+    "sponsorConfirmed": true,
+    "projectConfirmed": true,
+    "supportContactConfirmed": true,
+    "androidRequirementChecked": true,
+    "iosDevicesReady": true,
+    "testFlightInstalled": false,
+    "tenantAccountCreated": false,
+    "projectCreated": false,
+    "managersInvited": false,
+    "workersInvited": false,
+    "stakeholderInvited": false,
+    "tasksCreated": false,
+    "milestonesCreated": false,
+    "documentsPrepared": false,
+    "costsPrepared": false,
+    "workerReportMediaSmokePassed": false,
+    "managerApprovalSmokePassed": false,
+    "stakeholderVisibilitySmokePassed": false,
+    "knownLimitationsAccepted": true,
+    "ownerSignoff": true,
+    "clientSignoff": false
+  },
+  "goNoGo": {
+    "launchAllowed": null,
+    "reason": "",
+    "blockingItems": [],
+    "ownerSignoff": "Demo Owner — APPROVED (synthetic)",
+    "clientSignoff": "",
+    "decisionDate": "",
+    "nextAction": "Run validate script; complete Day 0 provisioning on staging"
+  }
+}

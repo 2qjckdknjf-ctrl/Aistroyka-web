@@ -45,22 +45,14 @@ public actor APIClient {
         if let key = idempotencyKey {
             request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
         }
-        if let token = await tokenProvider?() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let body = body {
             request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         }
 
-        let (data, response) = try await session.data(for: request)
-        let http = response as? HTTPURLResponse
-
-        if let code = http?.statusCode, code >= 400 {
-            if code == 401 {
-                await notifySessionInvalidIfNeeded()
-            }
+        let (data, response) = try await performData(request)
+        if let code = (response as? HTTPURLResponse)?.statusCode, code >= 400 {
             throw APIError.from(data: data, response: response)
         }
 
@@ -83,16 +75,10 @@ public actor APIClient {
         request.setValue(clientProfile, forHTTPHeaderField: "x-client")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-        if let token = await tokenProvider?() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
-        let (bytes, response) = try await session.bytes(for: request)
+        let (bytes, response) = try await performBytes(request)
         guard let http = response as? HTTPURLResponse else {
             throw APIError(statusCode: nil, code: nil, message: "Invalid response")
-        }
-        if http.statusCode == 401 {
-            await notifySessionInvalidIfNeeded()
         }
         if http.statusCode >= 400 {
             var data = Data()
@@ -113,6 +99,40 @@ public actor APIClient {
         let _: EmptyJSON = try await request(path: path, method: method, body: body, idempotencyKey: idempotencyKey)
     }
 
+    /// POST multipart `file` field (cabinet document upload).
+    public func uploadMultipartFile(
+        path: String,
+        fileData: Data,
+        fileName: String,
+        mimeType: String,
+        fieldName: String = "file",
+        idempotencyKey: String? = nil
+    ) async throws {
+        guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }
+        let pathTrimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        guard let url = URL(string: pathTrimmed, relativeTo: base) else { throw APIError(statusCode: nil, code: nil, message: "Invalid path") }
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if let key = idempotencyKey {
+            request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
+        }
+        var body = Data()
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".utf8))
+        body.append(Data("Content-Type: \(mimeType)\r\n\r\n".utf8))
+        body.append(fileData)
+        body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+        request.httpBody = body
+        let (data, response) = try await performData(request)
+        if let code = (response as? HTTPURLResponse)?.statusCode, code >= 400 {
+            throw APIError.from(data: data, response: response)
+        }
+    }
+
     /// Returns raw data and status for sync/changes so caller can decode 409 body (SyncConflictBody).
     public func requestDataAndResponse(path: String, method: String = "GET") async throws -> (Data, Int) {
         guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }
@@ -122,15 +142,85 @@ public actor APIClient {
         request.httpMethod = method
         request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
         request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        let (data, response) = try await performData(request)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        return (data, code)
+    }
+
+    private func applyAuth(_ request: inout URLRequest) async {
         if let token = await tokenProvider?() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        let (data, response) = try await session.data(for: request)
-        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-        if code == 401 {
-            await notifySessionInvalidIfNeeded()
+    }
+
+    /// Customer originals use the shared private same-origin transport.
+    public func requestPublishedPhoto(projectId: String, evidenceId: String) async throws -> Data {
+        let path = try CustomerPublishedEvidence.originalRequestPath(projectId: projectId, evidenceId: evidenceId)
+        return try await requestPrivateOriginal(path: path, maxBytes: 20 * 1024 * 1024,
+                                              allowedMime: ["image/jpeg", "image/png", "image/webp"])
+    }
+
+    public func requestPrivateDocument(projectId: String, documentId: String) async throws -> Data {
+        guard UUID(uuidString: projectId) != nil, UUID(uuidString: documentId) != nil else {
+            throw APIError(statusCode: 400, code: nil, message: "Invalid document identifier")
         }
-        return (data, code)
+        return try await requestPrivateOriginal(path: "projects/\(projectId)/documents/\(documentId)/original", maxBytes: 25 * 1024 * 1024)
+    }
+
+    /// Same-origin bearer requests only; no redirect, shared cookie jar or persistent response cache.
+    private func requestPrivateOriginal(path: String, maxBytes: Int, allowedMime: [String]? = nil) async throws -> Data {
+        guard let base = Config.apiBaseURL, let url = URL(string: path, relativeTo: base) else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid base URL")
+        }
+        let config = session.configuration
+        config.urlCache = nil; config.httpCookieStorage = nil
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let transport = URLSession(configuration: config, delegate: RejectPrivateRedirect(), delegateQueue: nil)
+        defer { transport.finishTasksAndInvalidate() }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
+        request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        if let allowedMime { request.setValue(allowedMime.joined(separator: ", "), forHTTPHeaderField: "Accept") }
+        let (data, response) = try await performData(request, transport: transport)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { throw APIError.from(data: data, response: response) }
+        guard response.url?.absoluteURL == url.absoluteURL, data.count <= maxBytes else {
+            throw APIError(statusCode: 415, code: nil, message: "Unsupported original response")
+        }
+        if let allowedMime, !allowedMime.contains(http.mimeType ?? "") { throw APIError(statusCode: 415, code: nil, message: "Unsupported original response") }
+        return data
+    }
+
+    private func performData(_ request: URLRequest, transport: URLSession? = nil) async throws -> (Data, URLResponse) {
+        let transport = transport ?? session
+        var req = request
+        await applyAuth(&req)
+        var result = try await transport.data(for: req)
+        if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+            if await AuthService.shared.refreshAfterUnauthorized() {
+                await applyAuth(&req)
+                result = try await transport.data(for: req)
+            }
+            if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+                await notifySessionInvalidIfNeeded()
+            }
+        }
+        return result
+    }
+
+    private func performBytes(_ request: URLRequest) async throws -> (URLSession.AsyncBytes, URLResponse) {
+        var req = request
+        await applyAuth(&req)
+        var result = try await session.bytes(for: req)
+        if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+            if await AuthService.shared.refreshAfterUnauthorized() {
+                await applyAuth(&req)
+                result = try await session.bytes(for: req)
+            }
+            if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+                await notifySessionInvalidIfNeeded()
+            }
+        }
+        return result
     }
 
     /// 401: notify host apps so they can sign out and avoid a stuck authenticated UI (Worker queue pauses without this).
@@ -149,6 +239,7 @@ public actor APIClient {
     private var shouldEmitSessionExpiredNotification: Bool {
         clientProfile == MobileClientProfile.manager.rawValue
             || clientProfile == MobileClientProfile.worker.rawValue
+            || clientProfile == MobileClientProfile.customer.rawValue
     }
 }
 
@@ -157,4 +248,9 @@ private struct AnyEncodable: Encodable {
     let value: Encodable
     init(_ value: Encodable) { self.value = value }
     func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
+}
+
+private final class RejectPrivateRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }

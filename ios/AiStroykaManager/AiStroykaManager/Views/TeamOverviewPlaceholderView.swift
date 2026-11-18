@@ -13,6 +13,11 @@ struct TeamOverviewPlaceholderView: View {
                 Text(NSLocalizedString("mgr_team_placeholder", comment: ""))
                     .foregroundStyle(.secondary)
             }
+            .aistroykaListChrome(
+                pageBackground: ManagerSemanticColors.pageBackground,
+                surfaceMuted: ManagerSemanticColors.surfaceMuted
+            )
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
         }
     }

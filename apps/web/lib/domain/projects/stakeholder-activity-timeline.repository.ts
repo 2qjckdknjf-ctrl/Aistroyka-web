@@ -212,7 +212,7 @@ export async function getStakeholderActivityTimeline(
   }
 
   if (viewer === "manager") {
-    const stakeholders = await shRepo.listByProject(supabase, tenantId, projectId);
+    const { rows: stakeholders } = await shRepo.listByProject(supabase, tenantId, projectId);
     for (const s of stakeholders) {
       items.push({
         id: `sh:invite:${s.id}`,

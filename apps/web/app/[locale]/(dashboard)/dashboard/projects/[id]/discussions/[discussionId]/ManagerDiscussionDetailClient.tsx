@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Button, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { discussionStatusBadgeClass } from "../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Entry = {
   id: string;
@@ -124,21 +125,21 @@ export function ManagerDiscussionDetailClient({
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">💬</span>}
           title={tDetail("discussionUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -150,16 +151,16 @@ export function ManagerDiscussionDetailClient({
       <Link href={`/dashboard/projects/${projectId}`} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
         {tDetail("backToProject")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <Badge className={discussionStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "discussion", tPortal)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">{tDetail("createdByUser")} {d.created_by.slice(0, 8)}…</p>
         {d.context ? <p className="mt-3 text-sm whitespace-pre-wrap">{d.context}</p> : null}
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {d.entries.map((e) => (
@@ -171,11 +172,11 @@ export function ManagerDiscussionDetailClient({
             </li>
           ))}
         </ul>
-      </Card>
+      </DashboardGlassCard>
 
       {open ? (
         <>
-          <Card className="p-4">
+          <DashboardGlassCard className="p-4">
             <h2 className="font-semibold">{tDetail("addUpdate")}</h2>
             <select
               className="mt-2 w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
@@ -202,9 +203,9 @@ export function ManagerDiscussionDetailClient({
             >
               {tDetail("postUpdate")}
             </Button>
-          </Card>
+          </DashboardGlassCard>
 
-          <Card className="p-4 border-l-4 border-l-aistroyka-success">
+          <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-success">
             <h2 className="font-semibold">{tDetail("resolve")}</h2>
             <textarea
               className="mt-2 w-full rounded border border-aistroyka-border-subtle p-2 text-sm"
@@ -223,7 +224,7 @@ export function ManagerDiscussionDetailClient({
             >
               {tDetail("markResolved")}
             </Button>
-          </Card>
+          </DashboardGlassCard>
 
           <Button type="button" variant="ghost" size="sm" loading={closeMutation.isPending} onClick={() => closeMutation.mutate()}>
             {tDetail("closeWithoutResolution")}

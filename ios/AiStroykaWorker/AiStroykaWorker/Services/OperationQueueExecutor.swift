@@ -185,7 +185,9 @@ final class OperationQueueExecutor: ObservableObject {
                     reportId: reportId,
                     taskId: op.payload.taskId,
                     workerNote: op.payload.workerNote,
-                    idempotencyKey: op.idempotencyKey
+                    idempotencyKey: op.idempotencyKey,
+                    actualVolume: op.payload.actualVolume,
+                    plannedVolume: op.payload.plannedVolume
                 )
                 appStore.save { $0.draftReportId = nil; $0.pendingUploads = [] }
                 return .success
@@ -193,6 +195,19 @@ final class OperationQueueExecutor: ObservableObject {
                 let cursor = op.payload.cursor ?? 0
                 try await WorkerAPI.syncAck(cursor: cursor, idempotencyKey: op.idempotencyKey)
                 appStore.save { $0.lastSyncCursor = String(cursor) }
+                return .success
+            case .sendTaskMessage:
+                guard let taskId = op.payload.taskId,
+                      let body = op.payload.messageBody,
+                      let clientId = op.payload.clientId else {
+                    return .permanent(message: "Missing task chat payload")
+                }
+                _ = try await TaskMessagesAPI.sendText(
+                    taskId: taskId,
+                    body: body,
+                    clientId: clientId,
+                    idempotencyKey: op.idempotencyKey
+                )
                 return .success
             }
         } catch let err as APIError {

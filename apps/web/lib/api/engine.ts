@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createContractorWorkspaceForUser } from "@/lib/account/account-workspace.service";
+import { pickPrimaryTenantMembership } from "@/lib/tenant/tenant-membership-priority";
 import { createAnalysisJobRpc } from "./rpcClient";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -22,7 +23,7 @@ export async function getOrCreateTenantForCurrentUser(
 
 /**
  * Returns the active tenant for current user.
- * Priority: owned tenant -> tenant_members membership.
+ * Priority: owned tenant -> strongest tenant_members row (internal beats stakeholder).
  */
 export async function getTenantForCurrentUser(
   supabase: SupabaseClient
@@ -39,13 +40,14 @@ export async function getTenantForCurrentUser(
       .maybeSingle();
     if (!e1 && ownTenant?.id) return ownTenant.id;
 
-    const { data: memberRow, error: e2 } = await supabase
+    const { data: memberRows, error: e2 } = await supabase
       .from("tenant_members")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .maybeSingle();
-    if (!e2 && memberRow?.tenant_id) return memberRow.tenant_id;
+      .select("tenant_id, role")
+      .eq("user_id", user.id);
+    if (!e2) {
+      const primary = pickPrimaryTenantMembership(memberRows ?? []);
+      if (primary?.tenant_id) return primary.tenant_id;
+    }
 
     // If user has a pending invitation, do not auto-create a personal tenant.
     const normalizedEmail = (user.email ?? "").trim().toLowerCase();
@@ -106,7 +108,12 @@ export async function getDefaultTenantId(
  */
 export async function createAnalysisJob(
   _supabase: SupabaseClient,
-  params: { tenant_id: string; media_id: string; priority?: "high" | "normal" | "low" }
+  params: {
+    tenant_id: string;
+    media_id: string;
+    priority?: "high" | "normal" | "low";
+    request_key?: string | null;
+  }
 ): Promise<{ id: string; media_id: string; status: string }> {
   const admin = getAdminClient();
   if (!admin) {
@@ -118,7 +125,35 @@ export async function createAnalysisJob(
     p_tenant_id: params.tenant_id,
     p_media_id: params.media_id,
     p_priority: params.priority ?? "normal",
+    ...(params.request_key ? { p_request_key: params.request_key } : {}),
   });
+  if (params.request_key) {
+    const { error: stampErr } = await admin
+      .from("analysis_jobs")
+      .update({ request_key: params.request_key } as never)
+      .eq("id", row.id)
+      .eq("tenant_id", params.tenant_id)
+      .is("request_key", null);
+    if (stampErr?.code === "23505") {
+      const { data: existingRaw, error: lookupErr } = await admin
+        .from("analysis_jobs")
+        .select("id, media_id, status")
+        .eq("tenant_id", params.tenant_id)
+        .eq("request_key", params.request_key)
+        .maybeSingle();
+      if (lookupErr) throw lookupErr;
+      const existing = existingRaw as { id: string; media_id: string; status: string } | null;
+      if (!existing || existing.media_id !== params.media_id) {
+        throw stampErr;
+      }
+      return {
+        id: existing.id,
+        media_id: existing.media_id,
+        status: existing.status,
+      };
+    }
+    if (stampErr) throw stampErr;
+  }
   return {
     id: row.id,
     media_id: row.media_id,

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
+import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
 import { listFlags, upsertFlag } from "@/lib/platform/flags";
 import { emitAudit } from "@/lib/observability/audit.service";
 
@@ -32,6 +33,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
+  if (platformErr) return platformErr;
+
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);

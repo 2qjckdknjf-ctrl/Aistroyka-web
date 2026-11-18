@@ -13,10 +13,11 @@ import { getProofPackByToken } from "@/lib/domain/proof-pack/proof-pack.service"
 import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
 
 export const dynamic = "force-dynamic";
+const headers = { "Cache-Control": "private, no-store", "CDN-Cache-Control": "no-store", "Cloudflare-CDN-Cache-Control": "no-store", "Referrer-Policy": "no-referrer" };
 
 export async function GET(_request: Request, context: { params: Promise<{ token: string }> }) {
   const { token } = await context.params;
-  if (!token) return NextResponse.json({ error: "Missing token" }, { status: 400 });
+  if (!token) return NextResponse.json({ error: "Missing token" }, { status: 400, headers });
   const admin = getAdminClient();
   if (!admin) {
     return NextResponse.json(
@@ -24,15 +25,15 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
         error:
           "Proof pack links require SUPABASE_SERVICE_ROLE_KEY (server-only). Configure env and redeploy.",
       },
-      { status: 503 }
+      { status: 503, headers }
     );
   }
   const { data, error } = await getProofPackByToken(admin, token);
-  if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404 });
+  if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404, headers });
   const safety = assertCustomerFinanceSafePayload(data);
   if (!safety.ok) {
-    console.error(`Blocked customer-finance leak in /api/v1/share/proof/${token}: ${safety.path ?? safety.key}`);
-    return NextResponse.json({ error: "Proof pack payload failed finance safety guard" }, { status: 500 });
+    console.error(`Blocked customer-finance leak in /api/v1/share/proof/:token: ${safety.path ?? safety.key}`);
+    return NextResponse.json({ error: "Proof pack payload failed finance safety guard" }, { status: 500, headers });
   }
-  return NextResponse.json({ data });
+  return NextResponse.json({ data }, { headers });
 }

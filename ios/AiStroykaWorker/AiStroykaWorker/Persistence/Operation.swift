@@ -25,6 +25,7 @@ enum OperationType: String, Codable {
     case attachMedia
     case submitReport
     case syncAck
+    case sendTaskMessage
 }
 
 /// Minimal payload: only fields needed for execution. All optional; decode by type.
@@ -43,6 +44,11 @@ struct OperationPayload: Codable, Equatable {
     var cursor: Int?
     /// Optional narrative sent with `POST worker/report/submit`.
     var workerNote: String?
+    /// Task chat text body / client id for offline send.
+    var messageBody: String?
+    var clientId: String?
+    var actualVolume: Double?
+    var plannedVolume: Double?
 
     init(
         dayId: String? = nil,
@@ -57,7 +63,11 @@ struct OperationPayload: Codable, Equatable {
         sizeBytes: Int? = nil,
         imageDataBase64: String? = nil,
         cursor: Int? = nil,
-        workerNote: String? = nil
+        workerNote: String? = nil,
+        messageBody: String? = nil,
+        clientId: String? = nil,
+        actualVolume: Double? = nil,
+        plannedVolume: Double? = nil
     ) {
         self.dayId = dayId
         self.taskId = taskId
@@ -72,6 +82,10 @@ struct OperationPayload: Codable, Equatable {
         self.imageDataBase64 = imageDataBase64
         self.cursor = cursor
         self.workerNote = workerNote
+        self.messageBody = messageBody
+        self.clientId = clientId
+        self.actualVolume = actualVolume
+        self.plannedVolume = plannedVolume
     }
 }
 

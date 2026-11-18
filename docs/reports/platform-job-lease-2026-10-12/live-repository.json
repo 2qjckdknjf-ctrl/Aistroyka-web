@@ -1,0 +1,23 @@
+{
+  "kind": "actual-repository-through-live-Supabase-SDK",
+  "provider_called": false,
+  "checks": [
+    {
+      "scenario": "two acknowledgements one winner",
+      "pass": true
+    },
+    {
+      "scenario": "microsecond-later same-worker lease survives stale success/dead/retry",
+      "pass": true
+    },
+    {
+      "scenario": "foreign tenant rejected",
+      "pass": true
+    },
+    {
+      "scenario": "own retry clears lease only",
+      "pass": true
+    }
+  ],
+  "cleanup": true
+}

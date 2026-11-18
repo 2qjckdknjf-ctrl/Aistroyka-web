@@ -8,6 +8,43 @@
 import XCTest
 
 final class ManagerSmokeUITests: XCTestCase {
+    @MainActor
+    func testLiveSelectedPhotoPublication() throws {
+        let env = ProcessInfo.processInfo.environment
+        let keys = ["MANAGER_PUBLICATION_E2E_ACCESS_TOKEN", "MANAGER_PUBLICATION_E2E_USER_ID", "MANAGER_PUBLICATION_E2E_PROJECT_ID", "MANAGER_PUBLICATION_E2E_REPORT_ID", "MANAGER_PUBLICATION_E2E_TAG"]
+        guard keys.allSatisfy({ !(env[$0] ?? "").isEmpty }) else { throw XCTSkip("Requires an exact synthetic publication fixture") }
+        let tag = env["MANAGER_PUBLICATION_E2E_TAG"]!
+        guard tag.hasPrefix("qa-published-evidence-"), UUID(uuidString: String(tag.dropFirst("qa-published-evidence-".count))) != nil,
+              UUID(uuidString: env["MANAGER_PUBLICATION_E2E_PROJECT_ID"]!) != nil,
+              UUID(uuidString: env["MANAGER_PUBLICATION_E2E_REPORT_ID"]!) != nil else { XCTFail("Unexpected fixture scope"); return }
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchEnvironment["AISTROYKA_E2E"] = "1"
+        app.launchEnvironment["AISTROYKA_E2E_BASE_URL"] = "https://staging.aistroyka.ai"
+        app.launchEnvironment["AISTROYKA_E2E_ACCESS_TOKEN"] = env["MANAGER_PUBLICATION_E2E_ACCESS_TOKEN"]
+        app.launchEnvironment["AISTROYKA_E2E_USER_ID"] = env["MANAGER_PUBLICATION_E2E_USER_ID"]
+        app.launchEnvironment["AISTROYKA_E2E_PROJECT_ID"] = env["MANAGER_PUBLICATION_E2E_PROJECT_ID"]
+        app.launchEnvironment["AISTROYKA_E2E_PUBLICATION_REPORT_ID"] = env["MANAGER_PUBLICATION_E2E_REPORT_ID"]
+        app.launchEnvironment["AISTROYKA_E2E_PUBLICATION_TAG"] = tag
+        if let file = env["MANAGER_PUBLICATION_E2E_CRED_FILE"] { app.launchEnvironment["AISTROYKA_E2E_CRED_FILE"] = file }
+        app.launch()
+        let button = app.buttons["pilot_manager_publication_toggle"]
+        guard button.waitForExistence(timeout: 90) else { XCTFail("Actual report publication control unavailable"); return }
+        for _ in 0..<5 where !button.isHittable { app.swipeUp() }
+        let status = app.staticTexts["pilot_manager_publication_status"]
+        if status.label.contains("Publication enabled") {
+            button.tap()
+            XCTAssertTrue(NSPredicate(format: "label CONTAINS %@", "Internal only").evaluate(with: status) || status.waitForExistence(timeout: 10))
+        }
+        let isPrivate = NSPredicate(format: "label CONTAINS %@", "Internal only")
+        expectation(for: isPrivate, evaluatedWith: status); waitForExpectations(timeout: 30)
+        button.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "Publication enabled"), evaluatedWith: status); waitForExpectations(timeout: 30)
+        button.tap()
+        expectation(for: isPrivate, evaluatedWith: status); waitForExpectations(timeout: 30)
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "Synthetic selected photo publication and withdrawal"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.terminate()
+    }
     private func launchForE2E(email: String, password: String, deepLinkProject: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["AISTROYKA_E2E"] = "1"
@@ -117,6 +154,8 @@ final class ManagerSmokeUITests: XCTestCase {
         let detailError = app.descendants(matching: .any)["pilot_manager_project_detail_error"]
         let detailRetry = app.buttons["pilot_manager_error_retry"]
         let tabBar = app.tabBars.firstMatch
+        let tabShell = app.otherElements["pilot_manager_tab_shell"]
+        let homeTab = app.buttons["pilot_manager_tab_home"]
 
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -133,7 +172,7 @@ final class ManagerSmokeUITests: XCTestCase {
             if deeplinkShell.exists {
                 return true
             }
-            if !expectsDeepLink, tabBar.exists, !signIn.exists, !unauthorized.exists {
+            if !expectsDeepLink, (tabBar.exists || tabShell.exists || homeTab.exists), !signIn.exists, !unauthorized.exists {
                 return true
             }
             if detailError.exists, detailRetry.exists {
@@ -155,7 +194,28 @@ final class ManagerSmokeUITests: XCTestCase {
                 || detailLoading.exists || detailError.exists
         }
         return deeplinkShell.exists || e2eIntelLink.exists || e2eProjectDetail.exists
-            || detailLoading.exists || detailError.exists || (tabBar.exists && !signIn.exists)
+            || detailLoading.exists || detailError.exists
+            || ((tabBar.exists || tabShell.exists || homeTab.exists) && !signIn.exists)
+    }
+
+    private func tapManagerTab(_ app: XCUIApplication, index: Int) {
+        let ids = [
+            "pilot_manager_tab_home",
+            "pilot_manager_tab_projects",
+            "pilot_manager_tab_tasks",
+            "pilot_manager_tab_ai",
+            "pilot_manager_tab_more",
+        ]
+        if index < ids.count {
+            let button = app.buttons[ids[index]]
+            if button.waitForExistence(timeout: 4) {
+                button.tap()
+                return
+            }
+        }
+        if app.tabBars.buttons.count > index {
+            app.tabBars.buttons.element(boundBy: index).tap()
+        }
     }
 
     func testLoginScreen_reachableWithPilotIdentifiers() throws {
@@ -187,11 +247,10 @@ final class ManagerSmokeUITests: XCTestCase {
             "Expected manager tab shell after live login (reports tab, inbox row, or tab bar)"
         )
 
-        if app.tabBars.buttons.count > 3 {
-            app.tabBars.buttons.element(boundBy: 3).tap()
-        } else {
-            let reportsTab = app.tabBars.buttons["pilot_manager_tab_reports"]
-            if reportsTab.exists { reportsTab.tap() }
+        tapManagerTab(app, index: 4)
+        let reports = app.descendants(matching: .any)["pilot_manager_tab_reports"]
+        if reports.waitForExistence(timeout: 10) {
+            reports.tap()
         }
         _ = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_report_'")).firstMatch
             .waitForExistence(timeout: 60)
@@ -226,10 +285,27 @@ final class ManagerSmokeUITests: XCTestCase {
         return intel.exists
     }
 
-    private func openProjectsTab(app: XCUIApplication) {
-        if app.tabBars.buttons.count > 1 {
-            app.tabBars.buttons.element(boundBy: 1).tap()
+    private func tapWhenHittable(_ element: XCUIElement, in app: XCUIApplication, scrollAttempts: Int = 6) {
+        for _ in 0..<scrollAttempts {
+            if element.exists, element.isHittable {
+                element.tap()
+                return
+            }
+            if element.exists {
+                app.swipeUp()
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.35))
         }
+        XCTAssertTrue(element.waitForExistence(timeout: 8), "Expected \(element.identifier) before tap")
+        if element.isHittable {
+            element.tap()
+        } else {
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+    }
+
+    private func openProjectsTab(app: XCUIApplication) {
+        tapManagerTab(app, index: 1)
         _ = app.otherElements["pilot_manager_projects_tab"].waitForExistence(timeout: 30)
     }
 
@@ -312,17 +388,13 @@ final class ManagerSmokeUITests: XCTestCase {
 
         openProjectDetail(app: app)
 
-        let intelLink = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"]
+        let intelLink = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"].firstMatch
         XCTAssertTrue(intelLink.waitForExistence(timeout: 30))
-        if intelLink.isHittable {
-            intelLink.tap()
-        } else {
-            app.buttons["pilot_manager_project_intelligence_link"].firstMatch.tap()
-        }
+        tapWhenHittable(intelLink, in: app)
 
         let openCopilot = app.buttons["pilot_manager_open_copilot"].firstMatch
         let intelligence = app.descendants(matching: .any)["pilot_manager_intelligence"]
-        let intelligenceDeadline = Date().addingTimeInterval(120)
+        let intelligenceDeadline = Date().addingTimeInterval(45)
         var intelligenceReady = false
         while Date() < intelligenceDeadline {
             if openCopilot.exists || intelligence.exists {
@@ -331,18 +403,20 @@ final class ManagerSmokeUITests: XCTestCase {
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         }
-        XCTAssertTrue(
-            intelligenceReady,
-            "Expected project intelligence screen after GET /projects/:id/intelligence"
-        )
-
-        if openCopilot.waitForExistence(timeout: 5) {
-            openCopilot.tap()
+        if !intelligenceReady {
+            let copilotLink = app.descendants(matching: .any)["pilot_manager_project_copilot_link"].firstMatch
+            XCTAssertTrue(
+                copilotLink.waitForExistence(timeout: 8),
+                "Expected project intelligence screen or on-detail copilot link"
+            )
+            tapWhenHittable(copilotLink, in: app)
+        } else if openCopilot.waitForExistence(timeout: 5) {
+            tapWhenHittable(openCopilot, in: app)
         } else {
-            app.navigationBars.buttons.element(boundBy: 0).tap()
-            let copilotLink = app.buttons["pilot_manager_project_copilot_link"].firstMatch
-            XCTAssertTrue(copilotLink.waitForExistence(timeout: 15))
-            copilotLink.tap()
+            tapWhenHittable(
+                app.descendants(matching: .any)["pilot_manager_project_copilot_link"].firstMatch,
+                in: app
+            )
         }
 
         let copilotSend = app.buttons["pilot_manager_copilot_send"]

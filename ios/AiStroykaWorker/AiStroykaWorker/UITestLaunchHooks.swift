@@ -11,7 +11,8 @@ import Shared
 
 enum UITestLaunchHooks {
     static var isEnabled: Bool {
-        ProcessInfo.processInfo.environment["AISTROYKA_UI_TEST"] == "1"
+        WorkerV43LaunchFlags.isOn("AISTROYKA_UI_TEST")
+            || ProcessInfo.processInfo.environment["AISTROYKA_UI_TEST"] == "preview"
     }
 
     /// Live pilot E2E: skip intro; optional `AISTROYKA_E2E_PROJECT_ID` auto-selects project in HomeContainerView.
@@ -49,6 +50,7 @@ enum UITestLaunchHooks {
                 $0.hasCompletedWorkerIntro = true
                 $0.draftReportId = nil
                 $0.pendingUploads = []
+                $0.clearCachedTodayTasks()
             }
             await AuthService.shared.signOut()
             appState.isLoggedIn = false
@@ -56,7 +58,10 @@ enum UITestLaunchHooks {
             return
         }
         guard isEnabled else { return }
-        store.save { $0.hasCompletedWorkerIntro = true }
+        store.save {
+            $0.hasCompletedWorkerIntro = true
+            $0.clearCachedTodayTasks()
+        }
         await AuthService.shared.signOut()
         appState.isLoggedIn = false
         appState.currentUser = nil

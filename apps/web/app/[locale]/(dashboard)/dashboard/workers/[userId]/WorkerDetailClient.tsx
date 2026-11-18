@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface WorkerSummary {
   reports_count: number;
@@ -29,7 +30,7 @@ export function WorkerDetailClient({ userId }: { userId: string }) {
     enabled: !!userId,
   });
 
-  if (isPending) return <Card className="p-4"><Skeleton lines={2} /></Card>;
+  if (isPending) return <DashboardGlassCard className="p-4"><Skeleton lines={2} /></DashboardGlassCard>;
   const reports_count = data?.reports_count ?? 0;
   const media_count = data?.media_count ?? 0;
   const is_contractor = data?.is_contractor ?? false;
@@ -38,7 +39,7 @@ export function WorkerDetailClient({ userId }: { userId: string }) {
   const reports_pending_review = data?.reports_pending_review ?? 0;
 
   return (
-    <Card className="p-4">
+    <DashboardGlassCard className="p-4">
       {is_contractor && (
         <p className="mb-3">
           <span className="inline-flex items-center rounded-full bg-aistroyka-surface px-2.5 py-0.5 text-aistroyka-caption font-medium text-aistroyka-accent ring-1 ring-aistroyka-border-subtle">
@@ -72,6 +73,6 @@ export function WorkerDetailClient({ userId }: { userId: string }) {
         <Link href={`/dashboard/tasks?worker_id=${encodeURIComponent(userId)}`} className="text-aistroyka-accent hover:underline mr-2">{tDetail("tasksForWorkerLink")}</Link>
         · <Link href="/dashboard/daily-reports" className="text-aistroyka-accent hover:underline">{tDetail("viewAllReportsLink")}</Link> {tDetail("workerSubmissionsSuffix")}
       </p>
-    </Card>
+    </DashboardGlassCard>
   );
 }
