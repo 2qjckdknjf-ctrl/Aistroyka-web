@@ -14,12 +14,14 @@ import {
   ShieldAlert,
   Settings,
   PanelLeftClose,
+  Briefcase,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   getDashboardNavIncludesAdmin,
   getPortalOnlyNavItems,
+  isDashboardNavHrefActive,
 } from "@/components/dashboard-nav.utils";
 
 type NavItem = {
@@ -32,6 +34,7 @@ type NavItem = {
 
 const CONTRACTOR_NAV: NavItem[] = [
   { href: "/dashboard", labelKey: "navDashboard", icon: LayoutDashboard, testId: "cta.dashboard.nav.overview" },
+  { href: "/portfolio", labelKey: "navPortfolio", icon: Briefcase, testId: "cta.dashboard.nav.portfolio" },
   { href: "/dashboard/projects", labelKey: "navProjects", icon: Building2, testId: "cta.dashboard.nav.projects" },
   { href: "/dashboard/tasks", labelKey: "navTasks", icon: ListTodo, testId: "cta.dashboard.nav.tasks" },
   { href: "/dashboard/workload", labelKey: "navCalendar", icon: CalendarDays },
@@ -67,30 +70,33 @@ export function CanonSidebarNav({
 }: CanonSidebarNavProps) {
   const t = useTranslations("canon");
 
-  const isActive = (href: string) => {
-    if (href === "/dashboard") return pathname === "/dashboard";
-    return pathname === href || pathname.startsWith(`${href}/`);
-  };
+  const isActive = (href: string) => isDashboardNavHrefActive(pathname, href);
 
   if (portalOnly) {
     return (
-      <nav className="flex flex-1 flex-col py-2" aria-label={t("portalNavigation")}>
-        {getPortalOnlyNavItems().map(({ href, key, testId }) => {
-          const active = isActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onNavigate}
-              data-testid={testId}
-              className={`canon-nav-link ${active ? "canon-nav-link--active" : ""}`}
-            >
-              <Building2 size={20} strokeWidth={1.75} aria-hidden />
-              <span className="canon-nav-label">{t("portalProjects")}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="flex h-full flex-col">
+        <Link href={homeHref} onClick={onNavigate} className="canon-sidebar-brand block">
+          AISTROYKA
+        </Link>
+        <nav className="flex flex-1 flex-col py-2" aria-label={t("portalNavigation")}>
+          {getPortalOnlyNavItems().map(({ href, testId }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={onNavigate}
+                data-testid={testId}
+                className={`canon-nav-link ${active ? "canon-nav-link--active" : ""}`}
+                aria-current={active ? "page" : undefined}
+              >
+                <Building2 size={20} strokeWidth={1.75} aria-hidden />
+                <span className="canon-nav-label">{t("portalProjects")}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
     );
   }
 
