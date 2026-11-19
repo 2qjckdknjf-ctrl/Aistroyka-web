@@ -7,6 +7,8 @@ export { DashboardTasksCanonPage } from "./DashboardTasksCanonPage";
 export { CanonProjectTabBar, getCanonProjectTabItems } from "./CanonProjectTabBar";
 export { ProjectCommandCenterOverview } from "./ProjectCommandCenterOverview";
 export { CanonPageHeader } from "./CanonPageHeader";
+export { ProjectMoreActionsMenu } from "./ProjectMoreActionsMenu";
+export { ProjectSetupNotesBanner } from "./ProjectSetupNotesBanner";
 export { CanonPortfolioAiPanel } from "./CanonPortfolioAiPanel";
 export { ReportReviewCanonView } from "./ReportReviewCanonView";
 export type { ReportReviewCanonData, ReportAnalysisCanonData } from "./ReportReviewCanonView";

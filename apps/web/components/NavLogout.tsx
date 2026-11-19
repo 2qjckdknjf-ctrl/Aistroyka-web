@@ -4,7 +4,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
-export function NavLogout() {
+export function NavLogout({ className }: { className?: string }) {
   const router = useRouter();
   const t = useTranslations("nav");
 
@@ -19,7 +19,7 @@ export function NavLogout() {
     <button
       type="button"
       onClick={handleLogout}
-      className="btn-secondary text-sm"
+      className={className ?? "btn-secondary text-sm"}
     >
       {t("logout")}
     </button>
