@@ -12,7 +12,10 @@ import { isAdminHostBlockedApiPath, resolveAdminHostPageRouting } from "@/lib/pl
 import { applyApiSecurityHeadersToHeaders } from "@/lib/security-headers";
 import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
 import { isPortalOnlyTenantRole } from "@/lib/tenant/tenant.policy";
-import { redirectIfStakeholderBlockedPath } from "@/lib/tenant/stakeholder-dashboard-paths";
+import {
+  redirectIfStakeholderBlockedPath,
+  stakeholderGateUnavailableResponse,
+} from "@/lib/tenant/stakeholder-dashboard-paths";
 import { matchesPathPrefix } from "@/lib/routing/matches-path-prefix";
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -182,7 +185,12 @@ export async function middleware(request: NextRequest) {
         }
       }
     } catch {
-      // fail-open: role lookup errors must not lock contractor dashboards
+      const unavailable = stakeholderGateUnavailableResponse(pathWithoutLoc, locale, request.url);
+      if (unavailable) {
+        mergeSupabaseSessionIntoResponse(sessionResponse, unavailable);
+        unavailable.headers.set("X-Auth-Redirect", "stakeholder-gate-unavailable");
+        return applyHostProfileHeader(unavailable, request);
+      }
     }
   }
   if (isAuthPage && user) {
