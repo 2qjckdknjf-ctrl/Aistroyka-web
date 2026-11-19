@@ -1,5 +1,11 @@
 # STATUS — AISTROYKA
 
+## P0 инцидент — 2026-11-19: Supabase недоступен, production/staging 503
+
+Живая проверка 2026-11-19 07:10 UTC: `GET /api/v1/health` на `aistroyka.ai` и `staging.aistroyka.ai` → 503, `db: error`, `supabaseReachable: false`, `buildStamp.sha7 = f6f56b8` (deploy 2026-10-30). DNS `vthfrxehrursfloevnlp.supabase.co` → NXDOMAIN (проект AISTROYKA приостановлен или удалён на стороне Supabase); начало между 2026-11-08 13:10 и 2026-11-09 09:54 UTC. Cloudflare Workers исправны, починка только через Supabase Dashboard владельцем (restore/unpause **того же** проекта `vthfrxehrursfloevnlp`, без создания нового). После восстановления: health 200, затем GDPR processor и миграционный receipts preflight перед любым apply.
+
+Исправления по [глубокому аудиту 2026-11-18](docs/audit/AUDIT_2026-11-18_full-deep-audit-ru.md) открыты отдельными PR (ветки `cursor/*-95a4`): закрытие `/smoke` + robots, fail-closed stakeholder gate, Next 15.5.29 (14 advisories), runtime health monitor (cron + issue `runtime-incident`), удаление дубликатов «(1)», i18n support/uploads, эта сверка документации. Все требуют non-author review. Пункты «Следующее локальное» ниже остаются в силе, но блокированы P0. Legal-тексты, store-загрузки и billing 7-day gate — `OWNER_GATE`.
+
 ## Актуальная плановая сверка — 2026-10-30
 
 Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Main tip после #480–#483: `ff7d0894`. Hosted SQL applied (grants, quantity/material/corrections/captions, completeness evaluations, intake_draft unique, tender findings).
