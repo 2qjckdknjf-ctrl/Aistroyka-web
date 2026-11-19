@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
   Badge,
@@ -35,11 +35,29 @@ interface UploadSessionRow {
   report_id?: string | null;
 }
 
-function formatDate(value?: string | null): string {
+function formatDate(value: string | null | undefined, locale: string): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" });
+  return date.toLocaleString(locale, { dateStyle: "short", timeStyle: "short" });
+}
+
+function statusLabel(
+  status: string,
+  tUploads: ReturnType<typeof useTranslations<"dashboard.uploadsPage">>,
+): string {
+  switch (status) {
+    case "created":
+      return tUploads("statusCreated");
+    case "uploaded":
+      return tUploads("statusUploaded");
+    case "finalized":
+      return tUploads("statusFinalized");
+    case "expired":
+      return tUploads("statusExpired");
+    default:
+      return status;
+  }
 }
 
 function statusVariant(status: string): "success" | "warning" | "danger" | "neutral" {
@@ -78,12 +96,14 @@ function referenceLabel(row: UploadSessionRow, tDetail: ReturnType<typeof useTra
 
 export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tUploads = useTranslations("dashboard.uploadsPage");
+  const locale = useLocale();
   const isCanon = skin === "canon";
   const UPLOAD_STATUS_OPTIONS = [
-    { value: "created", label: tDetail("created") },
-    { value: "uploaded", label: tDetail("uploaded") },
-    { value: "finalized", label: tDetail("finalized") },
-    { value: "expired", label: tDetail("expired") },
+    { value: "created", label: tUploads("statusCreated") },
+    { value: "uploaded", label: tUploads("statusUploaded") },
+    { value: "finalized", label: tUploads("statusFinalized") },
+    { value: "expired", label: tUploads("statusExpired") },
   ];
   const { params, setParam } = useFilterParams();
   const searchParams = useSearchParams();
@@ -238,7 +258,7 @@ export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" 
                         ? "canon-risk-badge--high"
                         : "canon-risk-badge--medium"
                   }`}>
-                    {row.status}
+                    {statusLabel(row.status, tUploads)}
                   </span>
                 </td>
                 <td className="canon-hide-mobile">{purposeLabel(row.purpose, tDetail)}</td>
@@ -247,7 +267,7 @@ export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" 
                     {row.user_id.slice(0, 8)}…
                   </Link>
                 </td>
-                <td className="text-xs tabular-nums">{formatDate(row.created_at)}</td>
+                <td className="text-xs tabular-nums">{formatDate(row.created_at, locale)}</td>
               </tr>
             ))}
           </tbody>
@@ -283,7 +303,7 @@ export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" 
                 </span>
               </TableCell>
               <TableCell>
-                <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+                <Badge variant={statusVariant(row.status)}>{statusLabel(row.status, tUploads)}</Badge>
               </TableCell>
               <TableCell>{purposeLabel(row.purpose, tDetail)}</TableCell>
               <TableCell>
@@ -299,10 +319,10 @@ export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" 
                 {referenceLabel(row, tDetail)}
               </TableCell>
               <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                {formatDate(row.created_at)}
+                {formatDate(row.created_at, locale)}
               </TableCell>
               <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                {row.updated_at ? formatDate(row.updated_at) : formatDate(row.expires_at)}
+                {row.updated_at ? formatDate(row.updated_at, locale) : formatDate(row.expires_at, locale)}
               </TableCell>
             </TableRow>
           ))}

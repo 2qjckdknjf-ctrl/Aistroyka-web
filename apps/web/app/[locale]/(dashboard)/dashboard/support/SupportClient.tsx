@@ -23,6 +23,22 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
   const t = useTranslations("dashboard.supportPage");
   const locale = useLocale();
   const isCanon = skin === "canon";
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "open":
+        return t("statusOpen");
+      case "in_progress":
+        return t("statusInProgress");
+      case "waiting_user":
+        return t("statusWaitingUser");
+      case "resolved":
+        return t("statusResolved");
+      case "closed":
+        return t("statusClosed");
+      default:
+        return t("statusUnknown", { status });
+    }
+  };
   const shell = isCanon ? "canon-glass p-4" : "card";
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
@@ -174,7 +190,7 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
                 >
                   <p className="text-sm font-medium text-aistroyka-text-primary">{ticket.subject}</p>
                   <p className="text-xs text-aistroyka-text-tertiary">
-                    {ticket.status} · {new Date(ticket.updated_at).toLocaleString(locale)}
+                    {statusLabel(ticket.status)} · {new Date(ticket.updated_at).toLocaleString(locale)}
                   </p>
                 </button>
               </li>
@@ -190,7 +206,7 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
           {activeTicket ? (
             <>
               <p className="mt-2 text-sm text-aistroyka-text-secondary">
-                {activeTicket.subject} ({activeTicket.status})
+                {activeTicket.subject} ({statusLabel(activeTicket.status)})
               </p>
               <ul className="mt-3 max-h-64 space-y-2 overflow-auto">
                 {messages.map((msg) => (

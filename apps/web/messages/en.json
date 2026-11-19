@@ -801,7 +801,13 @@
       "noMessages": "No messages yet.",
       "replyPlaceholder": "Add message",
       "sendMessage": "Send message",
-      "selectTicket": "Select a ticket to view details."
+      "selectTicket": "Select a ticket to view details.",
+      "statusOpen": "Open",
+      "statusInProgress": "In progress",
+      "statusWaitingUser": "Waiting for you",
+      "statusResolved": "Resolved",
+      "statusClosed": "Closed",
+      "statusUnknown": "{status}"
     },
     "uploadsPage": {
       "statusCreated": "Created",
@@ -826,7 +832,8 @@
       "csvCreated": "Created",
       "csvExpires": "Expires",
       "alertExpired": "Expired",
-      "alertStuck": "Stuck"
+      "alertStuck": "Stuck",
+      "statusExpired": "Expired"
     }
   },
   "onboarding": {

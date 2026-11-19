@@ -1023,7 +1023,13 @@
       "noMessages": "Aún no hay mensajes.",
       "replyPlaceholder": "Añade un mensaje",
       "sendMessage": "Enviar mensaje",
-      "selectTicket": "Selecciona una solicitud para ver los detalles."
+      "selectTicket": "Selecciona una solicitud para ver los detalles.",
+      "statusOpen": "Abierta",
+      "statusInProgress": "En curso",
+      "statusWaitingUser": "Esperando tu respuesta",
+      "statusResolved": "Resuelta",
+      "statusClosed": "Cerrada",
+      "statusUnknown": "{status}"
     },
     "uploadsPage": {
       "statusCreated": "Creada",
@@ -1048,7 +1054,8 @@
       "csvCreated": "Creada",
       "csvExpires": "Vence",
       "alertExpired": "Vencida",
-      "alertStuck": "Atascada"
+      "alertStuck": "Atascada",
+      "statusExpired": "Vencida"
     }
   },
   "projects": {

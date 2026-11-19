@@ -1023,7 +1023,13 @@
       "noMessages": "Сообщений пока нет.",
       "replyPlaceholder": "Добавьте сообщение",
       "sendMessage": "Отправить сообщение",
-      "selectTicket": "Выберите обращение, чтобы посмотреть подробности."
+      "selectTicket": "Выберите обращение, чтобы посмотреть подробности.",
+      "statusOpen": "Открыто",
+      "statusInProgress": "В работе",
+      "statusWaitingUser": "Ожидает вашего ответа",
+      "statusResolved": "Решено",
+      "statusClosed": "Закрыто",
+      "statusUnknown": "{status}"
     },
     "uploadsPage": {
       "statusCreated": "Создана",
@@ -1048,7 +1054,8 @@
       "csvCreated": "Создана",
       "csvExpires": "Истекает",
       "alertExpired": "Истекла",
-      "alertStuck": "Зависла"
+      "alertStuck": "Зависла",
+      "statusExpired": "Истекла"
     }
   },
   "projects": {
