@@ -168,7 +168,7 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
 
   return (
     <div className="space-y-6">
-      <Link href={`/dashboard/projects/${projectId}?tab=aftercare`} className="text-aistroyka-accent hover:underline text-sm">
+      <Link href={`/dashboard/projects/${projectId}?tab=service-requests`} className="text-aistroyka-accent hover:underline text-sm">
         {tDetail("backToAftercare")}
       </Link>
       <DashboardGlassCard className="p-4">

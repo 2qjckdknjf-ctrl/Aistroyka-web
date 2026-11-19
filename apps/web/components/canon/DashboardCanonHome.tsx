@@ -137,7 +137,7 @@ export function DashboardCanonHome() {
         project: task.title,
         title: t("attentionOverdueTask"),
         level: "high",
-        href: `/dashboard/tasks?task=${task.id}`,
+        href: `/dashboard/tasks/${task.id}`,
       });
     }
     for (const report of ops?.queues.reportsPendingReview ?? []) {
@@ -220,7 +220,7 @@ export function DashboardCanonHome() {
               <h2 className="canon-section-title">{t("activeProjects")}</h2>
             </div>
             {projectsQuery.isPending ? (
-              <div className="p-8 text-center text-[var(--canon-text-muted)]">{tDash("loading")}</div>
+              <div className="p-8 text-center text-[var(--canon-text-muted)]">{t("loading")}</div>
             ) : projects.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-[var(--canon-text-secondary)]">{tDash("noProjectsYet")}</p>

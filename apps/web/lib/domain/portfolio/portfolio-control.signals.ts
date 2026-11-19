@@ -16,13 +16,13 @@ export function drilldownHrefForCategory(projectId: string, category: PortfolioB
     case "client_requests":
       return `${base}/client`;
     case "change_orders":
-      return base;
+      return `${base}?tab=change-orders`;
     case "discussions":
       return `${base}/client/discussions`;
     case "handover_pipeline":
-      return base;
+      return `${base}?tab=handover`;
     case "aftercare":
-      return `${base}?tab=aftercare`;
+      return `${base}?tab=service-requests`;
     case "issues":
       return `${base}?tab=issues`;
     case "reports":
