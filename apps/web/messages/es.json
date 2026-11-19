@@ -4087,7 +4087,10 @@
   },
   "errors": {
     "insufficientRights": "Permisos insuficientes",
-    "insufficientRightsMessage": "No tienes permiso para esta acción."
+    "insufficientRightsMessage": "No tienes permiso para esta acción.",
+    "accessCheckUnavailableTitle": "Verificación de acceso no disponible",
+    "accessCheckUnavailableMessage": "No pudimos confirmar qué áreas del espacio de trabajo puede abrir tu cuenta. El acceso permanece cerrado hasta que la verificación se complete. Inténtalo de nuevo en un momento.",
+    "accessCheckUnavailableRetry": "Reintentar"
   },
   "billingOverviewSurface": {
     "cardTitle": "Estado de facturación",
