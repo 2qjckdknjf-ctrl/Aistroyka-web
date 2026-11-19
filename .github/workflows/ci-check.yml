@@ -27,6 +27,8 @@ jobs:
         run: python3 scripts/ops/test_migration_receipts_preflight.py -v
       - name: Published evidence live probe scope tests
         run: python3 scripts/ops/test_verify_published_evidence_live.py -v
+      - name: Runtime health probe tests
+        run: python3 scripts/ops/test_runtime_health_probe.py -v
 
       - name: Production deploy boundary tests
         run: python3 scripts/release/test_deploy_production_worker.py -v

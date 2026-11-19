@@ -1,0 +1,95 @@
+# Scheduled read-only health probe for production and staging (no deploy, no secrets).
+# A failing probe fails the run and opens or updates one "runtime-incident" issue;
+# the next healthy run comments on that issue and closes it.
+name: Runtime Health Monitor
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which hosts to check"
+        required: true
+        default: both
+        type: choice
+        options:
+          - both
+          - production
+          - staging
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: runtime-health-monitor
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Probe /api/v1/health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      INCIDENT_LABEL: runtime-incident
+      INCIDENT_TITLE: "Runtime health incident: /api/v1/health is failing"
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Probe health (retry once to skip single-request blips)
+        id: probe
+        env:
+          TARGET: ${{ inputs.target || 'both' }}
+        run: |
+          set -uo pipefail
+          status=1
+          for attempt in 1 2; do
+            if python3 scripts/ops/runtime_health_probe.py --target "$TARGET" --summary-file health-summary.md; then
+              status=0
+              break
+            fi
+            [ "$attempt" -eq 1 ] && sleep 60
+          done
+          # Always write a summary file even when the probe crashes mid-run.
+          if [ ! -f health-summary.md ]; then
+            printf '| Target | HTTP | Healthy | buildStamp | Details |\n|---|---|---|---|---|\n| probe | - | NO | - | summary missing |\n' > health-summary.md
+          fi
+          cat health-summary.md >> "$GITHUB_STEP_SUMMARY"
+          echo "healthy=$([ "$status" -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # Only a successful full `both` probe may auto-close the shared incident.
+          echo "may_resolve=$([ "$status" -eq 0 ] && [ "$TARGET" = "both" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the incident issue
+        if: steps.probe.outputs.healthy == 'false'
+        run: |
+          set -euo pipefail
+          gh label create "$INCIDENT_LABEL" --color B60205 --description "Automated runtime health incident" 2>/dev/null || true
+          body="$(printf 'Health probe failed at %s UTC.\n\n%s\nRun: %s\n' "$(date -u '+%Y-%m-%d %H:%M')" "$(cat health-summary.md)" "$RUN_URL")"
+          issue="$(gh issue list --label "$INCIDENT_LABEL" --state open --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$body"
+          else
+            gh issue create --title "$INCIDENT_TITLE" --label "$INCIDENT_LABEL" --body "$body"
+          fi
+
+      - name: Resolve the incident issue after recovery
+        if: steps.probe.outputs.may_resolve == 'true'
+        run: |
+          set -euo pipefail
+          issue="$(gh issue list --label "$INCIDENT_LABEL" --state open --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$(printf 'Recovered at %s UTC.\n\n%s\nRun: %s\n' "$(date -u '+%Y-%m-%d %H:%M')" "$(cat health-summary.md)" "$RUN_URL")"
+            gh issue close "$issue" --reason completed
+          fi
+
+      - name: Fail the run while unhealthy
+        if: steps.probe.outputs.healthy == 'false'
+        run: |
+          echo "::error::/api/v1/health is failing; see the job summary and the $INCIDENT_LABEL issue."
+          exit 1
