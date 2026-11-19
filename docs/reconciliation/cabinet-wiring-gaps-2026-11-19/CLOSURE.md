@@ -44,6 +44,18 @@ For the audited cabinet wiring gaps in this slice, discovered user-visible break
 | Bottom nav Documents active on empty hash | Active only for `#portal-documents` |
 | Portal sidebar missing brand | Brand link to portal home |
 
+## Pass 4 — post-PR follow-ups (same branch)
+
+| Issue | Fix |
+|-------|-----|
+| `/team` open to portal-only roles | Middleware block + test |
+| Wrong i18n keys (alerts / loading / creating) | Correct namespaces |
+| Canon task deep links dead-end | Open full task + home links to `/tasks/:id` |
+| Uploads empty state no next step | CTA to projects |
+| Task title/description not editable | Edit details modal → PATCH |
+
+PR: https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/500
+
 ## Checks run
 
 - `I18N_CHECK_ALL=1 bun run i18n:check` → PASS
