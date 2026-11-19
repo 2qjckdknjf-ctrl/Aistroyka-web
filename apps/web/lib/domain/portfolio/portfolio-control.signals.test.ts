@@ -109,6 +109,8 @@ describe("pickTopBlockerCategory", () => {
 
 describe("drilldownHrefForCategory", () => {
   it("maps aftercare to tab", () => {
-    expect(drilldownHrefForCategory("p1", "aftercare")).toContain("tab=aftercare");
+    expect(drilldownHrefForCategory("p1", "aftercare")).toContain("tab=service-requests");
+    expect(drilldownHrefForCategory("p1", "change_orders")).toContain("tab=change-orders");
+    expect(drilldownHrefForCategory("p1", "handover_pipeline")).toContain("tab=handover");
   });
 });

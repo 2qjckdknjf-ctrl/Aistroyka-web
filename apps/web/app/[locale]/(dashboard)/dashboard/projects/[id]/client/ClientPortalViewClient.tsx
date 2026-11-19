@@ -265,14 +265,16 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
                 : null}
             </p>
           )}
-          {portalOnly ? null : (
-            <Link
-              href={`/dashboard/projects/${projectId}/handover/pack`}
-              className="mt-3 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
-            >
-              {tDetail("handoverPackPreviewLink")}
-            </Link>
-          )}
+          <Link
+            href={
+              portalOnly
+                ? `/dashboard/projects/${projectId}/client/handover/pack`
+                : `/dashboard/projects/${projectId}/handover/pack`
+            }
+            className="mt-3 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+          >
+            {tDetail("handoverPackPreviewLink")}
+          </Link>
         </DashboardGlassCard>
       ) : null}
 

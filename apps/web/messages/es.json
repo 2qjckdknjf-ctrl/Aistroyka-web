@@ -14,6 +14,7 @@
     "screen01Label": "Cartera",
     "screen02Label": "Proyectos",
     "navDashboard": "Panel principal",
+    "navPortfolio": "Portfolio",
     "navProjects": "Proyectos",
     "navTasks": "Tareas",
     "navCalendar": "Calendario",
@@ -28,6 +29,8 @@
     "navAdmin": "Admin",
     "globalSearch": "Buscar",
     "globalSearchPlaceholder": "Buscar proyectos, tareas, documentos…",
+    "portalSearchHint": "Abre un proyecto para ver documentos, aprobaciones y actualizaciones.",
+    "portalPickProjectFirst": "Abre un proyecto primero",
     "notifications": "Notificaciones",
     "messages": "Mensajes",
     "help": "Ayuda",
@@ -398,7 +401,13 @@
     "budgetWithinPlan": "Dentro del presupuesto previsto",
     "portalRecentActivity": "Actividad reciente",
     "projectTabReconciliation": "Conciliación",
-    "projectTabCompleteness": "Completitud"
+    "projectTabCompleteness": "Completitud",
+    "projectTabServiceRequests": "Postventa",
+    "projectTabClientRequests": "Solicitudes del cliente",
+    "projectTabDiscussions": "Discusiones",
+    "projectTabStakeholders": "Stakeholders",
+    "projectTabIssues": "Incidencias",
+    "projectTabCommercial": "Comercial"
   },
   "nav": {
     "dashboard": "Panel",
@@ -1026,9 +1035,11 @@
     "clientOptional": "Cliente (opcional)",
     "clientPlaceholder": "Nombre del cliente o propietario",
     "notesOptional": "Notas (opcional)",
-    "notesPlaceholder": "Notas de arranque — locales hasta ampliar campos en la API",
+    "notesPlaceholder": "Notas de arranque — se muestran una vez en el resumen del proyecto",
     "richCreateHint": "El nombre es obligatorio. Dirección y cliente se incluyen en el título hasta que la API tenga campos dedicados.",
-    "nameTooLong": "El nombre del proyecto debe tener como máximo 200 caracteres."
+    "nameTooLong": "El nombre del proyecto debe tener como máximo 200 caracteres.",
+    "setupNotesBannerTitle": "Notas al crear el proyecto",
+    "setupNotesDismiss": "Cerrar"
   },
   "projectDetail": {
     "uploadImage": "Subir imagen",

@@ -247,7 +247,7 @@ export function mapServiceRequestEvent(
     reasonNote: row.note,
     audience: STAKEHOLDER,
     source: "project_service_request_events",
-    targetUrl: `${base}?tab=aftercare`,
+    targetUrl: `${base}?tab=service-requests`,
     linkedPointers: pointersFromServiceRequest(req),
   };
 }

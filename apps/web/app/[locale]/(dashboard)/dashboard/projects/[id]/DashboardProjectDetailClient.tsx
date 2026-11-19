@@ -33,6 +33,12 @@ import { DefectsProjectTab } from "./DefectsProjectTab";
 import { ChangeOrdersManagerPanel } from "./ChangeOrdersManagerPanel";
 import { HandoverManagerPanel } from "./HandoverManagerPanel";
 import { ProjectReviewPackPanel } from "./ProjectReviewPackPanel";
+import { ServiceRequestsProjectTab } from "./ServiceRequestsProjectTab";
+import { ClientRequestsManagerPanel } from "./ClientRequestsManagerPanel";
+import { StakeholderManagerPanel } from "./StakeholderManagerPanel";
+import { StakeholderDiscussionsManagerPanel } from "./StakeholderDiscussionsManagerPanel";
+import { ProjectIssuesPanel } from "./ProjectIssuesPanel";
+import { ProjectCommercialPanel } from "./ProjectCommercialPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
@@ -40,6 +46,8 @@ import {
   CanonPageHeader,
   CanonProjectTabBar,
   ProjectCommandCenterOverview,
+  ProjectMoreActionsMenu,
+  ProjectSetupNotesBanner,
 } from "@/components/canon";
 import { ProjectVideoDailyAnalysisPanel } from "../../../projects/ProjectVideoDailyAnalysisPanel";
 import { ProjectFieldDailyLogPanel } from "../../../projects/ProjectFieldDailyLogPanel";
@@ -125,6 +133,15 @@ async function fetchProjectAi(projectId: string, page: number): Promise<{ data: 
   return res.json();
 }
 
+async function fetchProjectIssues(
+  projectId: string
+): Promise<{ id: string; title: string; description?: string | null; status: string; created_at: string }[]> {
+  const res = await fetch(`/api/v1/projects/${projectId}/issues`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load issues");
+  const json = await res.json();
+  return json.data ?? [];
+}
+
 export function DashboardProjectDetailClient({
   projectId,
   canExportReports = false,
@@ -198,6 +215,11 @@ export function DashboardProjectDetailClient({
     queryFn: () => fetchProjectAi(projectId, aiPage),
     enabled: !!projectId && activeTab === "ai",
   });
+  const issuesQuery = useQuery({
+    queryKey: ["project-issues", projectId],
+    queryFn: () => fetchProjectIssues(projectId),
+    enabled: !!projectId && activeTab === "issues",
+  });
 
   const project = projectQuery.data;
   const summary = summaryQuery.data ?? { activeWorkers: 0, openReports: 0, aiAnalyses: 0 };
@@ -245,7 +267,7 @@ export function DashboardProjectDetailClient({
         actions={
           <>
             <span className="canon-risk-badge canon-risk-badge--low">{t("statusInProgress")}</span>
-            <button type="button" className="canon-ghost-btn" aria-label={t("moreActions")}>⋯</button>
+            <ProjectMoreActionsMenu projectId={projectId} />
             <Link
               href={`/dashboard/tasks?project_id=${encodeURIComponent(projectId)}`}
               className="canon-gold-btn"
@@ -255,6 +277,8 @@ export function DashboardProjectDetailClient({
           </>
         }
       />
+
+      {activeTab === "overview" ? <ProjectSetupNotesBanner projectId={projectId} /> : null}
 
       <div className="canon-glass overflow-hidden">
         <CanonProjectTabBar
@@ -324,11 +348,38 @@ export function DashboardProjectDetailClient({
         <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
           <ProjectDecisionsPanel projectId={projectId} />
         </TabPanel>
+        <TabPanel
+          id="panel-client-requests"
+          selected={activeTab === "client-requests"}
+          aria-labelledby="tab-client-requests"
+        >
+          <ClientRequestsManagerPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-discussions" selected={activeTab === "discussions"} aria-labelledby="tab-discussions">
+          <StakeholderDiscussionsManagerPanel projectId={projectId} />
+        </TabPanel>
         <TabPanel id="panel-defects" selected={activeTab === "defects"} aria-labelledby="tab-defects">
           <DefectsProjectTab projectId={projectId} />
         </TabPanel>
+        <TabPanel id="panel-issues" selected={activeTab === "issues"} aria-labelledby="tab-issues">
+          <ProjectIssuesPanel projectId={projectId} query={issuesQuery} />
+        </TabPanel>
         <TabPanel id="panel-change-orders" selected={activeTab === "change-orders"} aria-labelledby="tab-change-orders">
           <ChangeOrdersManagerPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel
+          id="panel-service-requests"
+          selected={activeTab === "service-requests"}
+          aria-labelledby="tab-service-requests"
+        >
+          <ServiceRequestsProjectTab projectId={projectId} />
+        </TabPanel>
+        <TabPanel
+          id="panel-stakeholders"
+          selected={activeTab === "stakeholders"}
+          aria-labelledby="tab-stakeholders"
+        >
+          <StakeholderManagerPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-handover" selected={activeTab === "handover"} aria-labelledby="tab-handover">
           <HandoverManagerPanel projectId={projectId} />
@@ -338,6 +389,9 @@ export function DashboardProjectDetailClient({
         </TabPanel>
         <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
           <ProjectCostsPanel projectId={projectId} skin="canon" />
+        </TabPanel>
+        <TabPanel id="panel-commercial" selected={activeTab === "commercial"} aria-labelledby="tab-commercial">
+          <ProjectCommercialPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
           <ProjectEstimatePanel projectId={projectId} skin="canon" />

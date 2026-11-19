@@ -52,7 +52,7 @@ export function CanonPortalActivityPanel({ projectId }: { projectId: string }) {
           {displayed.map((item) => (
             <Link
               key={item.id}
-              href={item.targetUrl ?? `/portal/projects/${projectId}`}
+              href={item.targetUrl ?? `/dashboard/projects/${projectId}/client`}
               className={`rounded-lg border p-3 transition-colors hover:border-[var(--canon-cyan-dim)] ${
                 item.actionNeeded
                   ? "border-[var(--canon-gold)] bg-[rgba(255,193,7,0.08)]"

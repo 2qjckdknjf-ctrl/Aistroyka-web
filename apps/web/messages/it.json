@@ -14,6 +14,7 @@
     "screen01Label": "Portafoglio",
     "screen02Label": "Progetti",
     "navDashboard": "Cabinet principale",
+    "navPortfolio": "Portfolio",
     "navProjects": "Progetti",
     "navTasks": "Attività",
     "navCalendar": "Calendario",
@@ -28,6 +29,8 @@
     "navAdmin": "Amministrazione",
     "globalSearch": "Cerca",
     "globalSearchPlaceholder": "Cerca progetti, attività, documenti…",
+    "portalSearchHint": "Apri un progetto per vedere documenti, approvazioni e aggiornamenti.",
+    "portalPickProjectFirst": "Apri prima un progetto",
     "notifications": "Notifiche",
     "messages": "Messaggi",
     "help": "Aiuto",
@@ -398,7 +401,13 @@
     "budgetWithinPlan": "Dentro del budget previsto",
     "portalRecentActivity": "Attività recente",
     "projectTabReconciliation": "Riconciliazione",
-    "projectTabCompleteness": "Completezza"
+    "projectTabCompleteness": "Completezza",
+    "projectTabServiceRequests": "Post-vendita",
+    "projectTabClientRequests": "Richieste cliente",
+    "projectTabDiscussions": "Discussioni",
+    "projectTabStakeholders": "Stakeholder",
+    "projectTabIssues": "Problemi",
+    "projectTabCommercial": "Commerciale"
   },
   "nav": {
     "dashboard": "Cabinet",
@@ -1026,9 +1035,11 @@
     "clientOptional": "Cliente (opzionale)",
     "clientPlaceholder": "Nome cliente o commitente",
     "notesOptional": "Note (opzionale)",
-    "notesPlaceholder": "Note di avvio — locali finché l’API non espande i campi",
+    "notesPlaceholder": "Note di avvio — mostrate una volta nella panoramica progetto",
     "richCreateHint": "Il nome è obbligatorio. Indirizzo e cliente vanno nel titolo finché non ci sono campi dedicati nell’API.",
-    "nameTooLong": "Il nome del progetto deve essere di massimo 200 caratteri."
+    "nameTooLong": "Il nome del progetto deve essere di massimo 200 caratteri.",
+    "setupNotesBannerTitle": "Note dalla creazione del progetto",
+    "setupNotesDismiss": "Chiudi"
   },
   "projectDetail": {
     "uploadImage": "Carica immagine",

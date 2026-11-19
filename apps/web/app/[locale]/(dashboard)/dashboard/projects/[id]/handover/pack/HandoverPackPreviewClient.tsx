@@ -26,11 +26,20 @@ async function fetchPack(
   return j.data;
 }
 
-export function HandoverPackPreviewClient({ projectId }: { projectId: string }) {
+export function HandoverPackPreviewClient({
+  projectId,
+  backHref,
+  backLabelKey = "handoverPackBackProject",
+}: {
+  projectId: string;
+  backHref?: string;
+  backLabelKey?: "handoverPackBackProject" | "backToClientPortal";
+}) {
   const locale = useLocale();
   const t = useTranslations("dashboardDetail");
   const tPortal = useTranslations("portalStatus");
   const tApi = useTranslations("apiErrors");
+  const resolvedBackHref = backHref ?? `/dashboard/projects/${projectId}`;
   const q = useQuery({
     queryKey: ["handover-pack", projectId, locale],
     queryFn: () => fetchPack(projectId, locale, tApi),
@@ -50,8 +59,8 @@ export function HandoverPackPreviewClient({ projectId }: { projectId: string }) 
     return (
       <main className="mx-auto max-w-3xl p-6">
         <ErrorState message={q.error instanceof Error ? q.error.message : t("handoverPackLoadFailed")} onRetry={() => q.refetch()} />
-        <Link href={`/dashboard/projects/${projectId}`} className="mt-4 inline-block text-sm text-aistroyka-accent hover:underline">
-          {t("handoverPackBackProject")}
+        <Link href={resolvedBackHref} className="mt-4 inline-block text-sm text-aistroyka-accent hover:underline">
+          {t(backLabelKey)}
         </Link>
       </main>
     );
@@ -64,8 +73,8 @@ export function HandoverPackPreviewClient({ projectId }: { projectId: string }) 
     <main className="mx-auto max-w-3xl space-y-6 p-6 print:max-w-none print:p-4">
       <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
         <div>
-          <Link href={`/dashboard/projects/${projectId}`} className="text-sm text-aistroyka-accent hover:underline">
-            {t("handoverPackBackProject")}
+          <Link href={resolvedBackHref} className="text-sm text-aistroyka-accent hover:underline">
+            {t(backLabelKey)}
           </Link>
           <h1 className="mt-2 text-aistroyka-title3 font-bold text-aistroyka-text-primary">{t("handoverPackPageTitle")}</h1>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("handoverPackHint")}</p>

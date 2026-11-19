@@ -14,6 +14,7 @@
     "screen01Label": "Портфель",
     "screen02Label": "Проекты",
     "navDashboard": "Главный дашборд",
+    "navPortfolio": "Портфель",
     "navProjects": "Проекты",
     "navTasks": "Задачи",
     "navCalendar": "Календарь",
@@ -28,6 +29,8 @@
     "navAdmin": "Админ",
     "globalSearch": "Поиск",
     "globalSearchPlaceholder": "Поиск по проектам, задачам, документам…",
+    "portalSearchHint": "Откройте проект, чтобы смотреть документы, согласования и обновления.",
+    "portalPickProjectFirst": "Сначала откройте проект",
     "notifications": "Уведомления",
     "messages": "Сообщения",
     "help": "Помощь",
@@ -398,7 +401,13 @@
     "budgetWithinPlan": "В пределах плана",
     "portalRecentActivity": "Недавние события",
     "projectTabReconciliation": "Сверка",
-    "projectTabCompleteness": "Полнота"
+    "projectTabCompleteness": "Полнота",
+    "projectTabServiceRequests": "Сервис / гарантия",
+    "projectTabClientRequests": "Запросы клиента",
+    "projectTabDiscussions": "Обсуждения",
+    "projectTabStakeholders": "Стейкхолдеры",
+    "projectTabIssues": "Проблемы",
+    "projectTabCommercial": "Коммерция"
   },
   "nav": {
     "dashboard": "Кабинет",
@@ -1026,9 +1035,11 @@
     "clientOptional": "Клиент (необязательно)",
     "clientPlaceholder": "Имя клиента или заказчика",
     "notesOptional": "Заметки (необязательно)",
-    "notesPlaceholder": "Заметки к старту — локально, пока API не расширят поля проекта",
+    "notesPlaceholder": "Заметки к старту — один раз на обзоре проекта",
     "richCreateHint": "Название обязательно. Адрес и клиент добавляются в название, пока отдельные поля не появятся в API.",
-    "nameTooLong": "Название проекта не более 200 символов."
+    "nameTooLong": "Название проекта не более 200 символов.",
+    "setupNotesBannerTitle": "Заметки при создании проекта",
+    "setupNotesDismiss": "Скрыть"
   },
   "projectDetail": {
     "uploadImage": "Загрузка изображения",

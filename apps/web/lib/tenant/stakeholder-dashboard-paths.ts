@@ -52,7 +52,8 @@ export function redirectIfStakeholderBlockedPath(
     pathWithoutLocale.startsWith("/billing") ||
     pathWithoutLocale.startsWith("/admin") ||
     pathWithoutLocale.startsWith("/portfolio") ||
-    pathWithoutLocale.startsWith("/projects")
+    pathWithoutLocale.startsWith("/projects") ||
+    pathWithoutLocale.startsWith("/team")
   ) {
     return NextResponse.redirect(portalHomeUrl(locale, requestUrl));
   }
