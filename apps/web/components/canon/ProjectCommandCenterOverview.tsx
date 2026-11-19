@@ -202,7 +202,7 @@ export function ProjectCommandCenterOverview({
                   <Circle size={16} className="mt-0.5 shrink-0 text-[var(--canon-text-muted)]" aria-hidden />
                   <div className="min-w-0 flex-1">
                     <Link
-                      href={`/dashboard/tasks?task=${task.id}`}
+                      href={`/dashboard/tasks/${task.id}`}
                       className="font-medium text-[var(--canon-text-primary)] hover:text-[var(--canon-gold)]"
                     >
                       {task.title}
