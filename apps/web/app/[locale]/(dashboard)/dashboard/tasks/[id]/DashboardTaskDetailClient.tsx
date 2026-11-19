@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -65,10 +65,13 @@ export function DashboardTaskDetailClient({
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
   const [savingPriority, setSavingPriority] = useState(false);
 
-  const fetchTask = () => {
+  const fetchSeq = useRef(0);
+
+  const fetchTask = (clearPrevious = false) => {
+    const seq = ++fetchSeq.current;
     setLoading(true);
-    // V2-WEB-02-AC-03: never keep previous task content while loading a different id.
-    setTask(null);
+    // V2-WEB-02-AC-03: drop prior content only when the selected id changes.
+    if (clearPrevious) setTask(null);
     setError(null);
     fetch(`/api/v1/tasks/${taskId}`, { credentials: "include" })
       .then((r) => {
@@ -78,18 +81,23 @@ export function DashboardTaskDetailClient({
         return r.json();
       })
       .then((json: { data?: TaskDetail }) => {
+        if (seq !== fetchSeq.current) return;
         setTask(json.data ?? null);
         setError(null);
       })
       .catch((e) => {
+        if (seq !== fetchSeq.current) return;
         setError(e instanceof Error ? e.message : "Failed to load");
         setTask(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (seq !== fetchSeq.current) return;
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchTask();
+    fetchTask(true);
   }, [taskId]);
 
   useEffect(() => {
