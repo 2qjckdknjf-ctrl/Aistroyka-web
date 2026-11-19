@@ -67,9 +67,13 @@ export function DashboardTaskDetailClient({
 
   const fetchTask = () => {
     setLoading(true);
+    // V2-WEB-02-AC-03: never keep previous task content while loading a different id.
+    setTask(null);
+    setError(null);
     fetch(`/api/v1/tasks/${taskId}`, { credentials: "include" })
       .then((r) => {
         if (r.status === 404) throw new Error("Not found");
+        if (r.status === 403) throw new Error("Forbidden");
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
       })

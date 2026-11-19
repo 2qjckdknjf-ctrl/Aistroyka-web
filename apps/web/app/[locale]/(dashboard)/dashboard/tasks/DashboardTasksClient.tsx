@@ -27,8 +27,10 @@ import { exportTableToCsv } from "@/lib/cockpit/csvExport";
 import { DashboardTaskDetailClient } from "./[id]/DashboardTaskDetailClient";
 import {
   TASK_BOARD_COLUMNS,
+  buildTaskDetailHref,
   groupTasksByBoardColumn,
   isTaskOverdue,
+  parseSelectedTaskId,
   parseTasksWorkspaceView,
   sortTasksForPhonePriority,
   taskStatusBadgeVariant,
@@ -93,7 +95,11 @@ export function DashboardTasksClient({
   const pathname = usePathname();
   const router = useRouter();
   const view = skin === "canon" ? "board" : parseTasksWorkspaceView(searchParams?.get("view"));
-  const selectedTaskId = searchParams?.get("task")?.trim() || null;
+  const selectedTaskId = parseSelectedTaskId(searchParams?.get("task"));
+  const workspaceReturnTo = useMemo(() => {
+    const qs = searchParams?.toString() ?? "";
+    return qs ? `/dashboard/tasks?${qs}` : "/dashboard/tasks";
+  }, [searchParams]);
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const STATUS_OPTIONS = [
@@ -393,7 +399,7 @@ export function DashboardTasksClient({
                     ) : null}
                   </button>
                   <Link
-                    href={`/dashboard/tasks/${r.id}`}
+                    href={buildTaskDetailHref(r.id, workspaceReturnTo)}
                     className="font-medium text-aistroyka-accent hover:underline lg:hidden"
                   >
                     {r.title}
@@ -467,7 +473,7 @@ export function DashboardTasksClient({
           <li key={r.id}>
             <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised/60 p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <Link href={`/dashboard/tasks/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">
+                <Link href={buildTaskDetailHref(r.id, workspaceReturnTo)} className="font-medium text-aistroyka-accent hover:underline">
                   {r.title}
                 </Link>
                 <Badge variant={taskStatusBadgeVariant(r.status)}>{r.status}</Badge>
@@ -585,7 +591,7 @@ export function DashboardTasksClient({
                       </button>
                       {skin === "canon" ? (
                         <Link
-                          href={`/dashboard/tasks/${r.id}`}
+                          href={buildTaskDetailHref(r.id, workspaceReturnTo)}
                           className="mt-1 inline-block px-1 text-xs text-[var(--canon-cyan)] hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -595,7 +601,7 @@ export function DashboardTasksClient({
                         <>
                           <div className="mt-1 flex flex-wrap gap-1 px-1">{renderTaskActions(r)}</div>
                           <Link
-                            href={`/dashboard/tasks/${r.id}`}
+                            href={buildTaskDetailHref(r.id, workspaceReturnTo)}
                             className="mt-1 inline-block px-1 text-aistroyka-caption text-aistroyka-accent hover:underline lg:hidden"
                           >
                             {tDetail("openFullTask")}
@@ -633,7 +639,7 @@ export function DashboardTasksClient({
       ) : null}
       <div
         className={`grid gap-4 ${
-          selectedTaskId && skin !== "canon" ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""
+          selectedTaskId ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""
         }`}
       >
         {skin === "canon" ? (
@@ -641,7 +647,7 @@ export function DashboardTasksClient({
             {selectedTaskId ? (
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--canon-border-glass)] px-4 py-3">
                 <Link
-                  href={`/dashboard/tasks/${selectedTaskId}`}
+                  href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
                   className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
                 >
                   {tDetail("openFullTask")}
@@ -735,23 +741,66 @@ export function DashboardTasksClient({
         </DashboardGlassCard>
         )}
 
-        {selectedTaskId && skin !== "canon" ? (
-          <aside className="hidden min-w-0 lg:block" aria-label={tDetail("tasks")}>
-            <div className="sticky top-20 space-y-3">
-              <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
+        {selectedTaskId ? (
+          <>
+            <aside className="hidden min-w-0 lg:block" aria-label={tDetail("tasks")}>
+              <div className="sticky top-20 space-y-3">
+                {skin === "canon" ? (
+                  <div className="canon-glass space-y-3 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Link
+                        href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                        className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
+                      >
+                        {tDetail("openFullTask")}
+                      </Link>
+                      <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                        {tDetail("closeTaskInspector")}
+                      </Button>
+                    </div>
+                    <DashboardTaskDetailClient taskId={selectedTaskId} skin="canon" />
+                  </div>
+                ) : (
+                  <>
+                    <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
+                      <Link
+                        href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                        className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                      >
+                        {tDetail("openFullTask")}
+                      </Link>
+                      <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                        {tDetail("closeTaskInspector")}
+                      </Button>
+                    </DashboardGlassCard>
+                    <DashboardTaskDetailClient taskId={selectedTaskId} />
+                  </>
+                )}
+              </div>
+            </aside>
+            {/* Phone / narrow: show selected task under the board (V2-WEB-02). */}
+            <div className="min-w-0 lg:hidden" aria-label={tDetail("tasks")}>
+              <DashboardTaskDetailClient
+                taskId={selectedTaskId}
+                skin={skin === "canon" ? "canon" : "default"}
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link
-                  href={`/dashboard/tasks/${selectedTaskId}`}
-                  className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                  className={
+                    skin === "canon"
+                      ? "text-sm font-medium text-[var(--canon-cyan)] hover:underline"
+                      : "text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  }
                 >
                   {tDetail("openFullTask")}
                 </Link>
                 <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
                   {tDetail("closeTaskInspector")}
                 </Button>
-              </DashboardGlassCard>
-              <DashboardTaskDetailClient taskId={selectedTaskId} />
+              </div>
             </div>
-          </aside>
+          </>
         ) : null}
       </div>
 
