@@ -200,6 +200,13 @@ export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" 
               icon={<span className="text-2xl">⇧</span>}
               title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
               subtitle={stuck ? tDetail("stuckUploadSessionsAppear") : tDetail("uploadSessionsAppear")}
+              action={
+                stuck ? undefined : (
+                  <Link href="/dashboard/projects" className="canon-gold-btn inline-flex">
+                    {tDetail("openProjectsArrow")}
+                  </Link>
+                )
+              }
             />
           </div>
         ) : (
@@ -208,6 +215,13 @@ export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" 
               icon={<span className="text-2xl">⇧</span>}
               title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
               subtitle={stuck ? tDetail("stuckUploadSessionsAppear") : tDetail("uploadSessionsAppear")}
+              action={
+                stuck ? undefined : (
+                  <Link href="/dashboard/projects" className="text-aistroyka-accent hover:underline">
+                    {tDetail("openProjectsArrow")}
+                  </Link>
+                )
+              }
             />
           </DashboardGlassCard>
         )}

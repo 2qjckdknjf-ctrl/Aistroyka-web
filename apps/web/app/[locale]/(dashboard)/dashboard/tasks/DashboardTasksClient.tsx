@@ -583,7 +583,15 @@ export function DashboardTasksClient({
                           {overdue ? ` · ${tDetail("overdue")}` : ""}
                         </p>
                       </button>
-                      {skin !== "canon" ? (
+                      {skin === "canon" ? (
+                        <Link
+                          href={`/dashboard/tasks/${r.id}`}
+                          className="mt-1 inline-block px-1 text-xs text-[var(--canon-cyan)] hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {tDetail("openFullTask")}
+                        </Link>
+                      ) : (
                         <>
                           <div className="mt-1 flex flex-wrap gap-1 px-1">{renderTaskActions(r)}</div>
                           <Link
@@ -593,7 +601,7 @@ export function DashboardTasksClient({
                             {tDetail("openFullTask")}
                           </Link>
                         </>
-                      ) : null}
+                      )}
                     </li>
                   );
                 })
@@ -630,6 +638,19 @@ export function DashboardTasksClient({
       >
         {skin === "canon" ? (
           <div className={cardShellClass}>
+            {selectedTaskId ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--canon-border-glass)] px-4 py-3">
+                <Link
+                  href={`/dashboard/tasks/${selectedTaskId}`}
+                  className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
+                >
+                  {tDetail("openFullTask")}
+                </Link>
+                <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                  {tDetail("closeTaskInspector")}
+                </Button>
+              </div>
+            ) : null}
             {loading && data.length === 0 ? (
               <div className="p-4">
                 <Skeleton lines={6} />

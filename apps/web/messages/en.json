@@ -14,6 +14,7 @@
     "screen01Label": "Portfolio",
     "screen02Label": "Projects",
     "navDashboard": "Main dashboard",
+    "navPortfolio": "Portfolio",
     "navProjects": "Projects",
     "navTasks": "Tasks",
     "navCalendar": "Calendar",
@@ -28,6 +29,8 @@
     "navAdmin": "Admin",
     "globalSearch": "Search",
     "globalSearchPlaceholder": "Search projects, tasks, documents…",
+    "portalSearchHint": "Open a project to review documents, approvals, and updates.",
+    "portalPickProjectFirst": "Open a project first",
     "notifications": "Notifications",
     "messages": "Messages",
     "help": "Help",
@@ -398,7 +401,13 @@
     "budgetWithinPlan": "Within the planned budget",
     "portalRecentActivity": "Recent activity",
     "projectTabReconciliation": "Reconciliation",
-    "projectTabCompleteness": "Completeness"
+    "projectTabCompleteness": "Completeness",
+    "projectTabServiceRequests": "Aftercare",
+    "projectTabClientRequests": "Client requests",
+    "projectTabDiscussions": "Discussions",
+    "projectTabStakeholders": "Stakeholders",
+    "projectTabIssues": "Issues",
+    "projectTabCommercial": "Commercial"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -1078,9 +1087,11 @@
     "clientOptional": "Client (optional)",
     "clientPlaceholder": "Client or owner name",
     "notesOptional": "Setup notes (optional)",
-    "notesPlaceholder": "Kickoff notes — kept locally until project detail fields expand",
+    "notesPlaceholder": "Kickoff notes — shown once on the project overview",
     "richCreateHint": "Name is required. Address and client are included in the project title until dedicated fields ship in the API.",
-    "nameTooLong": "Project name must be at most 200 characters."
+    "nameTooLong": "Project name must be at most 200 characters.",
+    "setupNotesBannerTitle": "Setup notes from project creation",
+    "setupNotesDismiss": "Dismiss"
   },
   "projectDetail": {
     "uploadImage": "Upload image",
