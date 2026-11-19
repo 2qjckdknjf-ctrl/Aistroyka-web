@@ -56,7 +56,7 @@
 ## 7. Database model summary
 
 - `tenants` = operational RLS isolation boundary. Additive `accounts` layer above tenants (platform/contractor/client; project modes contractor-led/client-led).
-- Billing: `account_subscriptions` (account source of truth) + dual-written `billing_customers`/`entitlements` (with `account_id`; `tenant_id` stays Stripe webhook anchor). Resolver `resolveEffectiveEntitlements` with `ENTITLEMENT_RESOLUTION_SOURCE` = legacy/shadow/account (drift in `entitlement_resolution_drift`).
+- Billing on `main` (verified 2026-11-19): tenant-scoped `billing_customers`/`entitlements` (Stripe webhook anchored on `tenant_id`). Only `accounts`/`account_members` exist from the account layer. The designed account billing layer (`account_subscriptions`, resolver `resolveEffectiveEntitlements`, `ENTITLEMENT_RESOLUTION_SOURCE`, `entitlement_resolution_drift`) is not merged; its cutover gates still apply once it lands.
 - Stakeholders are NOT `account_members`; platform-owner client-data access via audited `platform_break_glass_grants`.
 - RBAC/account/billing design docs under `docs/architecture/`.
 

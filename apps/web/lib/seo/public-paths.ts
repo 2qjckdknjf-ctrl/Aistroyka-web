@@ -4,7 +4,6 @@ export const PUBLIC_SITEMAP_PATHS = [
   "/features",
   "/solutions",
   "/ai-construction-control",
-  "/ai-demo",
   "/mobile",
   "/pricing",
   "/about",
@@ -18,7 +17,6 @@ export const PUBLIC_SITEMAP_PATHS = [
   "/projects-showcase",
   "/platform",
   "/security",
-  "/copilot",
   "/integrations",
   "/api",
   "/workflows",
@@ -29,6 +27,8 @@ export const PUBLIC_SITEMAP_PATHS = [
 
 /** Thin stub routes kept live but omitted from the sitemap until they have real bodies. */
 export const PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP = [
+  "/ai-demo",
+  "/copilot",
   "/cases/residential",
   "/cases/commercial",
   "/cases/infrastructure",
