@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -36,6 +36,10 @@ export function DashboardTasksCanonPage() {
   const tNav = useTranslations("nav");
   const tDetail = useTranslations("dashboardDetail");
   const [openCreate, setOpenCreate] = useState<(() => void) | null>(null);
+  // V2-WEB-01: keep registration identity stable — inline lambdas re-trigger child effects → update-depth loop.
+  const registerCreateHandler = useCallback((open: () => void) => {
+    setOpenCreate(() => open);
+  }, []);
   const { params, setParam, setParams } = useFilterParams();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -147,7 +151,7 @@ export function DashboardTasksCanonPage() {
       <div className="grid gap-6 xl:grid-cols-[1fr_300px]">
         <DashboardTasksClient
           skin="canon"
-          onRegisterCreateHandler={(open) => setOpenCreate(() => open)}
+          onRegisterCreateHandler={registerCreateHandler}
         />
         <CanonTasksAiPanel />
       </div>
