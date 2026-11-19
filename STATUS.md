@@ -10,13 +10,17 @@
 
 **Слито в main (APPROVED → merge):** #489 audit report, #490 `/smoke`+robots, #491 stakeholder fail-closed, #492 Next 15.5.29, #493 runtime health monitor, #494 дубликаты «(1)», #495 i18n support/uploads, #496 docs truth, #497 smoke 503=FAIL, #498 owner/platform route tests, #499 sitemap drop `/ai-demo`+`/copilot`. Также #500 cabinet wiring (отдельный поток).
 
-**Открыто / OWNER_GATE:** legal Privacy/Terms, store uploads, billing 7-day shadow, #178 (russian-default + устаревший June audit — не мержить как есть; default Russian добавляется в AGENTS этим срезом). Runtime Health Monitor на `main` (cron */30); live probe PASS both.
+**Сверка планов 2026-11-19:** [docs/reconciliation/plan-status-2026-11-19/RESULT.md](docs/reconciliation/plan-status-2026-11-19/RESULT.md) — Phase 13 CONDITIONAL YES; очередь Oct-23 как рамка AIS ID; устаревшие «#446–#453 не merged» помечены; следующий agent: Graph invalidate-on-revoke, billing/help route tests, i18n P2, V2-WEB-01 после fresh repro.
+
+**Открыто / OWNER_GATE:** legal Privacy/Terms, store uploads, billing 7-day shadow, #178 (russian-default + устаревший June audit — не мержить as-is; default Russian в AGENTS). Runtime Health Monitor на `main` (cron */30); live probe PASS both.
+
+**Следующее локальное (после сверки):** V2-WEB-01 после fresh repro; остаток route tests `platform/*`/`admin/*`/billing; i18n platform-admin EN; не открывать 97 V2-пакетов сразу. Graph invalidate-on-revoke + DemoProjectCard i18n + billing/overview & help/hints tests — в срезе сверки. Live Gemini/Worker fixtures и legal/store/billing 7-day — `OWNER_GATE`.
 
 ## Актуальная плановая сверка — 2026-10-30
 
 Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Main tip после #480–#483: `ff7d0894`. Hosted SQL applied (grants, quantity/material/corrections/captions, completeness evaluations, intake_draft unique, tender findings).
 
-Stage2a A01–A05 + MATERIAL-008 + CORRECTION-009 + MEM-016 + STREAM-010 (#480) + RULE-015 (#481) + CLIENT-005A idempotency (#482) + RECON-017 Finding Ledger (#483) на main. Closures: [STREAM-010](docs/reports/ais-stream-010-closure-2026-10-30/RESULT.md), [RULE-015](docs/reports/ais-rule-015-closure-2026-10-30/RESULT.md), [005A](docs/reports/ais-client-005a-idempotency-closure-2026-10-30/RESULT.md), [RECON-017](docs/reports/ais-recon-017-closure-2026-10-30/RESULT.md). Следующее локальное: Manager UI для completeness/recon, Graph invalidate-on-revoke. Live Gemini/Worker fixtures и legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
+Stage2a A01–A05 + MATERIAL-008 + CORRECTION-009 + MEM-016 + STREAM-010 (#480) + RULE-015 (#481) + CLIENT-005A idempotency (#482) + RECON-017 Finding Ledger (#483) на main. Closures: [STREAM-010](docs/reports/ais-stream-010-closure-2026-10-30/RESULT.md), [RULE-015](docs/reports/ais-rule-015-closure-2026-10-30/RESULT.md), [005A](docs/reports/ais-client-005a-idempotency-closure-2026-10-30/RESULT.md), [RECON-017](docs/reports/ais-recon-017-closure-2026-10-30/RESULT.md). **Update 2026-11-19:** Manager completeness UI (`ProjectTradeCompletenessPanel`) уже на main; актуальное «следующее» — см. блок сверки выше (Graph invalidate-on-revoke и т.д.). Live Gemini/Worker fixtures и legal/store/billing 7-day — `OWNER_GATE`. [Очередь](docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md#действующая-очередь--консолидация-2026-10-23).
 
 ## Дополнение 2026-10-20 — полный аудит включён в план
 
