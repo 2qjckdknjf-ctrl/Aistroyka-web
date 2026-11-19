@@ -56,6 +56,8 @@ describe("GET /api/v1/config", () => {
       traceId: "trace-1",
       clientProfile: "ios_lite",
     });
+    const body = await res.json();
+    expect(body.flags.AGENTIC_FOUNDATION_ENABLED.enabled).toBe(false);
   });
 
   it("preserves unauthenticated/cookie fallback behavior through the same helper", async () => {
