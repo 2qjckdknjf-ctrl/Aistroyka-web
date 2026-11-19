@@ -79,5 +79,35 @@ class ProbeTests(unittest.TestCase):
         self.assertIn('| 503 | NO |', text)
 
 
+    def test_truncated_body_fails_without_raising(self):
+        class TruncatingHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                payload = b'{"ok":false,"db":"error"}'
+                self.send_response(503)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(payload) + 40))
+                self.end_headers()
+                self.wfile.write(payload)
+                # Close without sending the remaining advertised bytes.
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(('127.0.0.1', 0), TruncatingHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        url = f'http://127.0.0.1:{server.server_port}'
+        with tempfile.TemporaryDirectory() as tmp:
+            summary = Path(tmp) / 'summary.md'
+            code = module.main(['--base-url', url, '--summary-file', str(summary)])
+            self.assertEqual(code, 1)
+            self.assertTrue(summary.exists())
+            self.assertIn('| NO |', summary.read_text())
+        result = module.probe(url)
+        self.assertFalse(result['healthy'])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -6,6 +6,7 @@ HTTP 200 with `ok: true`. Prints one line per host and, with `--summary-file`,
 writes a markdown summary that the scheduled monitor posts to the incident issue.
 """
 import argparse
+import http.client
 import json
 import sys
 import urllib.error
@@ -18,6 +19,16 @@ TARGETS = {
 SUMMARY_FIELDS = ('ok', 'db', 'supabaseReachable', 'env', 'reason')
 
 
+def _read_body(response):
+    """Read the full response body; IncompleteRead / short bodies become probe failures."""
+    try:
+        return response.read()
+    except http.client.IncompleteRead as exc:
+        # Prefer partial bytes if present so JSON details can still surface in the summary.
+        if exc.partial:
+            return exc.partial
+        raise
+
 def probe(base_url, timeout=20):
     url = base_url.rstrip('/') + '/api/v1/health'
     request = urllib.request.Request(url, headers={'Cache-Control': 'no-cache', 'User-Agent': 'aistroyka-runtime-health-probe'})
@@ -27,11 +38,15 @@ def probe(base_url, timeout=20):
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             status = response.status
-            raw = response.read()
+            raw = _read_body(response)
     except urllib.error.HTTPError as exc:
         status = exc.code
-        raw = exc.read()
-    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        try:
+            raw = _read_body(exc)
+        except Exception as read_exc:  # noqa: BLE001 — treat any body-read failure as unhealthy
+            raw = b''
+            error = f'health response truncated: {read_exc}'
+    except (urllib.error.URLError, TimeoutError, OSError, http.client.IncompleteRead) as exc:
         raw = b''
         error = f'request failed: {exc}'
     if raw:

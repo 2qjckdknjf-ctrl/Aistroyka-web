@@ -56,8 +56,14 @@ jobs:
             fi
             [ "$attempt" -eq 1 ] && sleep 60
           done
+          # Always write a summary file even when the probe crashes mid-run.
+          if [ ! -f health-summary.md ]; then
+            printf '| Target | HTTP | Healthy | buildStamp | Details |\n|---|---|---|---|---|\n| probe | - | NO | - | summary missing |\n' > health-summary.md
+          fi
           cat health-summary.md >> "$GITHUB_STEP_SUMMARY"
           echo "healthy=$([ "$status" -eq 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          # Only a successful full `both` probe may auto-close the shared incident.
+          echo "may_resolve=$([ "$status" -eq 0 ] && [ "$TARGET" = "both" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Open or update the incident issue
         if: steps.probe.outputs.healthy == 'false'
@@ -73,7 +79,7 @@ jobs:
           fi
 
       - name: Resolve the incident issue after recovery
-        if: steps.probe.outputs.healthy == 'true'
+        if: steps.probe.outputs.may_resolve == 'true'
         run: |
           set -euo pipefail
           issue="$(gh issue list --label "$INCIDENT_LABEL" --state open --limit 1 --json number --jq '.[0].number // empty')"
