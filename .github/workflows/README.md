@@ -2,6 +2,14 @@
 
 Canonical workflows live in this directory. Deploy truth: `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`.
 
+## Runtime health monitor
+
+| File | Trigger | Purpose |
+|------|---------|---------|
+| `runtime-health-monitor.yml` | `schedule` every 30 min + `workflow_dispatch` | Read-only `GET /api/v1/health` on production and staging (`scripts/ops/runtime_health_probe.py`) |
+
+A failing probe (not HTTP 200 with `ok: true`, after one retry) fails the run and opens or comments on a single issue labelled `runtime-incident`. The first healthy run afterwards comments and closes it. No secrets beyond the default `GITHUB_TOKEN` (`issues: write`).
+
 ## iOS Layer B E2E (live pilot)
 
 | File | Trigger | Purpose |
