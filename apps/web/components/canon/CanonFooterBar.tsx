@@ -21,7 +21,13 @@ function weekNumber(now: Date): number {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-export function CanonFooterBar({ locale = "ru" }: { locale?: string }) {
+export function CanonFooterBar({
+  locale = "ru",
+  portalOnly = false,
+}: {
+  locale?: string;
+  portalOnly?: boolean;
+}) {
   const t = useTranslations("canon");
   const now = new Date();
 
@@ -39,13 +45,15 @@ export function CanonFooterBar({ locale = "ru" }: { locale?: string }) {
           <span className="canon-status-dot" aria-hidden />
           <span className="hidden sm:inline">{t("systemOk")}</span>
         </span>
-        <Link
-          href="/dashboard/support"
-          className="flex items-center gap-1.5 text-xs font-medium text-[var(--canon-text-secondary)] hover:text-[var(--canon-text-primary)] sm:text-sm"
-        >
-          <Mail size={14} aria-hidden />
-          <span className="hidden sm:inline">{t("feedback")}</span>
-        </Link>
+        {portalOnly ? null : (
+          <Link
+            href="/dashboard/support"
+            className="flex items-center gap-1.5 text-xs font-medium text-[var(--canon-text-secondary)] hover:text-[var(--canon-text-primary)] sm:text-sm"
+          >
+            <Mail size={14} aria-hidden />
+            <span className="hidden sm:inline">{t("feedback")}</span>
+          </Link>
+        )}
       </div>
     </footer>
   );

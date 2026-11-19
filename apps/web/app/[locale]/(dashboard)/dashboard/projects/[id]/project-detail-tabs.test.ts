@@ -10,6 +10,10 @@ describe("resolveProjectDetailTab", () => {
     expect(PROJECT_COMMAND_TAB_ORDER[0]).toBe("overview");
     expect(PROJECT_COMMAND_TAB_ORDER).toContain("reports");
     expect(PROJECT_COMMAND_TAB_ORDER).toContain("decisions");
+    expect(PROJECT_COMMAND_TAB_ORDER).toContain("intelligence");
+    expect(PROJECT_COMMAND_TAB_ORDER).toContain("contractors");
+    expect(PROJECT_COMMAND_TAB_ORDER).toContain("issues");
+    expect(PROJECT_COMMAND_TAB_ORDER).toContain("commercial");
     expect(new Set(PROJECT_COMMAND_TAB_ORDER).size).toBe(PROJECT_COMMAND_TAB_ORDER.length);
   });
 
@@ -19,19 +23,30 @@ describe("resolveProjectDetailTab", () => {
     expect(resolveProjectDetailTab("documents")).toBe("documents");
     expect(resolveProjectDetailTab("schedule")).toBe("schedule");
     expect(resolveProjectDetailTab("decisions")).toBe("decisions");
+    expect(resolveProjectDetailTab("client-requests")).toBe("client-requests");
+    expect(resolveProjectDetailTab("discussions")).toBe("discussions");
     expect(resolveProjectDetailTab("defects")).toBe("defects");
+    expect(resolveProjectDetailTab("issues")).toBe("issues");
     expect(resolveProjectDetailTab("change-orders")).toBe("change-orders");
+    expect(resolveProjectDetailTab("service-requests")).toBe("service-requests");
+    expect(resolveProjectDetailTab("stakeholders")).toBe("stakeholders");
     expect(resolveProjectDetailTab("handover")).toBe("handover");
     expect(resolveProjectDetailTab("review-pack")).toBe("review-pack");
     expect(resolveProjectDetailTab("workers")).toBe("workers");
     expect(resolveProjectDetailTab("uploads")).toBe("uploads");
     expect(resolveProjectDetailTab("ai")).toBe("ai");
     expect(resolveProjectDetailTab("costs")).toBe("costs");
+    expect(resolveProjectDetailTab("commercial")).toBe("commercial");
     expect(resolveProjectDetailTab("estimate")).toBe("estimate");
     expect(resolveProjectDetailTab("quantities")).toBe("quantities");
     expect(resolveProjectDetailTab("preproject")).toBe("preproject");
     expect(resolveProjectDetailTab("reconciliation")).toBe("reconciliation");
     expect(resolveProjectDetailTab("completeness")).toBe("completeness");
+  });
+
+  it("maps legacy tab aliases", () => {
+    expect(resolveProjectDetailTab("aftercare")).toBe("service-requests");
+    expect(resolveProjectDetailTab("activity")).toBe("overview");
   });
 
   it("falls back to overview for missing or unknown tabs", () => {

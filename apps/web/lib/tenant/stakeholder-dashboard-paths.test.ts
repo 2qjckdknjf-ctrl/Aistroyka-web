@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redirectIfStakeholderBlockedPath } from "./stakeholder-dashboard-paths";
+import { redirectIfStakeholderBlockedPath, stakeholderGateUnavailableResponse } from "./stakeholder-dashboard-paths";
 
 describe("redirectIfStakeholderBlockedPath", () => {
   const base = "https://app.example.com";
@@ -21,7 +21,15 @@ describe("redirectIfStakeholderBlockedPath", () => {
 
   it("allows client subtree and invite", () => {
     expect(redirectIfStakeholderBlockedPath("/dashboard/projects/p1/client", "en", base)).toBeNull();
+    expect(
+      redirectIfStakeholderBlockedPath("/dashboard/projects/p1/client/handover/pack", "en", base)
+    ).toBeNull();
     expect(redirectIfStakeholderBlockedPath("/dashboard/stakeholder-invite", "en", base)).toBeNull();
+  });
+
+  it("blocks manager-only handover pack outside client subtree", () => {
+    const r = redirectIfStakeholderBlockedPath("/dashboard/projects/p1/handover/pack", "en", base);
+    expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
   });
 
   it("allows portal projects list and nested paths", () => {
@@ -51,5 +59,33 @@ describe("redirectIfStakeholderBlockedPath", () => {
     expect(redirectIfStakeholderBlockedPath("/billing", "en", base)?.headers.get("location")).toBe(
       "https://app.example.com/en/portal/projects"
     );
+  });
+
+  it("blocks team management for portal-only stakeholders", () => {
+    expect(redirectIfStakeholderBlockedPath("/team", "en", base)?.headers.get("location")).toBe(
+      "https://app.example.com/en/portal/projects"
+    );
+    expect(redirectIfStakeholderBlockedPath("/team/invite", "en", base)?.headers.get("location")).toBe(
+      "https://app.example.com/en/portal/projects"
+    );
+  });
+});
+
+describe("stakeholderGateUnavailableResponse", () => {
+  const base = "https://app.example.com";
+
+  it("answers contractor-only paths with a no-store 503 rewrite", () => {
+    for (const path of ["/dashboard", "/dashboard/projects/p1", "/dashboard/tasks", "/admin", "/billing", "/portfolio"]) {
+      const r = stakeholderGateUnavailableResponse(path, "ru", base);
+      expect(r?.status).toBe(503);
+      expect(r?.headers.get("x-middleware-rewrite")).toBe("https://app.example.com/ru/access-check-unavailable");
+      expect(r?.headers.get("cache-control")).toContain("no-store");
+    }
+  });
+
+  it("lets stakeholder-safe paths through", () => {
+    expect(stakeholderGateUnavailableResponse("/portal/projects", "en", base)).toBeNull();
+    expect(stakeholderGateUnavailableResponse("/dashboard/projects/p1/client", "en", base)).toBeNull();
+    expect(stakeholderGateUnavailableResponse("/dashboard/stakeholder-invite", "en", base)).toBeNull();
   });
 });

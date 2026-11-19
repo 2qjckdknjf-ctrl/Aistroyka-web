@@ -7,6 +7,7 @@ import { pickNextClientMilestone } from "@/lib/domain/client-portal/next-client-
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 import { ClientPortalCustomerEstimatesSection } from "@/app/[locale]/(dashboard)/dashboard/projects/[id]/client/ClientPortalCustomerEstimatesSection";
 import { ClientPortalRequestsSection } from "@/app/[locale]/(dashboard)/dashboard/projects/[id]/client/ClientPortalRequestsSection";
+import { ClientPortalNotificationsSection } from "@/app/[locale]/(dashboard)/dashboard/projects/[id]/client/ClientPortalNotificationsSection";
 import { CanonPageHeader } from "./CanonPageHeader";
 import { CanonProgressRing } from "./CanonProgressRing";
 import { CanonPortalActivityPanel } from "./CanonPortalActivityPanel";
@@ -50,6 +51,8 @@ export function ClientPortalCanonView({
 
       <CanonPageHeader title={data.project.name} subtitle={t("screen10Label")} showFavorite={false} />
 
+      <ClientPortalNotificationsSection projectId={projectId} surface="canon" />
+
       <div className="canon-portal-hero canon-glass p-4 sm:p-6">
         <p className="text-xl font-semibold text-[var(--canon-text-primary)]">{t("portalGreeting")}</p>
         <p className="mt-1 text-sm text-[var(--canon-text-secondary)]">{t("portalHeroHint")}</p>
@@ -81,7 +84,7 @@ export function ClientPortalCanonView({
           {tDetail("aftercareWarranty")}
         </Link>
         <Link
-          href={`/dashboard/projects/${projectId}/handover/pack`}
+          href={`/dashboard/projects/${projectId}/client/handover/pack`}
           className="canon-ghost-btn !text-xs"
         >
           {tDetail("handoverPackPageTitle")}
@@ -125,8 +128,12 @@ export function ClientPortalCanonView({
                     {t("portalDetails")}
                   </a>
                   {data.client_requests.some((r) => r.linked_entity_id === item.id) ? (
-                    <a href="#portal-client-requests" className="canon-ghost-btn !text-xs">
-                      {t("portalApprove")}
+                    <a
+                      href="#portal-client-requests"
+                      className="canon-ghost-btn !text-xs"
+                      title={t("portalApproveHint")}
+                    >
+                      {t("portalOpenRequest")}
                     </a>
                   ) : null}
                 </div>

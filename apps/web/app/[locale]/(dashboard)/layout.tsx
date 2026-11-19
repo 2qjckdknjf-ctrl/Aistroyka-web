@@ -111,7 +111,7 @@ export default async function DashboardLayout({
       const role = await getActiveTenantRoleForUser(supabase, user.id);
       portalOnly = isPortalOnlyTenantRole(role);
     } catch {
-      portalOnly = false;
+      portalOnly = true;
     }
 
     return (

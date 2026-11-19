@@ -20,12 +20,14 @@ export function getDebugConfig(): DebugConfig {
 
 const MAX_DEBUG_HOST_LENGTH = 256;
 
+type HostSource = { headers: Pick<Headers, "get"> };
+
 /**
  * True only when request host is allowed.
  * - Production: debug is allowed only if ALLOW_DEBUG_HOSTS is set and request host is in the list (never allow when allowlist empty).
  * - Non-production: when allowlist is unset, allow; when set, enforce host match.
  */
-export function isDebugAllowedForRequest(request?: Request): boolean {
+export function isDebugAllowedForRequest(request?: HostSource): boolean {
   const allowlist = (process.env.ALLOW_DEBUG_HOSTS ?? "").trim();
   const nodeEnv = process.env.NODE_ENV ?? "development";
   const isProduction = nodeEnv === "production";
@@ -54,10 +56,10 @@ export function isProductionDebugSafe(): boolean {
   return allowlist.length > 0;
 }
 
-export function isDebugAuthAllowed(request?: Request): boolean {
+export function isDebugAuthAllowed(request?: HostSource): boolean {
   return getDebugConfig().debugAuth && isDebugAllowedForRequest(request);
 }
 
-export function isDebugDiagAllowed(request?: Request): boolean {
+export function isDebugDiagAllowed(request?: HostSource): boolean {
   return getDebugConfig().debugDiag && isDebugAllowedForRequest(request);
 }
