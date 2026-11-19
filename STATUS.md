@@ -1,5 +1,13 @@
 # STATUS — AISTROYKA
 
+## P0 закрыт — 2026-11-19: Supabase снова доступен
+
+Живая проверка 2026-11-19 08:33 Europe/Madrid: `GET /api/v1/health` на `aistroyka.ai` и `staging.aistroyka.ai` → **200**, `ok: true`, `db: ok`, `supabaseReachable: true`, `buildStamp.sha7 = f6f56b8`. Staging smoke (`apps/web/scripts/smoke-staging.sh`) → PASS. DNS `vthfrxehrursfloevnlp.supabase.co` резолвится. Авария ~2026-11-09 → восстановление владельцем 2026-11-19 (тот же проект, без нового).
+
+GDPR Deletion Processor: прогоны 14–18 ноября падали с HTTP 503 `Failed to list tenants` из‑за БД. `workflow_dispatch` из агента — GitHub 403; следующий schedule 02:20 UTC (03:20 Europe/Madrid). Ручной запуск: Actions → GDPR Deletion Processor → Run workflow.
+
+Исправления аудита (ждут non-author APPROVED): #489 отчёт, #490 `/smoke`+robots, #491 stakeholder fail-closed, #492 Next 15.5.29, #493 runtime health monitor, #494 дубликаты «(1)», #495 i18n support/uploads, #496 docs truth, #497 smoke 503=FAIL, #498 owner/platform route tests. Legal/store/billing 7-day — `OWNER_GATE`.
+
 ## Актуальная плановая сверка — 2026-10-30
 
 Локальный conveyor Oct-23 закрыт: [closure](docs/reports/conveyor-closure-2026-10-28/RESULT.md). Main tip после #480–#483: `ff7d0894`. Hosted SQL applied (grants, quantity/material/corrections/captions, completeness evaluations, intake_draft unique, tender findings).
