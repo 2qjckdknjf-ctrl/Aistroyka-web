@@ -11,9 +11,9 @@ Canon skin set `?task=` on card click but gated the inspector with `skin !== "ca
 
 ## Fix
 
-1. Show task inspector for Canon (desktop aside + narrow under-board).  
+1. Show task inspector for Canon via a **single** responsive aside (no dual-mounted detail).  
 2. `buildTaskDetailHref` / `resolveTasksReturnHref` / `buildTasksWorkspaceHref` / `parseSelectedTaskId` in `tasks-workspace.utils.ts`.  
-3. Full-task links carry `returnTo`; `TaskDetailCanonPage` Back restores workspace query.  
+3. Full-task links carry `returnTo`; `TaskDetailCanonPage` Back restores workspace query **without** re-`decodeURIComponent` (preserves `%26` etc.).  
 4. Detail client clears prior task and maps 403/404 before paint.
 
 ## Evidence

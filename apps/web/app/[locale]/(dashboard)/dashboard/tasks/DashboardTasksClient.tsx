@@ -742,65 +742,40 @@ export function DashboardTasksClient({
         )}
 
         {selectedTaskId ? (
-          <>
-            <aside className="hidden min-w-0 lg:block" aria-label={tDetail("tasks")}>
-              <div className="sticky top-20 space-y-3">
-                {skin === "canon" ? (
-                  <div className="canon-glass space-y-3 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Link
-                        href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
-                        className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
-                      >
-                        {tDetail("openFullTask")}
-                      </Link>
-                      <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
-                        {tDetail("closeTaskInspector")}
-                      </Button>
-                    </div>
-                    <DashboardTaskDetailClient taskId={selectedTaskId} skin="canon" />
-                  </div>
-                ) : (
-                  <>
-                    <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
-                      <Link
-                        href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
-                        className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
-                      >
-                        {tDetail("openFullTask")}
-                      </Link>
-                      <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
-                        {tDetail("closeTaskInspector")}
-                      </Button>
-                    </DashboardGlassCard>
-                    <DashboardTaskDetailClient taskId={selectedTaskId} />
-                  </>
-                )}
+          <aside className="min-w-0 lg:sticky lg:top-20" aria-label={tDetail("tasks")}>
+            {/* Single detail instance for all breakpoints (Codex: avoid dual fetch/chat). */}
+            {skin === "canon" ? (
+              <div className="canon-glass space-y-3 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Link
+                    href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                    className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
+                  >
+                    {tDetail("openFullTask")}
+                  </Link>
+                  <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                    {tDetail("closeTaskInspector")}
+                  </Button>
+                </div>
+                <DashboardTaskDetailClient taskId={selectedTaskId} skin="canon" />
               </div>
-            </aside>
-            {/* Phone / narrow: show selected task under the board (V2-WEB-02). */}
-            <div className="min-w-0 lg:hidden" aria-label={tDetail("tasks")}>
-              <DashboardTaskDetailClient
-                taskId={selectedTaskId}
-                skin={skin === "canon" ? "canon" : "default"}
-              />
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link
-                  href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
-                  className={
-                    skin === "canon"
-                      ? "text-sm font-medium text-[var(--canon-cyan)] hover:underline"
-                      : "text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
-                  }
-                >
-                  {tDetail("openFullTask")}
-                </Link>
-                <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
-                  {tDetail("closeTaskInspector")}
-                </Button>
+            ) : (
+              <div className="space-y-3">
+                <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
+                  <Link
+                    href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                    className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {tDetail("openFullTask")}
+                  </Link>
+                  <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                    {tDetail("closeTaskInspector")}
+                  </Button>
+                </DashboardGlassCard>
+                <DashboardTaskDetailClient taskId={selectedTaskId} />
               </div>
-            </div>
-          </>
+            )}
+          </aside>
         ) : null}
       </div>
 

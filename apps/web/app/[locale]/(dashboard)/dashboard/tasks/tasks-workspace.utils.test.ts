@@ -78,13 +78,18 @@ describe("tasks workspace utils", () => {
     );
   });
 
-  it("resolves returnTo only for dashboard tasks paths", () => {
+  it("resolves returnTo only for dashboard tasks paths without re-decoding", () => {
     expect(resolveTasksReturnHref(null)).toBe("/dashboard/tasks");
     expect(resolveTasksReturnHref("/dashboard/tasks?view=board&task=t1")).toBe(
       "/dashboard/tasks?view=board&task=t1",
     );
+    // Already-decoded useSearchParams value must keep filter encodings intact.
+    expect(resolveTasksReturnHref("/dashboard/tasks?q=A%26B&view=board")).toBe(
+      "/dashboard/tasks?q=A%26B&view=board",
+    );
+    // Still-encoded outer values fail closed (do not double-decode).
     expect(resolveTasksReturnHref(encodeURIComponent("/dashboard/tasks?view=board"))).toBe(
-      "/dashboard/tasks?view=board",
+      "/dashboard/tasks",
     );
     expect(resolveTasksReturnHref("https://evil.example/dashboard/tasks")).toBe("/dashboard/tasks");
     expect(resolveTasksReturnHref("//evil.example")).toBe("/dashboard/tasks");

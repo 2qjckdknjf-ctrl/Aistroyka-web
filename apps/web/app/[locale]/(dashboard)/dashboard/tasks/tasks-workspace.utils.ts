@@ -129,16 +129,15 @@ export function buildTaskDetailHref(taskId: string, returnTo?: string | null): s
   return `${base}?returnTo=${encodeURIComponent(ret)}`;
 }
 
-/** Safe Back target from returnTo — only allow same-origin dashboard tasks paths. */
+/**
+ * Safe Back target from returnTo — only allow dashboard tasks paths.
+ * Callers should pass the already-decoded value (e.g. useSearchParams().get("returnTo"));
+ * do not decodeURIComponent again or filter encodings like `%26` break into extra params.
+ */
 export function resolveTasksReturnHref(returnTo: string | null | undefined): string {
   if (typeof returnTo !== "string" || !returnTo.trim()) return "/dashboard/tasks";
-  let decoded = returnTo.trim();
-  try {
-    decoded = decodeURIComponent(decoded);
-  } catch {
-    return "/dashboard/tasks";
-  }
-  if (!decoded.startsWith("/dashboard/tasks")) return "/dashboard/tasks";
-  if (decoded.startsWith("//") || decoded.includes("://")) return "/dashboard/tasks";
-  return decoded;
+  const path = returnTo.trim();
+  if (!path.startsWith("/dashboard/tasks")) return "/dashboard/tasks";
+  if (path.startsWith("//") || path.includes("://")) return "/dashboard/tasks";
+  return path;
 }
