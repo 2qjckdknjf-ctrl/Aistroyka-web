@@ -8,7 +8,7 @@ export function AlertsCanonPage() {
   const t = useTranslations("dashboard");
 
   return (
-    <DashboardCanonRouteShell title={t("alerts")}>
+    <DashboardCanonRouteShell title={t("alertsPageTitle")}>
       <DashboardAlertsClient skin="canon" />
     </DashboardCanonRouteShell>
   );

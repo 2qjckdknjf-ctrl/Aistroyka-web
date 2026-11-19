@@ -60,4 +60,13 @@ describe("redirectIfStakeholderBlockedPath", () => {
       "https://app.example.com/en/portal/projects"
     );
   });
+
+  it("blocks team management for portal-only stakeholders", () => {
+    expect(redirectIfStakeholderBlockedPath("/team", "en", base)?.headers.get("location")).toBe(
+      "https://app.example.com/en/portal/projects"
+    );
+    expect(redirectIfStakeholderBlockedPath("/team/invite", "en", base)?.headers.get("location")).toBe(
+      "https://app.example.com/en/portal/projects"
+    );
+  });
 });

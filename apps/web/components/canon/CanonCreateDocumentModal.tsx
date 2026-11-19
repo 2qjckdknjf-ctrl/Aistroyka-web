@@ -26,7 +26,7 @@ export function CanonCreateDocumentModal({
   const t = useTranslations("canon");
   const tCommon = useTranslations("common");
   const tDetail = useTranslations("dashboardDetail");
-  const tDash = useTranslations("dashboard");
+  const tProjects = useTranslations("projects");
   const [type, setType] = useState("document");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -108,7 +108,7 @@ export function CanonCreateDocumentModal({
             {tCommon("cancel")}
           </button>
           <button type="submit" className="canon-gold-btn" disabled={isSubmitting || !title.trim() || !file}>
-            {isSubmitting ? tDash("creating") : t("uploadFiles")}
+            {isSubmitting ? tProjects("creating") : t("uploadFiles")}
           </button>
         </div>
       </form>
