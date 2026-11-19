@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -64,6 +64,8 @@ export function DashboardTaskDetailClient({
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
   const [savingPriority, setSavingPriority] = useState(false);
+  const activeTaskIdRef = useRef(taskId);
+  activeTaskIdRef.current = taskId;
 
   const fetchTask = (opts?: { clearCurrent?: boolean }) => {
     const requestedId = taskId;
@@ -82,17 +84,17 @@ export function DashboardTaskDetailClient({
         return r.json();
       })
       .then((json: { data?: TaskDetail }) => {
-        if (requestedId !== taskId) return;
+        if (requestedId !== activeTaskIdRef.current) return;
         setTask(json.data ?? null);
         setError(null);
       })
       .catch((e) => {
-        if (requestedId !== taskId) return;
+        if (requestedId !== activeTaskIdRef.current) return;
         setError(e instanceof Error ? e.message : "Failed to load");
         setTask(null);
       })
       .finally(() => {
-        if (requestedId !== taskId) return;
+        if (requestedId !== activeTaskIdRef.current) return;
         setLoading(false);
       });
   };
