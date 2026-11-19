@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 
 type SupportTicket = {
   id: string;
@@ -19,7 +20,25 @@ type TicketMessage = {
 };
 
 export function SupportClient({ skin = "default" }: { skin?: "default" | "canon" }) {
+  const t = useTranslations("dashboard.supportPage");
+  const locale = useLocale();
   const isCanon = skin === "canon";
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case "open":
+        return t("statusOpen");
+      case "in_progress":
+        return t("statusInProgress");
+      case "waiting_user":
+        return t("statusWaitingUser");
+      case "resolved":
+        return t("statusResolved");
+      case "closed":
+        return t("statusClosed");
+      default:
+        return t("statusUnknown", { status });
+    }
+  };
   const shell = isCanon ? "canon-glass p-4" : "card";
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
@@ -84,7 +103,7 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
       });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(json.error ?? "Unable to create support request.");
+        setError(json.error ?? t("createFailed"));
         return;
       }
       setSubject("");
@@ -112,7 +131,7 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
       });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(json.error ?? "Unable to send message.");
+        setError(json.error ?? t("sendFailed"));
         return;
       }
       setReply("");
@@ -126,37 +145,37 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
   return (
     <section className="space-y-6">
       <header>
-        <h1 className="text-aistroyka-title2 font-bold text-aistroyka-text-primary">Contact AISTROYKA support</h1>
+        <h1 className="text-aistroyka-title2 font-bold text-aistroyka-text-primary">{t("title")}</h1>
         <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Create a ticket, track status, and continue the conversation in one thread.
+          {t("subtitle")}
         </p>
       </header>
 
       <form onSubmit={createTicket} className={`${shell} space-y-3`}>
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">New support request</h2>
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("newRequest")}</h2>
         <input
           value={subject}
           onChange={(event) => setSubject(event.target.value)}
-          placeholder="Subject"
+          placeholder={t("subjectPlaceholder")}
           className="input-field"
           required
         />
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="Describe your issue"
+          placeholder={t("messagePlaceholder")}
           className="input-field min-h-28"
           required
         />
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? "Sending..." : "Create ticket"}
+          {loading ? t("sending") : t("createTicket")}
         </button>
         {error ? <p className="text-sm text-aistroyka-error">{error}</p> : null}
       </form>
 
       <div className="grid gap-4 md:grid-cols-2">
         <section className={shell}>
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">My tickets</h2>
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("myTickets")}</h2>
           <ul className="mt-3 space-y-2">
             {tickets.map((ticket) => (
               <li key={ticket.id}>
@@ -171,53 +190,53 @@ export function SupportClient({ skin = "default" }: { skin?: "default" | "canon"
                 >
                   <p className="text-sm font-medium text-aistroyka-text-primary">{ticket.subject}</p>
                   <p className="text-xs text-aistroyka-text-tertiary">
-                    {ticket.status} · {new Date(ticket.updated_at).toLocaleString()}
+                    {statusLabel(ticket.status)} · {new Date(ticket.updated_at).toLocaleString(locale)}
                   </p>
                 </button>
               </li>
             ))}
             {tickets.length === 0 ? (
-              <li className="text-sm text-aistroyka-text-tertiary">No support requests yet.</li>
+              <li className="text-sm text-aistroyka-text-tertiary">{t("noTickets")}</li>
             ) : null}
           </ul>
         </section>
 
         <section className={shell}>
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Ticket thread</h2>
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("thread")}</h2>
           {activeTicket ? (
             <>
               <p className="mt-2 text-sm text-aistroyka-text-secondary">
-                {activeTicket.subject} ({activeTicket.status})
+                {activeTicket.subject} ({statusLabel(activeTicket.status)})
               </p>
               <ul className="mt-3 max-h-64 space-y-2 overflow-auto">
                 {messages.map((msg) => (
                   <li key={msg.id} className="rounded-card border border-aistroyka-border-subtle px-3 py-2">
                     <p className="text-xs text-aistroyka-text-tertiary">
-                      {msg.author_type === "platform_owner" ? "AISTROYKA support" : "You"} ·{" "}
-                      {new Date(msg.created_at).toLocaleString()}
+                      {msg.author_type === "platform_owner" ? t("authorSupport") : t("authorYou")} ·{" "}
+                      {new Date(msg.created_at).toLocaleString(locale)}
                     </p>
                     <p className="mt-1 text-sm text-aistroyka-text-primary">{msg.body}</p>
                   </li>
                 ))}
                 {messages.length === 0 ? (
-                  <li className="text-sm text-aistroyka-text-tertiary">No messages yet.</li>
+                  <li className="text-sm text-aistroyka-text-tertiary">{t("noMessages")}</li>
                 ) : null}
               </ul>
               <form onSubmit={sendReply} className="mt-3 space-y-2">
                 <textarea
                   value={reply}
                   onChange={(event) => setReply(event.target.value)}
-                  placeholder="Add message"
+                  placeholder={t("replyPlaceholder")}
                   className="input-field min-h-20"
                   required
                 />
                 <button type="submit" className="btn-secondary" disabled={loading || !reply.trim()}>
-                  Send message
+                  {t("sendMessage")}
                 </button>
               </form>
             </>
           ) : (
-            <p className="mt-3 text-sm text-aistroyka-text-tertiary">Select a ticket to view details.</p>
+            <p className="mt-3 text-sm text-aistroyka-text-tertiary">{t("selectTicket")}</p>
           )}
         </section>
       </div>
