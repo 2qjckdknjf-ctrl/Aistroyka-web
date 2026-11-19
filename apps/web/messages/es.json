@@ -3106,6 +3106,8 @@
     "turnOff": "Desactivar",
     "turnOn": "Activar",
     "updatesForYou": "Actualizaciones para ti",
+    "updatesLoadError": "No se pudieron cargar las actualizaciones. Inténtelo de nuevo.",
+    "updatesEmpty": "Aún no hay actualizaciones.",
     "new": "nuevas",
     "markAsRead": "Marcar como leído",
     "loadingUpdates": "Cargando actualizaciones…",

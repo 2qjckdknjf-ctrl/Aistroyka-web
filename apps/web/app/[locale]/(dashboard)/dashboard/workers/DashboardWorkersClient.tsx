@@ -27,8 +27,9 @@ interface WorkerRow {
   anomalies?: { open_shift: boolean; overtime: boolean; no_activity: boolean };
 }
 
-export function DashboardWorkersClient() {
+export function DashboardWorkersClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const [data, setData] = useState<WorkerRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +52,11 @@ export function DashboardWorkersClient() {
   }, []);
 
   if (loading && !data) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4">
+        <Skeleton lines={5} />
+      </div>
+    ) : (
       <DashboardGlassCard>
         <Skeleton lines={5} />
       </DashboardGlassCard>
@@ -59,7 +64,9 @@ export function DashboardWorkersClient() {
   }
 
   if (error) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4 text-sm text-[var(--canon-text-secondary)]">{error}</div>
+    ) : (
       <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
       </DashboardGlassCard>
@@ -67,15 +74,14 @@ export function DashboardWorkersClient() {
   }
 
   if (!data?.length) {
-    return (
-      <DashboardGlassCard>
-        <EmptyState
-          icon={<span className="text-2xl">👷</span>}
-          title={tDetail("noWorkersYet")}
-          subtitle={tDetail("workerDayDataAppears")}
-        />
-      </DashboardGlassCard>
+    const empty = (
+      <EmptyState
+        icon={<span className="text-2xl">👷</span>}
+        title={tDetail("noWorkersYet")}
+        subtitle={tDetail("workerDayDataAppears")}
+      />
     );
+    return isCanon ? <div className="canon-glass p-4">{empty}</div> : <DashboardGlassCard>{empty}</DashboardGlassCard>;
   }
 
   const copyWorkerId = (userId: string) => {
@@ -93,10 +99,22 @@ export function DashboardWorkersClient() {
     exportTableToCsv(headers, rows, "workers.csv");
   };
 
-  return (
-    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
+  const linkClass = isCanon
+    ? "font-medium text-[var(--canon-cyan)] hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--canon-cyan)] rounded"
+    : "font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded";
+  const mutedCell = isCanon
+    ? "text-[var(--canon-text-secondary)] tabular-nums"
+    : "text-aistroyka-text-secondary tabular-nums";
+  const idLinkClass = isCanon
+    ? "font-mono text-xs text-[var(--canon-cyan)] hover:underline truncate max-w-[120px] block"
+    : "font-mono text-aistroyka-caption text-aistroyka-accent hover:underline truncate max-w-[120px] block";
+
+  const table = (
+    <>
       <div className="p-2 flex justify-end">
-        <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+        <Button variant="secondary" onClick={exportCsv} className="text-sm">
+          {tDetail("exportCsv")}
+        </Button>
       </div>
       <Table aria-label={tDetail("workers")}>
         <TableHead>
@@ -113,14 +131,22 @@ export function DashboardWorkersClient() {
           {data.map((w) => (
             <TableRow key={w.user_id}>
               <TableCell>
-                <Link href={`/dashboard/workers/${encodeURIComponent(w.user_id)}`} className="font-mono text-aistroyka-caption text-aistroyka-accent hover:underline truncate max-w-[120px] block" title={w.user_id}>
+                <Link
+                  href={`/dashboard/workers/${encodeURIComponent(w.user_id)}`}
+                  className={idLinkClass}
+                  title={w.user_id}
+                >
                   {w.user_id.slice(0, 8)}…
                 </Link>
-                <Button variant="secondary" className="mt-1 text-xs py-0 px-1" onClick={() => copyWorkerId(w.user_id)}>{tDetail("copyId")}</Button>
+                <Button
+                  variant="secondary"
+                  className="mt-1 text-xs py-0 px-1"
+                  onClick={() => copyWorkerId(w.user_id)}
+                >
+                  {tDetail("copyId")}
+                </Button>
               </TableCell>
-              <TableCell className="text-aistroyka-text-secondary tabular-nums">
-                {w.last_day_date ?? "—"}
-              </TableCell>
+              <TableCell className={mutedCell}>{w.last_day_date ?? "—"}</TableCell>
               <TableCell>
                 {w.last_started_at && w.last_ended_at ? (
                   <Badge variant="success">{tDetail("ended")}</Badge>
@@ -141,7 +167,7 @@ export function DashboardWorkersClient() {
                   "—"
                 )}
               </TableCell>
-              <TableCell className="text-aistroyka-text-secondary tabular-nums">
+              <TableCell className={mutedCell}>
                 {w.last_report_submitted_at
                   ? new Date(w.last_report_submitted_at).toLocaleString(undefined, {
                       dateStyle: "short",
@@ -150,17 +176,11 @@ export function DashboardWorkersClient() {
                   : "—"}
               </TableCell>
               <TableCell>
-                <Link
-                  href={`/dashboard/workers/${encodeURIComponent(w.user_id)}`}
-                  className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
-                >
+                <Link href={`/dashboard/workers/${encodeURIComponent(w.user_id)}`} className={linkClass}>
                   {tDetail("view")}
                 </Link>
                 {" · "}
-                <Link
-                  href={`/dashboard/workers/${encodeURIComponent(w.user_id)}/days`}
-                  className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
-                >
+                <Link href={`/dashboard/workers/${encodeURIComponent(w.user_id)}/days`} className={linkClass}>
                   {tDetail("days")}
                 </Link>
               </TableCell>
@@ -168,6 +188,12 @@ export function DashboardWorkersClient() {
           ))}
         </TableBody>
       </Table>
-    </DashboardGlassCard>
+    </>
+  );
+
+  return isCanon ? (
+    <div className="canon-glass overflow-hidden p-0">{table}</div>
+  ) : (
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">{table}</DashboardGlassCard>
   );
 }

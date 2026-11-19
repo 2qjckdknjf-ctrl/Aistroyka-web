@@ -3106,6 +3106,8 @@
     "turnOff": "Disattiva",
     "turnOn": "Attiva",
     "updatesForYou": "Aggiornamenti per te",
+    "updatesLoadError": "Impossibile caricare gli aggiornamenti. Riprova.",
+    "updatesEmpty": "Nessun aggiornamento ancora.",
     "new": "nuove",
     "markAsRead": "Segna come letta",
     "loadingUpdates": "Caricamento aggiornamenti…",
