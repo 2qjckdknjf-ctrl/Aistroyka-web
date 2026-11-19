@@ -30,6 +30,7 @@ export function ClientPortalNotificationsSection({
   surface?: "legacy" | "canon";
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["stakeholder-notifications", projectId],
@@ -82,14 +83,37 @@ export function ClientPortalNotificationsSection({
   }
 
   if (q.isError) {
-    return null;
+    const errorBody = (
+      <div className="space-y-2" role="status">
+        <p className={mutedClass}>{tDetail("updatesLoadError")}</p>
+        <Button variant="secondary" className="text-xs" onClick={() => void q.refetch()}>
+          {tCommon("retry")}
+        </Button>
+      </div>
+    );
+    return surface === "canon" ? (
+      <div id="portal-notifications" className={shellClass}>
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <div className="mt-3">{errorBody}</div>
+      </div>
+    ) : (
+      <DashboardGlassCard className="p-4">
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <div className="mt-3">{errorBody}</div>
+      </DashboardGlassCard>
+    );
   }
 
   const items = q.data?.data ?? [];
   const unread = q.data?.unread ?? 0;
 
   if (items.length === 0) {
-    return null;
+    return surface === "canon" ? (
+      <div id="portal-notifications" className={shellClass}>
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <p className={`mt-2 ${mutedClass}`}>{tDetail("updatesEmpty")}</p>
+      </div>
+    ) : null;
   }
 
   const body = (

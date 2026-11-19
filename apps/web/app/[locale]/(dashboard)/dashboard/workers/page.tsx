@@ -1,5 +1,5 @@
-import { DashboardTeamCanonPage } from "@/components/canon/DashboardTeamCanonPage";
+import { DashboardWorkersCanonPage } from "@/components/canon/DashboardWorkersCanonPage";
 
 export default function WorkersPage() {
-  return <DashboardTeamCanonPage />;
+  return <DashboardWorkersCanonPage />;
 }

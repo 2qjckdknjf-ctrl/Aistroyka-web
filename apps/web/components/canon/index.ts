@@ -31,5 +31,6 @@ export { CanonAiWaveChart } from "./CanonAiWaveChart";
 export { DashboardCanonRouteShell } from "./DashboardCanonRouteShell";
 export { DashboardApprovalsCanonPage } from "./DashboardApprovalsCanonPage";
 export { DashboardContractorsCanonPage } from "./DashboardContractorsCanonPage";
+export { DashboardWorkersCanonPage } from "./DashboardWorkersCanonPage";
 export { CanonSurface } from "./CanonSurface";
 export { CanonPortalPhotoGallery } from "./CanonPortalPhotoGallery";

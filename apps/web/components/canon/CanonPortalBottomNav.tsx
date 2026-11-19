@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { FileText, Home, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { applyPortalHash } from "./portal-hash-nav";
 
 function parsePortalClientProjectId(pathname: string): string | null {
   const match = pathname.match(/\/dashboard\/projects\/([^/]+)\/client/);
@@ -23,14 +24,6 @@ export function CanonPortalBottomNav() {
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
   }, [pathname]);
-
-  function scrollToHash(targetHash: string) {
-    const id = targetHash.replace(/^#/, "");
-    if (!id) return;
-    window.requestAnimationFrame(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }
 
   const items = [
     {
@@ -75,12 +68,8 @@ export function CanonPortalBottomNav() {
               const onClientPage = pathname.includes(`/dashboard/projects/${projectId}/client`);
               if (!onClientPage) return;
               event.preventDefault();
-              if (window.location.hash !== item.hash) {
-                window.history.pushState(null, "", item.hash);
-                setHash(item.hash);
-                window.dispatchEvent(new HashChangeEvent("hashchange"));
-              }
-              scrollToHash(item.hash);
+              applyPortalHash(item.hash);
+              setHash(item.hash);
             }}
           >
             <item.icon size={20} aria-hidden />
