@@ -59,6 +59,6 @@
     "wrangler": "^4.67.0"
   },
   "optionalDependencies": {
-    "@next/swc-darwin-x64": "^15.5.12"
+    "@next/swc-darwin-x64": "^15.5.29"
   }
 }
