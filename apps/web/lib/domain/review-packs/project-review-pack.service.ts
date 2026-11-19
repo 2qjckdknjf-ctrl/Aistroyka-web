@@ -159,7 +159,7 @@ export async function buildProjectReviewPack(
         control.signals.activeAftercareCount > 0
           ? `${control.signals.activeAftercareCount} open service request(s) require triage or follow-up.`
           : "No open aftercare requests.",
-      href: `${control.projectHref}?tab=aftercare`,
+      href: `${control.projectHref}?tab=service-requests`,
     },
     attention: {
       totalPendingDecisions: summary.pendingDecisionsCount,
