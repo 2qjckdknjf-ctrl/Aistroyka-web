@@ -30,6 +30,7 @@ export function ClientPortalNotificationsSection({
   surface?: "legacy" | "canon";
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tNotifications = useTranslations("notificationsPage");
   const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["stakeholder-notifications", projectId],
@@ -81,15 +82,19 @@ export function ClientPortalNotificationsSection({
     );
   }
 
-  if (q.isError) {
-    return null;
-  }
-
   const items = q.data?.data ?? [];
   const unread = q.data?.unread ?? 0;
 
-  if (items.length === 0) {
-    return null;
+  if (q.isError || items.length === 0) {
+    if (surface !== "canon") return null;
+    return (
+      <div id="portal-notifications" className={shellClass}>
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <p className={`mt-2 ${mutedClass}`}>
+          {q.isError ? tNotifications("loadFailed") : tDetail("noUpdatesYet")}
+        </p>
+      </div>
+    );
   }
 
   const body = (

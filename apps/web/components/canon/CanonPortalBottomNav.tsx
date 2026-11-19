@@ -10,6 +10,11 @@ function parsePortalClientProjectId(pathname: string): string | null {
   return match?.[1] ?? null;
 }
 
+function hashFromHref(href: string): string {
+  const index = href.indexOf("#");
+  return index >= 0 ? href.slice(index) : "";
+}
+
 export function CanonPortalBottomNav() {
   const t = useTranslations("canon");
   const pathname = usePathname();
@@ -20,9 +25,21 @@ export function CanonPortalBottomNav() {
   useEffect(() => {
     const read = () => setHash(typeof window !== "undefined" ? window.location.hash : "");
     read();
+    // App Router same-route hash links update the URL with pushState and skip hashchange.
+    // popstate still covers back/forward; in-nav clicks set the hash directly.
     window.addEventListener("hashchange", read);
-    return () => window.removeEventListener("hashchange", read);
+    window.addEventListener("popstate", read);
+    return () => {
+      window.removeEventListener("hashchange", read);
+      window.removeEventListener("popstate", read);
+    };
   }, [pathname]);
+
+  const onClientProject = Boolean(clientBase);
+  const documentsActive = onClientProject && hash === "#portal-documents";
+  const approvalsActive = onClientProject && hash === "#portal-approvals";
+  const projectsActive =
+    pathname.startsWith("/portal") || (onClientProject && !documentsActive && !approvalsActive);
 
   const items = [
     {
@@ -30,7 +47,7 @@ export function CanonPortalBottomNav() {
       href: "/portal/projects",
       labelKey: "portalNavProjects" as const,
       icon: Home,
-      active: pathname.startsWith("/portal"),
+      active: projectsActive,
       enabled: true,
     },
     {
@@ -38,16 +55,16 @@ export function CanonPortalBottomNav() {
       href: clientBase ? `${clientBase}#portal-documents` : "/portal/projects",
       labelKey: "portalNavDocuments" as const,
       icon: FileText,
-      active: Boolean(clientBase) && hash === "#portal-documents",
-      enabled: Boolean(clientBase),
+      active: documentsActive,
+      enabled: onClientProject,
     },
     {
       key: "approvals",
       href: clientBase ? `${clientBase}#portal-approvals` : "/portal/projects",
       labelKey: "portalNavApprovals" as const,
       icon: MessageSquare,
-      active: Boolean(clientBase) && hash === "#portal-approvals",
-      enabled: Boolean(clientBase),
+      active: approvalsActive,
+      enabled: onClientProject,
     },
   ];
 
@@ -58,6 +75,7 @@ export function CanonPortalBottomNav() {
           <Link
             key={item.key}
             href={item.href}
+            onClick={() => setHash(hashFromHref(item.href))}
             className={`canon-portal-bottom-nav-item ${item.active ? "canon-portal-bottom-nav-item--active" : ""}`}
           >
             <item.icon size={20} aria-hidden />
