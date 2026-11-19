@@ -24,6 +24,14 @@ export function CanonPortalBottomNav() {
     return () => window.removeEventListener("hashchange", read);
   }, [pathname]);
 
+  function scrollToHash(targetHash: string) {
+    const id = targetHash.replace(/^#/, "");
+    if (!id) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   const items = [
     {
       key: "projects",
@@ -32,6 +40,7 @@ export function CanonPortalBottomNav() {
       icon: Home,
       active: pathname.startsWith("/portal"),
       enabled: true,
+      hash: null as string | null,
     },
     {
       key: "documents",
@@ -40,6 +49,7 @@ export function CanonPortalBottomNav() {
       icon: FileText,
       active: Boolean(clientBase) && hash === "#portal-documents",
       enabled: Boolean(clientBase),
+      hash: "#portal-documents" as string | null,
     },
     {
       key: "approvals",
@@ -48,6 +58,7 @@ export function CanonPortalBottomNav() {
       icon: MessageSquare,
       active: Boolean(clientBase) && hash === "#portal-approvals",
       enabled: Boolean(clientBase),
+      hash: "#portal-approvals" as string | null,
     },
   ];
 
@@ -59,6 +70,18 @@ export function CanonPortalBottomNav() {
             key={item.key}
             href={item.href}
             className={`canon-portal-bottom-nav-item ${item.active ? "canon-portal-bottom-nav-item--active" : ""}`}
+            onClick={(event) => {
+              if (!item.hash || !clientBase) return;
+              const onClientPage = pathname.includes(`/dashboard/projects/${projectId}/client`);
+              if (!onClientPage) return;
+              event.preventDefault();
+              if (window.location.hash !== item.hash) {
+                window.history.pushState(null, "", item.hash);
+                setHash(item.hash);
+                window.dispatchEvent(new HashChangeEvent("hashchange"));
+              }
+              scrollToHash(item.hash);
+            }}
           >
             <item.icon size={20} aria-hidden />
             <span>{t(item.labelKey)}</span>

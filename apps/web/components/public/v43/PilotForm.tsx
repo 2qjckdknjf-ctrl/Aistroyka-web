@@ -21,6 +21,7 @@ export function PilotForm() {
   const [step, setStep] = useState<1 | 2>(1);
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
   const [started, setStarted] = useState(false);
   const [values, setValues] = useState({
     name: "",
@@ -102,13 +103,27 @@ export function PilotForm() {
     <form
       className="v43-form-card v41-glass"
       onSubmit={(event) => {
+        const form = event.currentTarget;
+        if (!form.reportValidity()) {
+          event.preventDefault();
+          setShowFieldErrors(true);
+          return;
+        }
         event.preventDefault();
         if (step === 1) {
-          if (fieldErrors.length > 0) return;
+          if (fieldErrors.length > 0) {
+            setShowFieldErrors(true);
+            return;
+          }
+          setShowFieldErrors(false);
           setStep(2);
           return;
         }
-        if (fieldErrors.length > 0) return;
+        if (fieldErrors.length > 0) {
+          setShowFieldErrors(true);
+          return;
+        }
+        setShowFieldErrors(false);
         void submit();
       }}
     >
@@ -204,6 +219,11 @@ export function PilotForm() {
       {status === "error" && errorMessage ? (
         <p className="v41-form-error" role="alert">
           {errorMessage}
+        </p>
+      ) : null}
+      {showFieldErrors && fieldErrors.length > 0 ? (
+        <p className="v41-form-error" role="status">
+          {t("validationHint", { fields: fieldErrors.join(", ") })}
         </p>
       ) : null}
       <div className="v41-hero-actions">

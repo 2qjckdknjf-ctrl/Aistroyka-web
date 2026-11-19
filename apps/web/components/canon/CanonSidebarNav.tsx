@@ -10,6 +10,8 @@ import {
   Wallet,
   Truck,
   Users,
+  HardHat,
+  Bell,
   BarChart3,
   ShieldAlert,
   Settings,
@@ -41,9 +43,11 @@ const CONTRACTOR_NAV: NavItem[] = [
   { href: "/dashboard/uploads", labelKey: "navDocuments", icon: FileText, testId: "cta.dashboard.nav.uploads" },
   { href: "/dashboard/approvals", labelKey: "navFinance", icon: Wallet, testId: "cta.dashboard.nav.approvals" },
   { href: "/dashboard/devices", labelKey: "navSupplies", icon: Truck },
+  { href: "/dashboard/workers", labelKey: "navWorkers", icon: HardHat, testId: "cta.dashboard.nav.workers" },
   { href: "/dashboard/contractors", labelKey: "navContractors", icon: Users },
   { href: "/dashboard/reports", labelKey: "navReports", icon: BarChart3 },
   { href: "/dashboard/ai", labelKey: "navRisks", icon: ShieldAlert, testId: "cta.dashboard.nav.ai" },
+  { href: "/dashboard/alerts", labelKey: "navAlerts", icon: Bell, testId: "cta.dashboard.nav.alerts" },
   { href: "/dashboard/settings/auth", labelKey: "navSettings", icon: Settings, testId: "cta.dashboard.nav.authSettings" },
 ];
 
