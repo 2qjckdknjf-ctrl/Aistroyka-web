@@ -1,12 +1,16 @@
 # STATUS — AISTROYKA
 
-## P0 закрыт — 2026-11-19: Supabase снова доступен
+## Сверка 2026-11-19 — аудит-фиксы в main, runtime recovered
 
-Живая проверка 2026-11-19 08:33 Europe/Madrid: `GET /api/v1/health` на `aistroyka.ai` и `staging.aistroyka.ai` → **200**, `ok: true`, `db: ok`, `supabaseReachable: true`, `buildStamp.sha7 = f6f56b8`. Staging smoke (`apps/web/scripts/smoke-staging.sh`) → PASS. DNS `vthfrxehrursfloevnlp.supabase.co` резолвится. Авария ~2026-11-09 → восстановление владельцем 2026-11-19 (тот же проект, без нового).
+**Deploy:** staging + production на `buildStamp.sha7 = b736b6c` (tip `main` = merge #492 Next 15.5.29). Health 200 / `ok` / `db: ok` / `supabaseReachable: true` (проверено 2026-11-19 15:18 Europe/Madrid). Staging + apex smoke PASS.
 
-GDPR Deletion Processor: прогоны 14–18 ноября падали с HTTP 503 `Failed to list tenants` из‑за БД. `workflow_dispatch` из агента — GitHub 403; следующий schedule 02:20 UTC (03:20 Europe/Madrid). Ручной запуск: Actions → GDPR Deletion Processor → Run workflow.
+**P0 Supabase:** восстановлен владельцем (тот же `vthfrxehrursfloevnlp`); авария ~2026-11-09 → 2026-11-19.
 
-Исправления аудита (ждут non-author APPROVED): #489 отчёт, #490 `/smoke`+robots, #491 stakeholder fail-closed, #492 Next 15.5.29, #493 runtime health monitor, #494 дубликаты «(1)», #495 i18n support/uploads, #496 docs truth, #497 smoke 503=FAIL, #498 owner/platform route tests. Legal/store/billing 7-day — `OWNER_GATE`.
+**GDPR Deletion Processor:** schedule 2026-11-19 11:28 Europe/Madrid SUCCESS — `tenants=4, scheduled=8, processed=8` (run 44505956016). Прогоны 14–18 ноября падали из‑за БД.
+
+**Слито в main (APPROVED → merge):** #489 audit report, #490 `/smoke`+robots, #491 stakeholder fail-closed, #492 Next 15.5.29, #493 runtime health monitor, #494 дубликаты «(1)», #495 i18n support/uploads, #496 docs truth, #497 smoke 503=FAIL, #498 owner/platform route tests, #499 sitemap drop `/ai-demo`+`/copilot`. Также #500 cabinet wiring (отдельный поток).
+
+**Открыто / OWNER_GATE:** legal Privacy/Terms, store uploads, billing 7-day shadow, #178 (russian-default + устаревший June audit — не мержить как есть; default Russian добавляется в AGENTS этим срезом). Runtime Health Monitor на `main` (cron */30); live probe PASS both.
 
 ## Актуальная плановая сверка — 2026-10-30
 
