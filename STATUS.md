@@ -1,10 +1,12 @@
 # STATUS — AISTROYKA
 
-## P0 инцидент — 2026-11-19: Supabase недоступен, production/staging 503
+## P0 закрыт — 2026-11-19: Supabase снова доступен
 
-Живая проверка 2026-11-19 07:10 UTC: `GET /api/v1/health` на `aistroyka.ai` и `staging.aistroyka.ai` → 503, `db: error`, `supabaseReachable: false`, `buildStamp.sha7 = f6f56b8` (deploy 2026-10-30). DNS `vthfrxehrursfloevnlp.supabase.co` → NXDOMAIN (проект AISTROYKA приостановлен или удалён на стороне Supabase); начало между 2026-11-08 13:10 и 2026-11-09 09:54 UTC. Cloudflare Workers исправны, починка только через Supabase Dashboard владельцем (restore/unpause **того же** проекта `vthfrxehrursfloevnlp`, без создания нового). После восстановления: health 200, затем GDPR processor и миграционный receipts preflight перед любым apply.
+Живая проверка 2026-11-19 08:33 Europe/Madrid: `GET /api/v1/health` на `aistroyka.ai` и `staging.aistroyka.ai` → **200**, `ok: true`, `db: ok`, `supabaseReachable: true`, `buildStamp.sha7 = f6f56b8`. Staging smoke (`apps/web/scripts/smoke-staging.sh`) → PASS. DNS `vthfrxehrursfloevnlp.supabase.co` резолвится. Авария ~2026-11-09 → восстановление владельцем 2026-11-19 (тот же проект, без нового).
 
-Исправления по [глубокому аудиту 2026-11-18](docs/audit/AUDIT_2026-11-18_full-deep-audit-ru.md) открыты отдельными PR (ветки `cursor/*-95a4`): #490 `/smoke`+robots, #491 stakeholder fail-closed, #492 Next 15.5.29, #493 runtime health monitor, #494 дубликаты «(1)», #495 i18n support/uploads, #496 эта сверка docs, #497 smoke 503=FAIL, #498 colocated owner/platform route tests. Все требуют non-author review. Supabase MCP дважды отклонён владельцем — восстановление БД только через Dashboard. Пункты «Следующее локальное» ниже остаются в силе, но блокированы P0. Legal-тексты, store-загрузки и billing 7-day gate — `OWNER_GATE`.
+GDPR Deletion Processor: прогоны 14–18 ноября падали с HTTP 503 `Failed to list tenants` из‑за БД. `workflow_dispatch` из агента — GitHub 403; следующий schedule 02:20 UTC (03:20 Europe/Madrid). Ручной запуск: Actions → GDPR Deletion Processor → Run workflow.
+
+Исправления аудита (ждут non-author APPROVED): #489 отчёт, #490 `/smoke`+robots, #491 stakeholder fail-closed, #492 Next 15.5.29, #493 runtime health monitor, #494 дубликаты «(1)», #495 i18n support/uploads, #496 docs truth, #497 smoke 503=FAIL, #498 owner/platform route tests. Legal/store/billing 7-day — `OWNER_GATE`.
 
 ## Актуальная плановая сверка — 2026-10-30
 
