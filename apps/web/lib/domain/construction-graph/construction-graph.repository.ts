@@ -354,3 +354,98 @@ export async function persistConstructionGraphOverlay(
 
   return { persisted: true };
 }
+
+export type ConstructionGraphSourceRef = {
+  tenantId: string;
+  /** When omitted, all projects for the tenant/source pair are invalidated. */
+  projectId?: string | null;
+  sourceTable: string;
+  sourceId: string;
+};
+
+/**
+ * AIS-GRAPH-004: remove overlay nodes/edges for a corrected, deleted, or revoked source
+ * without waiting for the next full project graph rebuild.
+ * Best-effort: missing overlay tables are non-fatal.
+ */
+export async function invalidateConstructionGraphForSource(
+  supabase: SupabaseClient,
+  ref: ConstructionGraphSourceRef
+): Promise<{ invalidated: boolean; removedNodes: number; reason?: string }> {
+  const tenantId = ref.tenantId.trim();
+  const sourceTable = ref.sourceTable.trim();
+  const sourceId = ref.sourceId.trim();
+  const projectId =
+    typeof ref.projectId === "string" && ref.projectId.trim().length > 0
+      ? ref.projectId.trim()
+      : null;
+  if (!tenantId || !sourceTable || !sourceId) {
+    return { invalidated: false, removedNodes: 0, reason: "invalid_ref" };
+  }
+
+  let nodesQuery = supabase
+    .from("construction_graph_nodes")
+    .select("id, project_id")
+    .eq("tenant_id", tenantId)
+    .eq("source_table", sourceTable)
+    .eq("source_id", sourceId);
+  if (projectId) {
+    nodesQuery = nodesQuery.eq("project_id", projectId);
+  }
+
+  const nodesResult = await nodesQuery;
+  if (nodesResult.error) {
+    if (overlayMissing(nodesResult.error.message)) {
+      return { invalidated: false, removedNodes: 0, reason: "overlay_unavailable" };
+    }
+    return { invalidated: false, removedNodes: 0, reason: nodesResult.error.message };
+  }
+
+  const nodeRows = (nodesResult.data ?? []) as Array<{ id: string; project_id: string }>;
+  if (nodeRows.length === 0) {
+    return { invalidated: true, removedNodes: 0 };
+  }
+
+  const nodeIds = nodeRows.map((row) => row.id);
+  const projectIds = [...new Set(nodeRows.map((row) => row.project_id).filter(Boolean))];
+
+  for (const pid of projectIds) {
+    const fromDel = await supabase
+      .from("construction_graph_edges")
+      .delete()
+      .eq("tenant_id", tenantId)
+      .eq("project_id", pid)
+      .in("from_node_id", nodeIds);
+    if (fromDel.error && !overlayMissing(fromDel.error.message)) {
+      return { invalidated: false, removedNodes: 0, reason: fromDel.error.message };
+    }
+
+    const toDel = await supabase
+      .from("construction_graph_edges")
+      .delete()
+      .eq("tenant_id", tenantId)
+      .eq("project_id", pid)
+      .in("to_node_id", nodeIds);
+    if (toDel.error && !overlayMissing(toDel.error.message)) {
+      return { invalidated: false, removedNodes: 0, reason: toDel.error.message };
+    }
+  }
+
+  let nodeDelete = supabase
+    .from("construction_graph_nodes")
+    .delete()
+    .eq("tenant_id", tenantId)
+    .in("id", nodeIds);
+  if (projectId) {
+    nodeDelete = nodeDelete.eq("project_id", projectId);
+  }
+  const prune = await nodeDelete;
+  if (prune.error) {
+    if (overlayMissing(prune.error.message)) {
+      return { invalidated: false, removedNodes: 0, reason: "overlay_unavailable" };
+    }
+    return { invalidated: false, removedNodes: 0, reason: prune.error.message };
+  }
+
+  return { invalidated: true, removedNodes: nodeIds.length };
+}

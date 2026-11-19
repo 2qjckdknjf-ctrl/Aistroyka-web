@@ -754,7 +754,21 @@
     "defaultError": "No se pudo completar la incorporación. Inténtalo de nuevo.",
     "onboarding": "Incorporación",
     "welcomeToAistroyka": "Bienvenido a Aistroyka",
-    "completeStepsToGetStarted": "Completa estos pasos para empezar."
+    "completeStepsToGetStarted": "Completa estos pasos para empezar.",
+    "demoProject": {
+      "name": "Proyecto demo",
+      "badge": "Demo",
+      "description": "Datos de ejemplo. Crea tu primer proyecto para ver tus tareas, informes e información de IA.",
+      "tasksHeading": "Tareas",
+      "taskFoundation": "Inspección de cimentación",
+      "taskSafety": "Briefing de seguridad",
+      "taskDelivery": "Entrega de materiales",
+      "reportsHeading": "Informes y fotos",
+      "reportsPhotos": "{reports} informes, {photos} fotos",
+      "aiInsightsHeading": "Información de IA",
+      "aiSummary": "El proyecto va según lo previsto. Cimentación al 85%. Una tarea pendiente de evidencia.",
+      "cta": "Crea tu primer proyecto →"
+    }
   },
   "helpCenter": {
     "title": "Guía del proyecto y base de conocimiento",
