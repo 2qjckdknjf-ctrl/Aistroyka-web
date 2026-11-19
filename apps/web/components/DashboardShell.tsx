@@ -4,10 +4,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
 import { NavLogout } from "@/components/NavLogout";
-import {
-  getDashboardNavIncludesInternalOps,
-  getDashboardShellHomeHref,
-} from "@/components/dashboard-nav.utils";
+import { getDashboardShellHomeHref } from "@/components/dashboard-nav.utils";
 import {
   CanonSidebarNav,
   CanonTopBar,
@@ -41,7 +38,6 @@ export function DashboardShell({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
-  const showInternal = getDashboardNavIncludesInternalOps(portalOnly);
   const homeHref = getDashboardShellHomeHref(portalOnly);
 
   return (
@@ -68,11 +64,9 @@ export function DashboardShell({
           onCollapseToggle={() => setSidebarCollapsed((v) => !v)}
           onNavigate={closeSidebar}
         />
-        {showInternal ? (
-          <div className="border-t border-[var(--canon-border-glass)] px-3 py-2">
-            <NavLogout />
-          </div>
-        ) : null}
+        <div className="mt-auto border-t border-[var(--canon-border-glass)] px-3 py-2">
+          <NavLogout className="canon-ghost-btn !w-full !justify-center !text-xs" />
+        </div>
       </aside>
 
       {sidebarOpen ? (
@@ -89,6 +83,7 @@ export function DashboardShell({
           userEmail={userEmail}
           userRoleLabel={portalOnly ? t("portalRole") : t("defaultRole")}
           showMenuButton
+          portalOnly={portalOnly}
           onMenuClick={() => setSidebarOpen((v) => !v)}
         />
 
@@ -96,7 +91,7 @@ export function DashboardShell({
           <main className="mx-auto min-w-0 w-full max-w-[1680px] flex-1 px-3 py-4 sm:px-4 sm:py-5 md:px-6 md:py-6">
             {children}
           </main>
-          <CanonFooterBar locale={locale} />
+          <CanonFooterBar locale={locale} portalOnly={portalOnly} />
         </div>
       </div>
       {portalOnly ? <CanonPortalBottomNav /> : null}

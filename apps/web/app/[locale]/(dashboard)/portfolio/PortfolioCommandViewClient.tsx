@@ -290,13 +290,14 @@ export function PortfolioCommandViewClient() {
           ) : (
             <ul className="space-y-2">
               {recommendedActions.map((a, i) => {
-                const href =
+                const resolved =
                   a.relatedResourceType && a.relatedResourceId
                     ? getResourceHref(a.relatedResourceType, a.relatedResourceId, a.projectId)
-                    : `/dashboard/projects/${a.projectId}?tab=intelligence`;
+                    : null;
+                const href = resolved ?? `/dashboard/projects/${a.projectId}?tab=intelligence`;
                 return (
                   <li key={`${a.projectId}-${i}`} className="flex flex-col gap-0.5">
-                    <Link href={href ?? "#"} className="font-medium text-aistroyka-accent hover:underline">
+                    <Link href={href} className="font-medium text-aistroyka-accent hover:underline">
                       {a.title}
                     </Link>
                     <span className="text-xs text-aistroyka-text-tertiary">{a.projectName}</span>

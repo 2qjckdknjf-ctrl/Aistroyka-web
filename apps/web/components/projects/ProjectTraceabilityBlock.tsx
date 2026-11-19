@@ -9,6 +9,8 @@ interface ProjectTraceabilityBlockProps {
   title?: string;
   emptyMessage?: string;
   maxItems?: number;
+  /** Fallback when a row has no targetUrl. */
+  fallbackHref?: string;
 }
 
 function formatRelativeTime(iso: string): string {
@@ -36,6 +38,7 @@ export function ProjectTraceabilityBlock({
   title = "Audit & traceability",
   emptyMessage = "No recorded transitions or governance events for this project yet.",
   maxItems,
+  fallbackHref = "/dashboard/projects",
 }: ProjectTraceabilityBlockProps) {
   const displayed = maxItems ? items.slice(0, maxItems) : items;
 
@@ -64,7 +67,7 @@ export function ProjectTraceabilityBlock({
         {displayed.map((item) => (
           <li key={item.id}>
             <Link
-              href={item.targetUrl ?? "#"}
+              href={item.targetUrl ?? fallbackHref}
               className="block p-4 hover:bg-aistroyka-surface-raised transition-colors"
             >
               <p className="text-sm font-medium text-aistroyka-text-primary">{item.title}</p>

@@ -21,7 +21,15 @@ describe("redirectIfStakeholderBlockedPath", () => {
 
   it("allows client subtree and invite", () => {
     expect(redirectIfStakeholderBlockedPath("/dashboard/projects/p1/client", "en", base)).toBeNull();
+    expect(
+      redirectIfStakeholderBlockedPath("/dashboard/projects/p1/client/handover/pack", "en", base)
+    ).toBeNull();
     expect(redirectIfStakeholderBlockedPath("/dashboard/stakeholder-invite", "en", base)).toBeNull();
+  });
+
+  it("blocks manager-only handover pack outside client subtree", () => {
+    const r = redirectIfStakeholderBlockedPath("/dashboard/projects/p1/handover/pack", "en", base);
+    expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
   });
 
   it("allows portal projects list and nested paths", () => {
