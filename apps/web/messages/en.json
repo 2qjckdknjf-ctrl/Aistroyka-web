@@ -4123,6 +4123,9 @@
   },
   "errors": {
     "insufficientRights": "Insufficient rights",
-    "insufficientRightsMessage": "You do not have permission for this action."
+    "insufficientRightsMessage": "You do not have permission for this action.",
+    "accessCheckUnavailableTitle": "Access check unavailable",
+    "accessCheckUnavailableMessage": "We could not confirm which workspace areas your account may open. Access stays closed until the check succeeds. Try again in a moment.",
+    "accessCheckUnavailableRetry": "Try again"
   }
 }

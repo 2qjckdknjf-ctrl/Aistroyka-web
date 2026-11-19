@@ -4123,6 +4123,9 @@
   },
   "errors": {
     "insufficientRights": "Недостаточно прав",
-    "insufficientRightsMessage": "У вас нет прав для этого действия."
+    "insufficientRightsMessage": "У вас нет прав для этого действия.",
+    "accessCheckUnavailableTitle": "Проверка доступа недоступна",
+    "accessCheckUnavailableMessage": "Не удалось подтвердить, какие разделы доступны вашей учётной записи. Пока проверка не пройдёт, доступ закрыт. Повторите попытку чуть позже.",
+    "accessCheckUnavailableRetry": "Повторить"
   }
 }
