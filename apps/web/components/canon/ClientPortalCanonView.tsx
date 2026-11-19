@@ -128,8 +128,12 @@ export function ClientPortalCanonView({
                     {t("portalDetails")}
                   </a>
                   {data.client_requests.some((r) => r.linked_entity_id === item.id) ? (
-                    <a href="#portal-client-requests" className="canon-ghost-btn !text-xs">
-                      {t("portalApprove")}
+                    <a
+                      href="#portal-client-requests"
+                      className="canon-ghost-btn !text-xs"
+                      title={t("portalApproveHint")}
+                    >
+                      {t("portalOpenRequest")}
                     </a>
                   ) : null}
                 </div>

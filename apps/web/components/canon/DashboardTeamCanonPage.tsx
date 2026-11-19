@@ -207,6 +207,9 @@ export function DashboardTeamCanonPage() {
           <div className="canon-ai-panel rounded-xl p-3">
             <p className="text-sm font-semibold text-[var(--canon-text-primary)]">{t("teamChatTitle")}</p>
             <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{t("teamChatHint")}</p>
+            <Link href="/dashboard/tasks" className="canon-ghost-btn mt-3 inline-flex !text-xs">
+              {t("teamChatOpenTasks")}
+            </Link>
           </div>
         </aside>
       </div>
