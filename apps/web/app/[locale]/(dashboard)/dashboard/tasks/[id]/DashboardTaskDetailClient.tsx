@@ -65,12 +65,16 @@ export function DashboardTaskDetailClient({
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
   const [savingPriority, setSavingPriority] = useState(false);
 
-  const fetchTask = () => {
+  const fetchTask = (opts?: { clearCurrent?: boolean }) => {
+    const requestedId = taskId;
     setLoading(true);
-    // V2-WEB-02-AC-03: never keep previous task content while loading a different id.
-    setTask(null);
-    setError(null);
-    fetch(`/api/v1/tasks/${taskId}`, { credentials: "include" })
+    // Clear only when switching task ids — routine assign/edit/priority refetch
+    // must keep the panel + chat mounted (Bugbot).
+    if (opts?.clearCurrent) {
+      setTask(null);
+      setError(null);
+    }
+    fetch(`/api/v1/tasks/${requestedId}`, { credentials: "include" })
       .then((r) => {
         if (r.status === 404) throw new Error("Not found");
         if (r.status === 403) throw new Error("Forbidden");
@@ -78,18 +82,25 @@ export function DashboardTaskDetailClient({
         return r.json();
       })
       .then((json: { data?: TaskDetail }) => {
+        if (requestedId !== taskId) return;
         setTask(json.data ?? null);
         setError(null);
       })
       .catch((e) => {
+        if (requestedId !== taskId) return;
         setError(e instanceof Error ? e.message : "Failed to load");
         setTask(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestedId !== taskId) return;
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchTask();
+    fetchTask({ clearCurrent: true });
+    // Intentionally only re-run when the selected task id changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTask closes over latest taskId
   }, [taskId]);
 
   useEffect(() => {
