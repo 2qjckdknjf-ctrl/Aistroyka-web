@@ -104,7 +104,7 @@ function actionUrlForRecurringRule(projectId: string, kind: RecurringRuleKind): 
     case "blocking_defects_followup":
       return `${base}?tab=defects`;
     case "aftercare_open_review":
-      return `${base}?tab=aftercare`;
+      return `${base}?tab=service-requests`;
     case "stale_discussion_manager":
       return `${base}/client/discussions`;
     default:
@@ -317,7 +317,7 @@ export async function buildManagerWorkload(
         project_name: p.name,
         linked_entity_type: null,
         linked_entity_id: null,
-        action_url: `${base}?tab=aftercare`,
+        action_url: `${base}?tab=service-requests`,
         due_state: "waiting_on_team",
         status_bucket: statusBucketFor(pri),
       });

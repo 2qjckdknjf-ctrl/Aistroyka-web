@@ -12,7 +12,11 @@ async function fetchUnreadCount(): Promise<number> {
   return typeof json.count === "number" ? json.count : 0;
 }
 
-export function CanonNotificationBell() {
+export function CanonNotificationBell({
+  href = "/dashboard/notifications",
+}: {
+  href?: string;
+}) {
   const t = useTranslations("canon");
   const { data: count = 0 } = useQuery({
     queryKey: ["notifications-unread-count"],
@@ -23,7 +27,7 @@ export function CanonNotificationBell() {
 
   return (
     <Link
-      href="/dashboard/notifications"
+      href={href}
       className="canon-notify-btn"
       aria-label={count > 0 ? t("notificationsUnread", { count }) : t("notifications")}
     >
