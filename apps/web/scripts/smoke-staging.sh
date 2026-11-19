@@ -4,12 +4,21 @@
 set -e
 BASE="${1:-${SMOKE_BASE_URL:-https://staging.aistroyka.ai}}"
 echo "Smoke check: $BASE"
-code=$(curl -sS -o /dev/null -w "%{http_code}" -m 15 "$BASE/api/v1/health")
-if [[ "$code" != "200" && "$code" != "503" ]]; then
-  echo "FAIL: GET $BASE/api/v1/health → HTTP $code"
+# HTTP 503 / ok:false is a real outage (e.g. Supabase down) — do not treat as PASS.
+body_file="$(mktemp)"
+code=$(curl -sS -o "$body_file" -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
+body="$(cat "$body_file")"
+rm -f "$body_file"
+if [[ "$code" != "200" ]]; then
+  echo "FAIL: GET $BASE/api/v1/health → HTTP $code (require 200; 503 means DB/runtime unhealthy)"
+  echo "body: $body"
   exit 1
 fi
-body=$(curl -sS -m 15 "$BASE/api/v1/health")
+if ! echo "$body" | grep -q '"ok":true'; then
+  echo "FAIL: health HTTP 200 but ok!=true — $body"
+  exit 1
+fi
+echo "PASS: health HTTP 200 ok=true"
 if echo "$body" | grep -q '"env":"staging"'; then
   echo "PASS: health env=staging"
 else
