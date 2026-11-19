@@ -30,8 +30,8 @@ echo "GET /api/v1/health"
 health=$(curl -sS -o /dev/null -w "%{http_code}" -m 20 "${BASE}/api/v1/health" || true)
 echo "/api/v1/health HTTP $health"
 
-if [[ "$health" != "200" && "$health" != "503" ]]; then
-  echo "FAIL: unexpected health HTTP $health (allowed: 200, 503 unavailable)"
+if [[ "$health" != "200" ]]; then
+  echo "FAIL: unexpected health HTTP $health (require 200; 503 means DB/runtime unhealthy)"
   exit 1
 fi
 

@@ -11,8 +11,8 @@ echo "Dashboard smoke: $BASE"
 
 # 1) Health
 code=$(curl -sS -o /dev/null -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
-if [[ "$code" != "200" && "$code" != "503" ]]; then
-  echo "  FAIL: GET /api/v1/health → HTTP $code"
+if [[ "$code" != "200" ]]; then
+  echo "  FAIL: GET /api/v1/health → HTTP $code (require 200; 503 means DB/runtime unhealthy)"
   FAIL=1
 else
   echo "  PASS: health → $code"
