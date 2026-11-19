@@ -11,7 +11,7 @@
 - **Activation:** Manager = has assigned ≥1 task OR reviewed ≥1 report. Worker = has submitted ≥1 report.
 - **Formula:** (Activated users in cohort / Users with at least one login in cohort) × 100, within 7 days.
 - **Target (pilot):** > 50% for invited pilot users.
-- **Source:** Product events (login_success, task_assigned, report_submitted, report_reviewed) per PRODUCT_ANALYTICS_PLAN.
+- **Source:** `audit_logs` actions `login`, `task_assignment`, `report_submit`, `report_review`. Plan names (`login_success`, `task_assigned`, …) are not stored. See PRODUCT_ANALYTICS_PLAN. The 7-day helper is in-process only; no route returns this rate.
 
 ---
 
