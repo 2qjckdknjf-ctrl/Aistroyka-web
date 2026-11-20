@@ -421,3 +421,18 @@ These are **proposed additions to existing workstreams** from the November 11 in
 - **P1 / security reviewer pilot:** evaluate Codex Security-style verify-fix-reverify on authorized sandbox tasks; keep independent ROMA verdict and human approvals; no unapproved exploit activity.
 
 **Acceptance rule:** record baseline, owner, independent reviewer, test corpus, security/privacy gates, cost per verified task and explicit decision (adopt / defer / reject). No autonomous production actions or merge authorized by this documentation.
+
+
+## Gap-only AI roadmap reconciliation — 2026-11-20
+
+**Review period:** 2026-11-12–2026-11-20. Compared this branch with `main` and the existing Nov 10/11 reconciliation. Only incremental acceptance conditions and candidate evaluations are recorded; pre-existing capabilities must not be rebuilt. **PLANNING ONLY / NOT IMPLEMENTED / NOT MERGED.** The owner and independent reviewer remain TBD until assigned. Recheck exact HEAD, CI and production receipts before any DONE status.
+
+| Priority | Existing owner / workstream | Newly identified gap / acceptance evidence |
+|---|---|---|
+| P0 | ROMA mandatory monitor / authorization | Transitive policy test: three individually authorized agents must not exfiltrate a different tenant's data; preserve origin principal, data classification, allowed recipients and immutable lineage. Deny at action boundary. |
+| P0 | ROMA adversarial corpus / sandbox | Mirror Dimension-inspired synthetic browser/supplier environment: 10–15 repeatable tests of hidden prompt injection in DOM/ARIA/images/tool results, fake checkout, invalid recipient, order duplication and unauthorized network egress; no real purchases. |
+| P0 | ROMA independent verdict | Performance Factory adversarial diagnosis check: independent reviewer attempts to disprove root cause and fix; verify tool actions, diff, unchanged tests, exact SHA, and post-deploy baseline. No agent self-declared PASS. |
+| P1 | ROMA code/security review | Compare Copilot Evals, GitHub AI Scan and secret scanning on permitted synthetic PRs; include skills/MCP supply-chain provenance and transitive handoff tests. Gate paid security tools by budget and scope. |
+| P1 | ROMA external agent boundaries | Review Codex sandbox/Google agent sandbox approaches for filesystem/network/credentials; never assume a sandbox alone replaces policy or monitoring. |
+
+**Source references:** [OpenAI Performance Factory](https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast/), [Google Mirror Dimension](https://blog.google/security/mirror-dimension-for-agents/), [OpenAI frontier risk controls](https://openai.com/index/managing-frontier-ai-risk/). Other recent model/vendor announcements are *candidates requiring independent availability and price validation*, not approved dependencies. No new runtime privileges, model installation, migrations, payments, deployment, PR merge, or trading orders are authorized by this document.
