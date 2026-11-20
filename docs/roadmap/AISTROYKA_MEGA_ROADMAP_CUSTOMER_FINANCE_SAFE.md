@@ -2004,3 +2004,18 @@ These are **proposed additions to existing workstreams** from the November 11 in
 - **P1 / supply chain:** inventory Dependabot security alert coverage for inactive repos and validate December 8 policy; retain existing security gates.
 
 **Acceptance rule:** record baseline, owner, independent reviewer, test corpus, security/privacy gates, cost per verified task and explicit decision (adopt / defer / reject). No autonomous production actions or merge authorized by this documentation.
+
+
+## Gap-only AI roadmap reconciliation — 2026-11-20
+
+**Review period:** 2026-11-12–2026-11-20. Compared this branch with `main` and the existing Nov 10/11 reconciliation. Only incremental acceptance conditions and candidate evaluations are recorded; pre-existing capabilities must not be rebuilt. **PLANNING ONLY / NOT IMPLEMENTED / NOT MERGED.** The owner and independent reviewer remain TBD until assigned. Recheck exact HEAD, CI and production receipts before any DONE status.
+
+| Priority | Existing owner / workstream | Newly identified gap / acceptance evidence |
+|---|---|---|
+| P0 | Existing security / media / pilot gates | Validate transitive authorization across client→agent→supplier and tenant→project→finance; originator and data-recipient restrictions survive handoffs. Current main/PR and release evidence must be reconciled first. |
+| P1 | Existing materials/supplier procurement | Build synthetic supplier test fixtures (price changes, VAT, unit mismatch, lost ACK, duplicate order, malicious catalog text, forbidden buyer). Supplier API/authorized browser only; no actual purchase without explicit approval, reconciliation and budget check. |
+| P1 | Existing Construction Graph / Drawing Intelligence | Evaluate Qwen4-Max/Gemini Neon/GPT-6.2 on versioned multi-page drawings; extract measurements with unit/scale, uncertainty and cross-page evidence, independent geometric calculation and human approval; visual demo not metric proof. |
+| P1 | Existing operations / QA | Reuse Performance Factory style regression workflow for confirmed service failures: alert→diagnosis→independent countercheck→draft PR→post-deploy verification. Requires Grow OS durable Supervisor and ROMA. |
+| P2 | Existing ChatGPT/plugin integration | Study payment-token/wallet patterns only as future architecture; no claim of availability for Spanish customers, no autonomous payment. |
+
+**Source references:** [OpenAI Performance Factory](https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast/), [Google Mirror Dimension](https://blog.google/security/mirror-dimension-for-agents/), [OpenAI frontier risk controls](https://openai.com/index/managing-frontier-ai-risk/). Other recent model/vendor announcements are *candidates requiring independent availability and price validation*, not approved dependencies. No new runtime privileges, model installation, migrations, payments, deployment, PR merge, or trading orders are authorized by this document.
