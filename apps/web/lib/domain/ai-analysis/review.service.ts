@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { invalidateConstructionGraphForSource } from "@/lib/domain/construction-graph/construction-graph.repository";
 import {
   type AiAnalysisReviewStatus,
   isAiAnalysisGraphEligible,
@@ -38,6 +39,7 @@ export type ReviewAiAnalysisResult =
 type AnalysisRow = {
   id: string;
   tenant_id: string;
+  media_id: string | null;
   review_status: string | null;
   stage: string | null;
   completion_percent: number | null;
@@ -46,6 +48,40 @@ type AnalysisRow = {
   recommendations: string[] | null;
   frame_count: number | null;
 };
+
+/**
+ * AIS-GRAPH-004: when a verdict removes Graph eligibility, drop overlay edges/nodes
+ * for this analysis immediately. Failures are non-fatal so the review write still sticks.
+ */
+async function bestEffortInvalidateGraphForRevokedAnalysis(
+  supabase: SupabaseClient,
+  tenantId: string,
+  analysisId: string,
+  mediaId: string | null
+): Promise<void> {
+  try {
+    let projectId: string | null = null;
+    if (mediaId) {
+      const media = await supabase
+        .from("media")
+        .select("project_id")
+        .eq("id", mediaId)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (typeof media.data?.project_id === "string") {
+        projectId = media.data.project_id;
+      }
+    }
+    await invalidateConstructionGraphForSource(supabase, {
+      tenantId,
+      projectId,
+      sourceTable: "ai_analysis",
+      sourceId: analysisId,
+    });
+  } catch {
+    // Overlay invalidation must not roll back a durable human verdict.
+  }
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -102,7 +138,7 @@ export async function reviewAiAnalysis(
   const { data: existing, error: loadError } = await supabase
     .from("ai_analysis")
     .select(
-      "id, tenant_id, review_status, stage, completion_percent, risk_level, detected_issues, recommendations, frame_count"
+      "id, tenant_id, media_id, review_status, stage, completion_percent, risk_level, detected_issues, recommendations, frame_count"
     )
     .eq("id", analysisId)
     .maybeSingle();
@@ -193,11 +229,21 @@ export async function reviewAiAnalysis(
     return { ok: false, error: correctionError.message, code: "CORRECTION_INSERT_FAILED" };
   }
 
+  const graphEligible = isAiAnalysisGraphEligible(status);
+  if (!graphEligible) {
+    await bestEffortInvalidateGraphForRevokedAnalysis(
+      supabase,
+      tenantId,
+      analysisId,
+      typeof row.media_id === "string" ? row.media_id : null
+    );
+  }
+
   return {
     ok: true,
     analysisId: String(updated.id),
     reviewStatus: status,
-    graphEligible: isAiAnalysisGraphEligible(status),
+    graphEligible,
     reviewedAt: typeof updated.reviewed_at === "string" ? updated.reviewed_at : reviewedAt,
     reviewedBy: typeof updated.reviewed_by === "string" ? updated.reviewed_by : reviewerUserId,
     correctionId: typeof correction?.id === "string" ? correction.id : null,

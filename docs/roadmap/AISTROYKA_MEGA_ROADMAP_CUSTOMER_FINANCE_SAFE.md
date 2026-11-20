@@ -7,7 +7,16 @@ Purpose: Deep sequential product/engineering plan to finish AISTROYKA as a produ
 
 Эта очередь задаёт текущие приоритеты внутри существующих Phase 0–13 и AIS ID. Полные критерии фаз, [amendment](AISTROYKA_PLAN_AMENDMENT_2026-09-23.md) и [97 пакетов V2](AISTROYKA_V2_AUDIT_INTEGRATION_2026-10-20.md) сохраняются; не создавать второй backlog из ежедневных новостей. **Ответственные ниже — роли; конкретный исполнитель и независимый reviewer: TBD, назначаются до старта среза.** Вехи являются gates, а не обещанными календарными датами.
 
-Срез GitHub: main `04ec74bf955c29799ab535c043a33c1f9296c309`; этот документ продолжает **необъединённый Draft #453** на `586649ea9774924eb75512aa26d861974d372589`. Свежий remote preflight на main: `CURRENT_BASELINE`. Код/тесты/readiness и production проверяются раздельно; 23 октября live/device/provider проверки не запускались. Точные PR/HEAD/base/checks: [машинный снимок](CONSOLIDATION_EVIDENCE_2026-10-23.json).
+### Сверка 2026-11-19 (не заменяет таблицу ID ниже)
+
+Актуальный tip: `main` `b736b6c` (= live staging/production `buildStamp.sha7`). Полный отчёт: [plan-status-2026-11-19](../reconciliation/plan-status-2026-11-19/RESULT.md).
+
+- **Исторический снимок ниже** (main `04ec74b`, «#446–#453 PR_ONLY / не merged») — **устарел** как состояние GitHub. #446/#447/#448/#449/#453 и conveyor Stage2a/`#480–#483` уже на main (сверка STATUS / plan-fact 2026-10-28+).
+- **Закрыто кодом Nov-19:** audit P0/P1 agent-фиксы #489–#499 (smoke gate, stakeholder fail-closed, Next 15.5.29, runtime health monitor, smoke 503=FAIL, i18n support/uploads, docs truth, route tests, sitemap demos); Supabase P0 recovered; GDPR schedule SUCCESS.
+- **Очередь AIS ID ниже остаётся приоритетной рамкой** для следующего продукта: Graph invalidate-on-revoke (**slice 2026-11-19:** `invalidateConstructionGraphForSource` + review revoke hook), durable evidence/video lineage, V2-WEB-01 после fresh repro — agent; legal/store/billing 7-day/device/live Gemini — OWNER_GATE.
+- Таблицы «Реализованное» / «Нерешённые блокировки» ниже читаются как **исторический Oct-23 snapshot**, пока отдельные строки не будут переписаны в follow-up docs PR.
+
+Срез GitHub (исторический Oct-23): main `04ec74bf955c29799ab535c043a33c1f9296c309`; документ тогда продолжал Draft #453. Свежий remote preflight на main: `CURRENT_BASELINE`. Код/тесты/readiness и production проверяются раздельно; 23 октября live/device/provider проверки не запускались. Точные PR/HEAD/base/checks того дня: [машинный снимок](CONSOLIDATION_EVIDENCE_2026-10-23.json).
 
 ### Реализованное и открытая работа
 
