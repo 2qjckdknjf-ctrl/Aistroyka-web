@@ -760,7 +760,21 @@
     "defaultError": "Не удалось завершить онбординг. Повторите попытку.",
     "onboarding": "Онбординг",
     "welcomeToAistroyka": "Добро пожаловать в Aistroyka",
-    "completeStepsToGetStarted": "Пройдите эти шаги, чтобы начать."
+    "completeStepsToGetStarted": "Пройдите эти шаги, чтобы начать.",
+    "demoProject": {
+      "name": "Демо-проект",
+      "badge": "Демо",
+      "description": "Пример данных. Создайте первый проект, чтобы увидеть свои задачи, отчёты и AI-инсайты.",
+      "tasksHeading": "Задачи",
+      "taskFoundation": "Проверка фундамента",
+      "taskSafety": "Инструктаж по безопасности",
+      "taskDelivery": "Поставка материалов",
+      "reportsHeading": "Отчёты и фото",
+      "reportsPhotos": "{reports} отчётов, {photos} фото",
+      "aiInsightsHeading": "AI-инсайты",
+      "aiSummary": "Проект идёт по плану. Фундамент на 85%. Одна задача ждёт доказательств.",
+      "cta": "Создать первый проект →"
+    }
   },
   "helpCenter": {
     "title": "Справочник по проекту и работе в системе",

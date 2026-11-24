@@ -886,7 +886,21 @@
     "defaultError": "Unable to complete onboarding. Please try again.",
     "onboarding": "Onboarding",
     "welcomeToAistroyka": "Welcome to Aistroyka",
-    "completeStepsToGetStarted": "Complete these steps to get started."
+    "completeStepsToGetStarted": "Complete these steps to get started.",
+    "demoProject": {
+      "name": "Demo project",
+      "badge": "Demo",
+      "description": "Sample data. Create your first project to see your own tasks, reports, and AI insights.",
+      "tasksHeading": "Tasks",
+      "taskFoundation": "Foundation inspection",
+      "taskSafety": "Safety briefing",
+      "taskDelivery": "Material delivery",
+      "reportsHeading": "Reports & photos",
+      "reportsPhotos": "{reports} reports, {photos} photos",
+      "aiInsightsHeading": "AI insights",
+      "aiSummary": "Project is on track. Foundation phase at 85% completion. One task pending evidence.",
+      "cta": "Create your first project →"
+    }
   },
   "helpCenter": {
     "title": "Project guide and knowledge base",
