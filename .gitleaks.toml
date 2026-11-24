@@ -7,13 +7,20 @@ title = "Aistroyka"
 useDefault = true
 
 [allowlist]
-description = "Synthetic fixtures, UserDefaults/i18n keys, and historical audit artifacts (not live credentials)"
+description = "Synthetic fixtures, UserDefaults/i18n keys, example env JWTs, and historical audit artifacts (not live credentials). Full git history rewrite of main was rejected in favor of documented allowlist (owner 2026-11-24)."
 paths = [
   '''(^|/)apps/web/audit_''',
   '''(^|/)docs/''',
   '''(^|/)apps/web/lib/platform/push/apns\.provider\.test\.ts$''',
+  '''(^|/)apps/web/lib/platform/push/providers/google-oauth\.test\.ts$''',
   '''(^|/)apps/web/lib/ops/governed-ai-pr-e2e-runner\.contract\.test\.ts$''',
   '''(^|/)docs/reports/plan-exec-delta-2026-11-24/''',
+  '''(^|/)\.env(\.[^/]+)?\.example$''',
+  '''(^|/)\.dev\.vars\.example$''',
+  '''(^|/)ios/Config/Config\.example\.xcconfig$''',
+  '''(^|/)ios/Config/Secrets\.xcconfig$''',
+  '''(^|/)TestLogs/''',
+  '''(^|/)engine/Aistroyk/''',
 ]
 # Matched against the extracted secret (not the full line).
 regexes = [

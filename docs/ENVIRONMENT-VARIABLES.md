@@ -48,8 +48,9 @@ Vercel может встречаться как исторический/доп�
 | `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY` | Опционально: Google AI (Gemini vision и **обязательно** для `POST /api/v1/ai/analyze-video-daily`). |
 | `AI_PROVIDER_ALLOWLIST` | Опционально: comma-separated allowlist (`openai`, `anthropic`, `gemini`). Пусто = все встроенные. Провайдеры вне списка не вызываются. |
 | `AI_FALLBACK_ON_ERROR` | Опционально: `true`/`1` — при отсутствии tenant или ошибке чтения флагов оставлять cross-provider fallback. По умолчанию fail-closed (`false`). |
-| `AI_INFERENCE_RETENTION_MODE` | Опционально: декларация retention для inference egress — `undeclared` (default), `ephemeral_no_train_declared`, `zero_retention_declared`, `blocked`. Vendor ZDR proof остаётся OWNER_GATE. |
-| `AI_REQUIRE_RETENTION_DECLARATION` | Опционально: `true`/`1` — блокировать AI egress при `undeclared`/`blocked`. По умолчанию выключено (prod-safe). |
+| `AI_INFERENCE_RETENTION_MODE` | Декларация retention для inference egress — `undeclared` (default), `ephemeral_no_train_declared`, `zero_retention_declared`, `blocked`. Staging/prod (2026-11-24): `ephemeral_no_train_declared` (API default no-train; full OpenAI/Anthropic ZDR org approval still separate). |
+| `AI_REQUIRE_RETENTION_DECLARATION` | `true`/`1` — блокировать AI egress при `undeclared`/`blocked`. Staging/prod (2026-11-24): `true`. |
+| `AI_TENANT_PROVIDER_KEYS_JSON` | Опционально: JSON map `{ "<tenantId>": { "openai"|"anthropic"|"gemini": "<key>" } }` для tenant-scoped ключей. Пусто = только global env. Не коммитить значения. |
 | `AI_TRUSTED_IMAGE_HOSTS` | Опционально: trusted hosts для media URL при `pii_mode=strict`. |
 
 Хотя бы один из `OPENAI_API_KEY` или `AI_ANALYSIS_URL` нужен для полноценной работы классического анализа изображений; **видео «работа за день»** дополнительно требует ключ Gemini (см. выше).

@@ -2042,8 +2042,8 @@ Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519. **L
 | D2a AI_PROVIDER_ALLOWLIST | P0 | IMPLEMENTED | Deployed. |
 | D2b fail-closed fallback on error/null tenant | P0 | IMPLEMENTED | Deployed. |
 | D2c X-AI-Fallback-Reason | P0 | IMPLEMENTED | Unchanged. |
-| D3a inference retention declaration | P0 | PARTIAL | Declaration gate live; vendor ZDR proof OWNER_GATE. |
-| D3b tenant-scoped credentials / rotation | P0 | PARTIAL | Providers use `resolveAiProviderCredentials`; tenant vault OWNER_GATE. |
+| D3a inference retention declaration | P0 | PARTIAL→ops | Staging+prod secrets set to `ephemeral_no_train_declared` + require=true. Full vendor ZDR org approval still external. |
+| D3b tenant-scoped credentials / rotation | P0 | PARTIAL→ops | `AI_TENANT_PROVIDER_KEYS_JSON` map + tenantId wiring; populate keys when ready. KMS vault later. |
 | D4 transitive multi-agent authorization | P0 | PARTIAL→code | `evaluateTransitiveAuthorization` + optional `PolicyContext.handoff` in `runPolicy`. |
 | D5 report GET peer isolation tests | P0 | IMPLEMENTED | Deployed. |
 | D6 lite-allow-list | P1 | IMPLEMENTED | Unchanged. |

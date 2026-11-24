@@ -16,6 +16,8 @@ export interface VisionOptions {
   systemPrompt?: string;
   /** Override user message (e.g. cost-estimate vision). */
   userMessage?: string;
+  /** Optional tenant for per-tenant provider key map (D3b). */
+  tenantId?: string | null;
 }
 
 export type AIProvider = {
