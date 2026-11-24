@@ -1,5 +1,10 @@
 /** AI governance policy types. */
 
+import type {
+  AuthorizationHop,
+  AuthorizationMandate,
+} from "./transitive-authorization";
+
 export type PolicyDecision = "allow" | "block" | "degrade";
 
 export type ResourceType = "media" | "report";
@@ -20,6 +25,14 @@ export interface PolicyContext {
   user_message?: string | null;
   egress_text?: string | null;
   rate_override?: boolean;
+  /**
+   * Optional multi-agent handoff chain (D4). When set, runPolicy evaluates
+   * transitive authorization; absent ⇒ existing single-hop behavior unchanged.
+   */
+  handoff?: {
+    mandate: AuthorizationMandate;
+    hops: readonly AuthorizationHop[];
+  } | null;
 }
 
 export interface PolicyResult {
