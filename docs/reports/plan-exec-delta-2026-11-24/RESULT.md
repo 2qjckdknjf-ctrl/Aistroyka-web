@@ -61,6 +61,15 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 
 `aikido_scan_paths` on changed TS sources: **0 issues**.
 
+## Merge
+
+| Item | Value |
+|---|---|
+| PR | #507 MERGED |
+| merge_sha | `030e089ab0bd80ff2a4dbb64466daa029c2c8446` |
+| head_sha | `9c9f1eda9ed82b54ef620a64c465ed76873f4cab` |
+| review | non-author APPROVED (`6262265-cpu`) |
+
 ## CI on PR #507 (HEAD `704f77a3`)
 
 | Check | Conclusion |
