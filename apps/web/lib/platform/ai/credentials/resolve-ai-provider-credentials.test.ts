@@ -1,8 +1,17 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveAiProviderCredentials } from "./resolve-ai-provider-credentials";
+import {
+  parseTenantProviderKeyMap,
+  resolveAiProviderCredentials,
+} from "./resolve-ai-provider-credentials";
 
-describe("resolveAiProviderCredentials (D3b scaffold)", () => {
-  const keys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_AI_API_KEY", "GEMINI_API_KEY"] as const;
+describe("resolveAiProviderCredentials (D3b)", () => {
+  const keys = [
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GOOGLE_AI_API_KEY",
+    "GEMINI_API_KEY",
+    "AI_TENANT_PROVIDER_KEYS_JSON",
+  ] as const;
   const saved: Record<string, string | undefined> = {};
 
   afterEach(() => {
@@ -21,6 +30,7 @@ describe("resolveAiProviderCredentials (D3b scaffold)", () => {
 
   it("reads global OpenAI key and marks tenantScoped=false", () => {
     setEnv("OPENAI_API_KEY", "sk-test-not-real-aaaaaaaa");
+    setEnv("AI_TENANT_PROVIDER_KEYS_JSON", undefined);
     const creds = resolveAiProviderCredentials("openai", "tenant-1");
     expect(creds.source).toBe("global_env");
     expect(creds.tenantScoped).toBe(false);
@@ -36,6 +46,7 @@ describe("resolveAiProviderCredentials (D3b scaffold)", () => {
 
   it("returns missing when no key configured", () => {
     setEnv("ANTHROPIC_API_KEY", undefined);
+    setEnv("AI_TENANT_PROVIDER_KEYS_JSON", undefined);
     const creds = resolveAiProviderCredentials("anthropic", null);
     expect(creds).toEqual({
       provider: "anthropic",
@@ -43,6 +54,38 @@ describe("resolveAiProviderCredentials (D3b scaffold)", () => {
       source: "missing",
       tenantScoped: false,
       rotationHint: "missing",
+    });
+  });
+
+  it("prefers tenant map over global env when tenantId matches", () => {
+    setEnv("OPENAI_API_KEY", "sk-global");
+    setEnv(
+      "AI_TENANT_PROVIDER_KEYS_JSON",
+      JSON.stringify({ "tenant-1": { openai: "sk-tenant-only" } })
+    );
+    const creds = resolveAiProviderCredentials("openai", "tenant-1");
+    expect(creds.source).toBe("tenant_env_map");
+    expect(creds.tenantScoped).toBe(true);
+    expect(creds.apiKey).toBe("sk-tenant-only");
+    expect(creds.rotationHint).toBe("use_tenant_map_rotation");
+  });
+
+  it("falls back to global when tenant has no provider entry", () => {
+    setEnv("ANTHROPIC_API_KEY", "sk-anth-global");
+    setEnv(
+      "AI_TENANT_PROVIDER_KEYS_JSON",
+      JSON.stringify({ "tenant-1": { openai: "sk-tenant-only" } })
+    );
+    const creds = resolveAiProviderCredentials("anthropic", "tenant-1");
+    expect(creds.source).toBe("global_env");
+    expect(creds.apiKey).toBe("sk-anth-global");
+  });
+
+  it("parseTenantProviderKeyMap rejects invalid JSON", () => {
+    expect(parseTenantProviderKeyMap("{")).toBeNull();
+    expect(parseTenantProviderKeyMap("[]")).toBeNull();
+    expect(parseTenantProviderKeyMap('{"t":{"openai":"x"}}')).toEqual({
+      t: { openai: "x" },
     });
   });
 });

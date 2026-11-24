@@ -83,6 +83,7 @@ export async function invokeVisionWithRouter(
         maxTokens: options.maxTokens,
         systemPrompt: options.systemPrompt,
         userMessage: options.userMessage,
+        tenantId,
       });
       if (result) {
         await recordSuccess(supabase, provider.name);

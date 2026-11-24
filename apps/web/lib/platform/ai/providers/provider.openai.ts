@@ -19,7 +19,7 @@ export async function invokeVision(
 ): Promise<VisionResult | null> {
   const config = getServerConfig();
   const apiKey =
-    resolveAiProviderCredentials("openai").apiKey?.trim() ||
+    resolveAiProviderCredentials("openai", options?.tenantId ?? null).apiKey?.trim() ||
     config.OPENAI_API_KEY?.trim() ||
     "";
   if (!apiKey) return null;
