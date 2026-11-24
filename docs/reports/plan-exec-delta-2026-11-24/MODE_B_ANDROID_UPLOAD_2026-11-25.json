@@ -1,0 +1,12 @@
+{
+  "ai.aistroyka.worker": {
+    "ok": false,
+    "error": "<HttpError 403 when requesting https://androidpublisher.googleapis.com/androidpublisher/v3/applications/ai.aistroyka.worker/edits/04468303979694328467:commit?alt=json returned \"Target SDK of artifact is too low: 2026112501.\". Details: \"Target SDK of artifact is too low: 2026112501.\">",
+    "detail_snip": "{\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Target SDK of artifact is too low: 2026112501.\",\n    \"status\": \"PERMISSION_DENIED\"\n  }\n}\n"
+  },
+  "ai.aistroyka.manager": {
+    "ok": false,
+    "error": "<HttpError 403 when requesting https://androidpublisher.googleapis.com/androidpublisher/v3/applications/ai.aistroyka.manager/edits/00086476168328365074:commit?alt=json returned \"Target SDK of artifact is too low: 2026112501.\". Details: \"Target SDK of artifact is too low: 2026112501.\">",
+    "detail_snip": "{\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Target SDK of artifact is too low: 2026112501.\",\n    \"status\": \"PERMISSION_DENIED\"\n  }\n}\n"
+  }
+}
