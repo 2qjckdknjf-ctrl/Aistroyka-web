@@ -1,5 +1,9 @@
 # STATUS — AISTROYKA
 
+## Plan-exec follow-up — D3a/D3b + deploy proof
+
+Staging + production `GET /api/v1/health` → `buildStamp.sha7=030e089` (Deploy Cloudflare Production SUCCESS). Follow-up branch `cursor/plan-exec-continue-2026-11-24`: retention declaration gate + credential resolver scaffold + requirement→test matrix. Vendor ZDR / tenant vault remain OWNER_GATE. Roadmap PR #488 CONFLICTING vs main.
+
 ## Plan-exec delta 2026-11-24 — MERGED
 
 Protected merge [PR #507](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/507) → `main` @ `030e089a` (2026-11-24). Non-author APPROVED (`6262265-cpu`). CI Check + Gitleaks SUCCESS. Evidence: `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`.

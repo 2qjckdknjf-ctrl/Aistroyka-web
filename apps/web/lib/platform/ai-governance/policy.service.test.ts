@@ -134,4 +134,31 @@ describe("policy.service", () => {
     expect(result.decision).toBe("block");
     expect(result.rule_hits).toContain("secret_detected");
   });
+
+  it("records retention mode and blocks when declaration required but undeclared", async () => {
+    const origMode = process.env.AI_INFERENCE_RETENTION_MODE;
+    const origReq = process.env.AI_REQUIRE_RETENTION_DECLARATION;
+    delete process.env.AI_INFERENCE_RETENTION_MODE;
+    process.env.AI_REQUIRE_RETENTION_DECLARATION = "true";
+    try {
+      const result = await runPolicy(
+        supabase,
+        {
+          tenant_id: "t1",
+          subscription_tier: "free",
+          resource_type: "media",
+          image_count: 1,
+        },
+        null
+      );
+      expect(result.decision).toBe("block");
+      expect(result.rule_hits).toContain("retention_mode:undeclared");
+      expect(result.rule_hits).toContain("retention_undeclared_or_blocked");
+    } finally {
+      if (origMode === undefined) delete process.env.AI_INFERENCE_RETENTION_MODE;
+      else process.env.AI_INFERENCE_RETENTION_MODE = origMode;
+      if (origReq === undefined) delete process.env.AI_REQUIRE_RETENTION_DECLARATION;
+      else process.env.AI_REQUIRE_RETENTION_DECLARATION = origReq;
+    }
+  });
 });
