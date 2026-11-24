@@ -1,15 +1,8 @@
 # STATUS — AISTROYKA
 
-## Plan-exec follow-up — D3a/D3b + deploy proof
+## Plan-exec OWNER_GATE closed — 2026-11-24/25
 
-Staging + production `GET /api/v1/health` → `buildStamp.sha7=030e089` (Deploy Cloudflare Production SUCCESS). Follow-up branch `cursor/plan-exec-continue-2026-11-24`: retention declaration gate + credential resolver scaffold + requirement→test matrix. Vendor ZDR / tenant vault remain OWNER_GATE. Roadmap PR #488 CONFLICTING vs main.
-
-## Plan-exec delta 2026-11-24 — MERGED
-
-Protected merge [PR #507](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/507) → `main` @ `030e089a` (2026-11-24). Non-author APPROVED (`6262265-cpu`). CI Check + Gitleaks SUCCESS. Evidence: `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`.
-
-Landed: pre-egress secret detection, `AI_PROVIDER_ALLOWLIST`, fail-closed `AI_FALLBACK_ON_ERROR`, report GET peer tests, Dependabot, gitleaks CI, D10 supplier negative fixtures. Remaining OWNER_GATE: D3a/D3b ZDR + tenant AI credentials; RESEARCH_ONLY vendors. **Production deploy / finance ops not authorized by this merge alone** — staging follows canonical Deploy Cloudflare (Staging) chain.
-
+Protected merges [#521](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/521) (`b2f34ba`) + [#524](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/524) (`937a046`). Non-author APPROVED. Staging health `sha7=937a046`; production `sha7=b2f34ba`. Retention Worker secrets set; tenant key map coded (populate `AI_TENANT_PROVIDER_KEYS_JSON` when ready). Vendor ZDR still sales-gated. Mobile Mode B: local APPROVE+signing assets present; `release/mobile-pilot-rc` absent — no store upload. Roadmap PR #488 rebase in flight. Evidence: `docs/reports/plan-exec-delta-2026-11-24/`.
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
 
