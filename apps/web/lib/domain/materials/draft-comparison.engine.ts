@@ -1,4 +1,5 @@
 import { priceLineTotalMinor } from "@/lib/domain/quantities/exact-decimal";
+import { catalogTextIsUnsafe } from "@/lib/domain/materials/catalog-text-safety";
 
 export const MATERIAL_SUPPLY_COMPARE_POLICY = "material_supply.draft_compare.v1";
 
@@ -11,6 +12,12 @@ export type SupplierOfferForCompare = {
   quote_dated_at: string;
   quote_expires_at: string | null;
   provenance_note: string | null;
+  /** Optional D10 compare fields — absent on legacy quote rows. */
+  tax_treatment?: "excluded" | "included" | "unknown" | null;
+  unit?: string | null;
+  prior_unit_price_minor?: string | null;
+  sku?: string | null;
+  package_label?: string | null;
 };
 
 export type OfferCompareRow = {
@@ -39,12 +46,15 @@ function isExpired(expiresAt: string | null, asOf: string): boolean {
 /**
  * Pure draft comparison of supplier offers for one material need quantity.
  * Reuses priceLineTotalMinor — no second calculator. Unknown stock is never "available".
+ * D10 negatives (VAT / unit / price drift / unsafe catalog) are flagged and never ranked as winners.
  */
 export function compareSupplierOfferDrafts(input: {
   billableQuantity: string;
   defaultCoverage: string | null;
   offers: readonly SupplierOfferForCompare[];
   asOfDate: string;
+  /** Expected billable unit for the requirement (e.g. m2). */
+  expectedUnit?: string | null;
 }): DraftComparisonResult {
   const issues: string[] = [];
   if (!/^(0|[1-9][0-9]*)\.[0-9]{6}$/.test(input.billableQuantity)) {
@@ -71,6 +81,34 @@ export function compareSupplierOfferDrafts(input: {
     if (isExpired(offer.quote_expires_at, input.asOfDate)) {
       rowIssues.push("quote_expired");
     }
+    if (offer.tax_treatment === "included" || offer.tax_treatment === "unknown") {
+      rowIssues.push("vat_not_normalized");
+    }
+    if (
+      input.expectedUnit &&
+      offer.unit &&
+      offer.unit.trim().toLowerCase() !== input.expectedUnit.trim().toLowerCase()
+    ) {
+      rowIssues.push("unit_mismatch");
+    }
+    if (
+      offer.prior_unit_price_minor &&
+      offer.prior_unit_price_minor.trim() !== "" &&
+      offer.prior_unit_price_minor.trim() !== offer.unit_price_minor.trim()
+    ) {
+      rowIssues.push("price_changed");
+    }
+    if (
+      catalogTextIsUnsafe(
+        offer.supplier_name,
+        offer.sku,
+        offer.package_label,
+        offer.provenance_note
+      )
+    ) {
+      rowIssues.push("catalog_text_unsafe");
+    }
+
     const coverage =
       offer.coverage_quantity && offer.coverage_quantity.trim()
         ? offer.coverage_quantity.trim()
@@ -100,9 +138,20 @@ export function compareSupplierOfferDrafts(input: {
     });
   }
 
+  const blockingIssues = new Set([
+    "quote_expired",
+    "vat_not_normalized",
+    "unit_mismatch",
+    "price_changed",
+    "catalog_text_unsafe",
+  ]);
+
   const sortable = scored
     .map((row, index) => ({ row, index }))
-    .filter(({ row }) => row.line_total_minor !== null && !row.issues.includes("quote_expired"));
+    .filter(
+      ({ row }) =>
+        row.line_total_minor !== null && !row.issues.some((issue) => blockingIssues.has(issue))
+    );
   sortable.sort((a, b) => {
     const left = BigInt(a.row.line_total_minor!);
     const right = BigInt(b.row.line_total_minor!);

@@ -1,0 +1,75 @@
+# Pre-merge secret scan using the open-source Gitleaks CLI (Apache-2.0).
+# Complements apps/web pre-egress secret-detection (Codex delta 2026-11-24 D1a).
+# Uses the CLI binary — not gitleaks-action — so org license keys are not required.
+# Docs: https://github.com/gitleaks/gitleaks
+#
+# Scope: PR commit range + current tree (--no-git). Full-history rewrite of legacy
+# audit/diff artifacts is OWNER_GATE and intentionally not required for this gate.
+name: Gitleaks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: gitleaks-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          # Official checksum from https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_checksums.txt
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" -o /tmp/gitleaks.tgz
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tgz" | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tgz -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan working tree
+        run: |
+          set -euo pipefail
+          gitleaks detect --source . --no-git --config .gitleaks.toml --verbose --redact --exit-code 1
+
+      - name: Scan PR / push commits
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+            RANGE="${BASE}..${HEAD}"
+          else
+            # Push: scan commits introduced by this push only.
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.sha }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              RANGE="$AFTER"
+            else
+              RANGE="${BEFORE}..${AFTER}"
+            fi
+          fi
+          echo "Scanning commit range: $RANGE"
+          gitleaks detect --source . --config .gitleaks.toml --log-opts="$RANGE" --verbose --redact --exit-code 1

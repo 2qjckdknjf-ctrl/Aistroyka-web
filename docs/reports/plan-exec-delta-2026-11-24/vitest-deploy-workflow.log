@@ -1,0 +1,15 @@
+
+ RUN  v4.0.18 /Users/alex/Projects/AISTROYKA-plan-exec-2026-11-24/apps/web
+
+ ✓ lib/ops/deploy-workflow.contract.test.ts (22 tests) 5573ms
+     ✓ mocked host validates redirect hop headers on 302→200 chain  1116ms
+     ✓ mocked host rejects missing CSP on intermediate 302 hop  1086ms
+     ✓ mocked host rejects joined duplicate page headers including CSP/HSTS/PP  1010ms
+     ✓ mocked host rejects joined duplicate API headers without requiring CSP  1050ms
+     ✓ mocked host ignores 103 Early Hints and validates the final response  1197ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  22:53:32
+   Duration  5.67s (transform 20ms, setup 12ms, import 36ms, tests 5.57s, environment 0ms)
+

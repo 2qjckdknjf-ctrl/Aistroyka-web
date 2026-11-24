@@ -10,6 +10,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { getById as getProjectRow } from "@/lib/domain/projects/project.repository";
 import { addMaterialSupplierQuoteDraft } from "@/lib/domain/materials/material-requirement-draft.service";
 import { loadFixtureSupplierOffers } from "@/lib/domain/materials/supplier-offer.fixture-adapter";
+import { canSeedOrCompareMaterialSupply } from "@/lib/domain/materials/material-supply-access";
 import { emitAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export async function POST(
     }
     throw e;
   }
-  if (ctx.role !== "owner" && ctx.role !== "admin") {
+  if (!canSeedOrCompareMaterialSupply(ctx.role)) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
 

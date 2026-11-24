@@ -1,0 +1,3 @@
+$ node scripts/i18n/check-messages.js
+[i18n] Checking namespaces: activation.*, dashboard.*, dashboardDetail.* (1642 leaf keys in en). Set I18N_CHECK_ALL=1 for full-tree parity.
+[i18n] OK: ru, es, it match en.json for checked namespaces.

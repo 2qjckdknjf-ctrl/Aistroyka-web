@@ -15,6 +15,10 @@ export interface PolicyContext {
   video_url?: string | null;
   /** Fetched video byte length for tier caps. */
   video_size_bytes?: number | null;
+  /** Optional prompt / user text scanned for secrets before egress. */
+  system_prompt?: string | null;
+  user_message?: string | null;
+  egress_text?: string | null;
   rate_override?: boolean;
 }
 

@@ -49,9 +49,8 @@ export function CanonTopBar({
   const notificationsHref =
     portalOnly && clientProjectId
       ? `/dashboard/projects/${clientProjectId}/client#portal-notifications`
-      : portalOnly
-        ? "/portal/projects"
-        : "/dashboard/notifications";
+      : "/dashboard/notifications";
+  const portalBellDisabled = portalOnly && !clientProjectId;
 
   useEffect(() => {
     if (portalOnly) return;
@@ -130,7 +129,13 @@ export function CanonTopBar({
         </div>
 
         <div className="canon-topbar-actions flex shrink-0 items-center gap-0.5 sm:gap-2">
-          <CanonNotificationBell href={notificationsHref} />
+          <CanonNotificationBell
+            href={notificationsHref}
+            mode={portalOnly ? "portal" : "contractor"}
+            projectId={clientProjectId}
+            disabled={portalBellDisabled}
+            disabledTitle={t("portalPickProjectFirst")}
+          />
           {portalOnly ? null : (
             <>
               <Link href="/dashboard/support" className="canon-notify-btn" aria-label={t("support")}>
