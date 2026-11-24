@@ -91,10 +91,15 @@ export async function runPolicy(
       }
     }
   }
-  if (result.decision === "allow" && ctx.handoff) {
-    const handoff = evaluateTransitiveAuthorization(ctx.handoff.mandate, ctx.handoff.hops);
+  // Degrade still calls the model, so handoff is checked unless already blocked.
+  if (result.decision !== "block" && ctx.handoff) {
+    const handoff = evaluateTransitiveAuthorization(
+      ctx.handoff.mandate,
+      ctx.handoff.hops,
+      ctx.tenant_id
+    );
     result = {
-      decision: handoff.decision === "allow" ? "allow" : "block",
+      decision: handoff.decision === "allow" ? result.decision : "block",
       rule_hits: [...result.rule_hits, ...handoff.rule_hits],
       model_tier: result.model_tier,
     };

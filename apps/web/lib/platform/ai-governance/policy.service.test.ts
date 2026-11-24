@@ -175,6 +175,104 @@ describe("policy.service", () => {
     expect(result.rule_hits).toContain("cross_tenant_handoff");
   });
 
+  it("blocks a cross-tenant handoff when the base decision is degrade", async () => {
+    const result = await runPolicy(
+      supabase,
+      {
+        tenant_id: "tenant-a",
+        subscription_tier: "UNKNOWN",
+        handoff: {
+          mandate: {
+            tenantId: "tenant-a",
+            principalId: "user-1",
+            allowedRecipients: ["agent-a"],
+            classification: "restricted",
+            purpose: "draft",
+          },
+          hops: [
+            {
+              agentId: "agent-a",
+              tenantId: "tenant-b",
+              action: "summarize",
+              destination: "same_tenant_ops",
+              recipients: ["agent-a"],
+            },
+          ],
+        },
+      },
+      null
+    );
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("tier_unknown");
+    expect(result.rule_hits).toContain("cross_tenant_handoff");
+  });
+
+  it("keeps degrade when the handoff stays inside the mandate and policy tenant", async () => {
+    const result = await runPolicy(
+      supabase,
+      {
+        tenant_id: "tenant-a",
+        subscription_tier: "UNKNOWN",
+        handoff: {
+          mandate: {
+            tenantId: "tenant-a",
+            principalId: "user-1",
+            allowedRecipients: ["agent-a"],
+            classification: "restricted",
+            purpose: "draft",
+          },
+          hops: [
+            {
+              agentId: "agent-a",
+              tenantId: "tenant-a",
+              action: "summarize",
+              destination: "same_tenant_ops",
+              recipients: ["agent-a"],
+            },
+          ],
+        },
+      },
+      null
+    );
+    expect(result.decision).toBe("degrade");
+    expect(result.model_tier).toBe("free");
+    expect(result.rule_hits).toContain("transitive_allow");
+  });
+
+  it("blocks when the mandate tenant differs from the policy tenant", async () => {
+    const result = await runPolicy(
+      supabase,
+      {
+        tenant_id: "tenant-a",
+        subscription_tier: "free",
+        resource_type: "media",
+        image_count: 1,
+        handoff: {
+          mandate: {
+            tenantId: "tenant-b",
+            principalId: "user-1",
+            allowedRecipients: ["agent-b"],
+            classification: "restricted",
+            purpose: "draft",
+          },
+          hops: [
+            {
+              agentId: "agent-b",
+              tenantId: "tenant-b",
+              action: "summarize",
+              destination: "same_tenant_ops",
+              recipients: ["agent-b"],
+            },
+          ],
+        },
+      },
+      null
+    );
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("cross_tenant_handoff");
+    expect(result.rule_hits).not.toContain("transitive_allow");
+  });
+
   it("records retention mode and blocks when declaration required but undeclared", async () => {
     const origMode = process.env.AI_INFERENCE_RETENTION_MODE;
     const origReq = process.env.AI_REQUIRE_RETENTION_DECLARATION;

@@ -94,4 +94,40 @@ describe("evaluateTransitiveAuthorization (D4)", () => {
     );
     expect(evaluateTransitiveAuthorization(mandate, []).rule_hits).toContain("handoff_chain_empty");
   });
+
+  it("blocks when the mandate tenant is not the bound policy tenant", () => {
+    const result = evaluateTransitiveAuthorization(
+      { ...mandate, tenantId: "tenant-b" },
+      [hop({ agentId: "agent-a", tenantId: "tenant-b" })],
+      "tenant-a"
+    );
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("cross_tenant_handoff");
+    expect(result.rule_hits).toContain("isolated_grant_insufficient");
+  });
+
+  it("blocks a hop agent outside the mandate even when listed recipients are allowed", () => {
+    const result = evaluateTransitiveAuthorization(mandate, [
+      hop({ agentId: "outsider", recipients: ["agent-a"] }),
+    ]);
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("recipient_widened");
+  });
+
+  it("blocks a hop that omits recipients", () => {
+    const result = evaluateTransitiveAuthorization(mandate, [
+      hop({ agentId: "agent-a", recipients: undefined }),
+    ]);
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("recipient_widened");
+    expect(result.rule_hits).not.toContain("transitive_allow");
+  });
+
+  it("break-glass cannot hand off to an agent outside the mandate", () => {
+    const result = evaluateTransitiveAuthorization(mandate, [
+      hop({ agentId: "outsider", breakGlass: true, recipients: ["agent-a"] }),
+    ]);
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("break_glass_non_widening");
+  });
 });

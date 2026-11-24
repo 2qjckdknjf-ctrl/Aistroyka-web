@@ -26,7 +26,11 @@ export type AuthorizationHop = {
   tenantId: string;
   action: string;
   destination: HandoffDestination;
-  /** Attempted recipient ids for this hop (must stay ⊆ mandate.allowedRecipients). */
+  /**
+   * Recipient ids for this hop. Required at evaluation time and must stay
+   * ⊆ mandate.allowedRecipients. hop.agentId must be in that set too.
+   * Omitting recipients fails closed as widening.
+   */
   recipients?: readonly string[];
   /** If true, hop claims break-glass — must NOT widen recipients or cross tenant. */
   breakGlass?: boolean;
@@ -55,15 +59,23 @@ function isClassificationDowngrade(
 /**
  * Evaluate an originator mandate against a chain of agent hops.
  * Empty/missing mandate or hops ⇒ block (fail-closed).
+ * When boundTenantId is set (the policy tenant), the mandate must name that tenant.
  */
 export function evaluateTransitiveAuthorization(
   mandate: AuthorizationMandate | null | undefined,
-  hops: readonly AuthorizationHop[] | null | undefined
+  hops: readonly AuthorizationHop[] | null | undefined,
+  boundTenantId?: string
 ): TransitiveAuthorizationResult {
   const rule_hits: string[] = [];
 
   if (!mandate || !mandate.tenantId || !mandate.principalId) {
     return { decision: "block", rule_hits: ["mandate_missing"] };
+  }
+  if (boundTenantId !== undefined && boundTenantId !== mandate.tenantId) {
+    rule_hits.push("cross_tenant_handoff");
+    // A mandate for another tenant is not authorization for this request.
+    rule_hits.push("isolated_grant_insufficient");
+    return { decision: "block", rule_hits };
   }
   if (!hops || hops.length === 0) {
     return { decision: "block", rule_hits: ["handoff_chain_empty"] };
@@ -86,12 +98,18 @@ export function evaluateTransitiveAuthorization(
       rule_hits.push("forbidden_destination");
       return { decision: "block", rule_hits };
     }
-    if (hop.recipients) {
-      for (const recipient of hop.recipients) {
-        if (!allowed.has(recipient)) {
-          rule_hits.push(hop.breakGlass ? "break_glass_non_widening" : "recipient_widened");
-          return { decision: "block", rule_hits };
-        }
+    if (!allowed.has(hop.agentId)) {
+      rule_hits.push(hop.breakGlass ? "break_glass_non_widening" : "recipient_widened");
+      return { decision: "block", rule_hits };
+    }
+    if (hop.recipients == null) {
+      rule_hits.push(hop.breakGlass ? "break_glass_non_widening" : "recipient_widened");
+      return { decision: "block", rule_hits };
+    }
+    for (const recipient of hop.recipients) {
+      if (!allowed.has(recipient)) {
+        rule_hits.push(hop.breakGlass ? "break_glass_non_widening" : "recipient_widened");
+        return { decision: "block", rule_hits };
       }
     }
     if (hop.classification && isClassificationDowngrade(mandate.classification, hop.classification)) {
