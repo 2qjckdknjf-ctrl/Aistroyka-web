@@ -1,0 +1,23 @@
+# Gitleaks config for Aistroyka-web (Codex/Cursor delta 2026-11-24 D1a CI).
+# Extends default rules; allowlists only known synthetic fixtures / false positives.
+# Do not expand allowlist without documenting why the match is not a live secret.
+title = "Aistroyka"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Synthetic fixtures, UserDefaults/i18n keys, and historical audit artifacts (not live credentials)"
+paths = [
+  '''(^|/)apps/web/audit_''',
+  '''(^|/)docs/''',
+  '''(^|/)apps/web/lib/platform/push/apns\.provider\.test\.ts$''',
+  '''(^|/)apps/web/lib/ops/governed-ai-pr-e2e-runner\.contract\.test\.ts$''',
+  '''(^|/)docs/reports/plan-exec-delta-2026-11-24/''',
+]
+# Matched against the extracted secret (not the full line).
+regexes = [
+  '''^mgr\.v43\.''',
+  '''^wrk_v43_''',
+  '''^wrk\.v43\.''',
+]

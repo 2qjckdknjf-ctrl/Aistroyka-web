@@ -7,8 +7,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { evaluatePolicy } from "./policy.rules";
 import type { PolicyContext, PolicyResult } from "./policy.types";
 import { getPrivacySettings } from "@/lib/platform/privacy/privacy.service";
+import { containsSecrets } from "./secret-detection";
 
 export type { PolicyResult, PolicyDecision } from "./policy.types";
+export { detectSecrets, containsSecrets } from "./secret-detection";
 
 const POLICY_VERSION = "1.0";
 
@@ -26,6 +28,23 @@ export async function runPolicy(
   traceId?: string | null
 ): Promise<PolicyResult> {
   let result = evaluatePolicy(ctx);
+  if (result.decision === "allow") {
+    if (
+      containsSecrets(
+        ctx.image_url,
+        ctx.video_url,
+        ctx.system_prompt,
+        ctx.user_message,
+        ctx.egress_text
+      )
+    ) {
+      result = {
+        decision: "block",
+        rule_hits: [...result.rule_hits, "secret_detected"],
+        model_tier: result.model_tier,
+      };
+    }
+  }
   if (result.decision === "allow") {
     for (const mediaUrl of [ctx.image_url, ctx.video_url]) {
       if (!mediaUrl) continue;
