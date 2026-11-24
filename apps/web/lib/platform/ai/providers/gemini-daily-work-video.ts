@@ -7,6 +7,7 @@ import {
   DAILY_WORK_VIDEO_SYSTEM_PROMPT,
   buildDailyWorkVideoUserMessage,
 } from "@/lib/ai/prompts";
+import { resolveAiProviderCredentials } from "@/lib/platform/ai/credentials/resolve-ai-provider-credentials";
 import { ProviderRequestError } from "./provider.errors";
 import type { VisionResult } from "./provider.interface";
 
@@ -16,7 +17,7 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_FILE_POLLS = 90;
 
 function getApiKey(): string {
-  return (process.env.GOOGLE_AI_API_KEY ?? process.env.GEMINI_API_KEY ?? "").trim();
+  return resolveAiProviderCredentials("gemini").apiKey ?? "";
 }
 
 function resolveModel(): string {

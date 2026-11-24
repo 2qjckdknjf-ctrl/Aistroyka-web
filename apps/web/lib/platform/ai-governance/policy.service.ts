@@ -13,6 +13,7 @@ import {
   retentionBlocksEgress,
   retentionRuleHit,
 } from "./inference-retention";
+import { evaluateTransitiveAuthorization } from "./transitive-authorization";
 
 export type { PolicyResult, PolicyDecision } from "./policy.types";
 export { detectSecrets, containsSecrets } from "./secret-detection";
@@ -22,6 +23,14 @@ export {
   retentionBlocksEgress,
   retentionRuleHit,
 } from "./inference-retention";
+export { evaluateTransitiveAuthorization } from "./transitive-authorization";
+export type {
+  AuthorizationHop,
+  AuthorizationMandate,
+  DataClassification,
+  HandoffDestination,
+  TransitiveAuthorizationResult,
+} from "./transitive-authorization";
 
 const POLICY_VERSION = "1.0";
 
@@ -81,6 +90,14 @@ export async function runPolicy(
         break;
       }
     }
+  }
+  if (result.decision === "allow" && ctx.handoff) {
+    const handoff = evaluateTransitiveAuthorization(ctx.handoff.mandate, ctx.handoff.hops);
+    result = {
+      decision: handoff.decision === "allow" ? "allow" : "block",
+      rule_hits: [...result.rule_hits, ...handoff.rule_hits],
+      model_tier: result.model_tier,
+    };
   }
   const decisionId = await recordPolicyDecision(
     supabase,

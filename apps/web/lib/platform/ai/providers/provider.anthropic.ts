@@ -7,6 +7,7 @@ import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
 } from "@/lib/ai/prompts";
+import { resolveAiProviderCredentials } from "@/lib/platform/ai/credentials/resolve-ai-provider-credentials";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 import { ProviderRequestError } from "./provider.errors";
 
@@ -35,7 +36,7 @@ async function fetchImageAsBase64(imageUrl: string): Promise<{ data: string; med
 }
 
 function getConfig(): { apiKey: string; model: string } {
-  const apiKey = (process.env.ANTHROPIC_API_KEY ?? "").trim();
+  const apiKey = resolveAiProviderCredentials("anthropic").apiKey ?? "";
   const model =
     (process.env.ANTHROPIC_VISION_MODEL ?? DEFAULT_MODEL).trim() || DEFAULT_MODEL;
   return { apiKey, model };
