@@ -161,4 +161,60 @@ describe("policy.service", () => {
       else process.env.AI_REQUIRE_RETENTION_DECLARATION = origReq;
     }
   });
+
+  it("blocks degrade decisions when retention mode is blocked", async () => {
+    const origMode = process.env.AI_INFERENCE_RETENTION_MODE;
+    const origReq = process.env.AI_REQUIRE_RETENTION_DECLARATION;
+    process.env.AI_INFERENCE_RETENTION_MODE = "blocked";
+    delete process.env.AI_REQUIRE_RETENTION_DECLARATION;
+    try {
+      const result = await runPolicy(
+        supabase,
+        {
+          tenant_id: "t1",
+          subscription_tier: "",
+          resource_type: "media",
+          image_count: 1,
+        },
+        null
+      );
+      expect(result.decision).toBe("block");
+      expect(result.rule_hits).toContain("tier_unknown");
+      expect(result.rule_hits).toContain("retention_mode:blocked");
+      expect(result.rule_hits).toContain("retention_undeclared_or_blocked");
+    } finally {
+      if (origMode === undefined) delete process.env.AI_INFERENCE_RETENTION_MODE;
+      else process.env.AI_INFERENCE_RETENTION_MODE = origMode;
+      if (origReq === undefined) delete process.env.AI_REQUIRE_RETENTION_DECLARATION;
+      else process.env.AI_REQUIRE_RETENTION_DECLARATION = origReq;
+    }
+  });
+
+  it("blocks degrade decisions when retention is undeclared and declaration is required", async () => {
+    const origMode = process.env.AI_INFERENCE_RETENTION_MODE;
+    const origReq = process.env.AI_REQUIRE_RETENTION_DECLARATION;
+    delete process.env.AI_INFERENCE_RETENTION_MODE;
+    process.env.AI_REQUIRE_RETENTION_DECLARATION = "true";
+    try {
+      const result = await runPolicy(
+        supabase,
+        {
+          tenant_id: "t1",
+          subscription_tier: "UNKNOWN",
+          resource_type: "media",
+          image_count: 1,
+        },
+        null
+      );
+      expect(result.decision).toBe("block");
+      expect(result.rule_hits).toContain("tier_unknown");
+      expect(result.rule_hits).toContain("retention_mode:undeclared");
+      expect(result.rule_hits).toContain("retention_undeclared_or_blocked");
+    } finally {
+      if (origMode === undefined) delete process.env.AI_INFERENCE_RETENTION_MODE;
+      else process.env.AI_INFERENCE_RETENTION_MODE = origMode;
+      if (origReq === undefined) delete process.env.AI_REQUIRE_RETENTION_DECLARATION;
+      else process.env.AI_REQUIRE_RETENTION_DECLARATION = origReq;
+    }
+  });
 });

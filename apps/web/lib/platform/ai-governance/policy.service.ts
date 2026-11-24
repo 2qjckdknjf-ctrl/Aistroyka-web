@@ -44,7 +44,7 @@ export async function runPolicy(
     ...result,
     rule_hits: [...result.rule_hits, retentionRuleHit(retentionMode)],
   };
-  if (result.decision === "allow" && retentionBlocksEgress(retentionMode)) {
+  if (result.decision !== "block" && retentionBlocksEgress(retentionMode)) {
     result = {
       decision: "block",
       rule_hits: [...result.rule_hits, "retention_undeclared_or_blocked"],
