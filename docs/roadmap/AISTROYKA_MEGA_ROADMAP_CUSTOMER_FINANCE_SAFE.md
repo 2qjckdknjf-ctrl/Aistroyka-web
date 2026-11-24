@@ -2034,22 +2034,22 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 
 ### Execution status — Cursor 2026-11-24 (branch `cursor/plan-exec-delta-2026-11-24`)
 
-Reconciled against `origin/main` tip at work start and open PRs #488/#501/#503/#504/#505. Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. **Merged via PR #507** → `main` @ `030e089a` (non-author APPROVED). **Deployed:** staging+prod `buildStamp.sha7=030e089` (Deploy Cloudflare Production workflow SUCCESS). Purchases still unauthorized.
+Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519. **Live deploy observed:** staging+prod `buildStamp.sha7=3895681` (#518). Purchases unauthorized. Dependabot majors (#515/#516) and actions major bumps with CI FAILURE not auto-merged.
 
 | ID | Priority | Status | Notes |
 |---|---|---|---|
-| D1a pre-egress secret detection | P0 | IMPLEMENTED | Merged #507 + deployed `030e089`; full-history FP cleanup still OWNER_GATE. |
-| D2a AI_PROVIDER_ALLOWLIST | P0 | IMPLEMENTED | Merged + deployed. |
-| D2b fail-closed fallback on error/null tenant | P0 | IMPLEMENTED | Merged + deployed. |
+| D1a pre-egress secret detection | P0 | IMPLEMENTED | Deployed. Full-history FP cleanup OWNER_GATE. |
+| D2a AI_PROVIDER_ALLOWLIST | P0 | IMPLEMENTED | Deployed. |
+| D2b fail-closed fallback on error/null tenant | P0 | IMPLEMENTED | Deployed. |
 | D2c X-AI-Fallback-Reason | P0 | IMPLEMENTED | Unchanged. |
-| D3a inference retention declaration | P0 | PARTIAL→code | `AI_INFERENCE_RETENTION_MODE` + optional `AI_REQUIRE_RETENTION_DECLARATION`; vendor ZDR proof still OWNER_GATE. |
-| D3b tenant-scoped credentials / rotation | P0 | PARTIAL→scaffold | `resolveAiProviderCredentials` (global_env only); tenant vault OWNER_GATE. |
-| D4 transitive multi-agent authorization | P0 | PARTIAL | Existing tenant/job/RLS tests; no agent-handoff layer. |
-| D5 report GET peer isolation tests | P0 | IMPLEMENTED | Merged + deployed. |
+| D3a inference retention declaration | P0 | PARTIAL | Declaration gate live; vendor ZDR proof OWNER_GATE. |
+| D3b tenant-scoped credentials / rotation | P0 | PARTIAL | Providers use `resolveAiProviderCredentials`; tenant vault OWNER_GATE. |
+| D4 transitive multi-agent authorization | P0 | PARTIAL→code | `evaluateTransitiveAuthorization` + optional `PolicyContext.handoff` in `runPolicy`. |
+| D5 report GET peer isolation tests | P0 | IMPLEMENTED | Deployed. |
 | D6 lite-allow-list | P1 | IMPLEMENTED | Unchanged. |
-| D7 sandbox vendor eval | P0 | BLOCKED / RESEARCH_ONLY | No installs. |
-| D9 Graph/Drawing OmniEVIE/GLM | P1 | PARTIAL / RESEARCH_ONLY | No new models. |
-| D10 supplier fixture negatives | P1 | IMPLEMENTED | Merged #507 + deployed. |
-| D11 Monitor API | P1 | MISSING / RESEARCH_ONLY | |
-| D12 Claude Ship observe-only | P1 | MISSING / RESEARCH_ONLY | |
-| D15 Dependabot.yml | P1 | IMPLEMENTED | Config live; Dependabot PRs #509–#517 open (do not auto-merge majors). |
+| D7 sandbox vendor eval | P0 | BLOCKED / DEFER | See `RESEARCH_DEFER_2026-11-24.md`. |
+| D9 Graph/Drawing OmniEVIE/GLM | P1 | DEFER | No new models. |
+| D10 supplier fixture negatives | P1 | IMPLEMENTED | Deployed. |
+| D11 Monitor API | P1 | DEFER | No connector. |
+| D12 Claude Ship observe-only | P1 | DEFER | Keep human APPROVED. |
+| D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; several Dependabot CI FAILURE. |
