@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -119,11 +119,14 @@ export function DashboardTasksClient({
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState<string>("");
 
+  // V2-WEB-01: stable openCreate + ref for parent register — avoids effect↔setState loops
+  // when the parent passes a fresh inline onRegisterCreateHandler each render.
+  const openCreateForm = useCallback(() => setCreateOpen(true), []);
+  const onRegisterCreateHandlerRef = useRef(onRegisterCreateHandler);
+  onRegisterCreateHandlerRef.current = onRegisterCreateHandler;
   useEffect(() => {
-    if (onRegisterCreateHandler) {
-      onRegisterCreateHandler(() => setCreateOpen(true));
-    }
-  }, [onRegisterCreateHandler]);
+    onRegisterCreateHandlerRef.current?.(openCreateForm);
+  }, [openCreateForm]);
 
   const setWorkspaceParam = useCallback(
     (key: "view" | "task", value: string | null) => {
