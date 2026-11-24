@@ -2034,7 +2034,7 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 
 ### Execution status — Cursor 2026-11-24 (branch `cursor/plan-exec-delta-2026-11-24`)
 
-Reconciled against `origin/main` tip at work start and open PRs #488/#501/#503/#504/#505. Evidence report: `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. Independent reviewer: pending (non-author APPROVED). **No production deploy / merge / purchases.**
+Reconciled against `origin/main` tip at work start and open PRs #488/#501/#503/#504/#505. Evidence report: `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. **Merged via PR #507** → `main` @ `030e089a` with non-author APPROVED (`6262265-cpu`). **No production deploy / purchases authorized by that merge alone.**
 
 | ID | Priority | Status | Notes |
 |---|---|---|---|
