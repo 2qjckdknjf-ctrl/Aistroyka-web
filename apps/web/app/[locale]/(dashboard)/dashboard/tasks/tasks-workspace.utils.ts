@@ -91,3 +91,53 @@ export function isTaskOverdue(status: string, dueDate: string | null, todayIso: 
   if (status === "done" || status === "cancelled") return false;
   return dueDate < todayIso;
 }
+
+/** V2-WEB-02: selected task from `?task=` — empty/whitespace → null. */
+export function parseSelectedTaskId(raw: string | null | undefined): string | null {
+  if (typeof raw !== "string") return null;
+  const id = raw.trim();
+  return id.length > 0 ? id : null;
+}
+
+/**
+ * V2-WEB-02: build the tasks workspace href while preserving filters/view/task.
+ * Absolute dashboard path (locale prefix handled by next-intl Link).
+ */
+export function buildTasksWorkspaceHref(input: {
+  view?: TasksWorkspaceView | null;
+  taskId?: string | null;
+  filters?: Record<string, string | null | undefined>;
+}): string {
+  const qs = new URLSearchParams();
+  if (input.view === "board") qs.set("view", "board");
+  const taskId = parseSelectedTaskId(input.taskId ?? null);
+  if (taskId) qs.set("task", taskId);
+  for (const [key, value] of Object.entries(input.filters ?? {})) {
+    if (typeof value === "string" && value.trim()) qs.set(key, value.trim());
+  }
+  const out = qs.toString();
+  return out ? `/dashboard/tasks?${out}` : "/dashboard/tasks";
+}
+
+/** Full task detail href with optional returnTo for Back restoration. */
+export function buildTaskDetailHref(taskId: string, returnTo?: string | null): string {
+  const id = parseSelectedTaskId(taskId);
+  if (!id) return "/dashboard/tasks";
+  const base = `/dashboard/tasks/${id}`;
+  const ret = typeof returnTo === "string" ? returnTo.trim() : "";
+  if (!ret) return base;
+  return `${base}?returnTo=${encodeURIComponent(ret)}`;
+}
+
+/**
+ * Safe Back target from returnTo — only allow dashboard tasks paths.
+ * Callers should pass the already-decoded value (e.g. useSearchParams().get("returnTo"));
+ * do not decodeURIComponent again or filter encodings like `%26` break into extra params.
+ */
+export function resolveTasksReturnHref(returnTo: string | null | undefined): string {
+  if (typeof returnTo !== "string" || !returnTo.trim()) return "/dashboard/tasks";
+  const path = returnTo.trim();
+  if (!path.startsWith("/dashboard/tasks")) return "/dashboard/tasks";
+  if (path.startsWith("//") || path.includes("://")) return "/dashboard/tasks";
+  return path;
+}

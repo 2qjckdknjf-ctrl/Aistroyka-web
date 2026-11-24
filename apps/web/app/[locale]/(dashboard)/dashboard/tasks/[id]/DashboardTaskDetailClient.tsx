@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -64,28 +64,45 @@ export function DashboardTaskDetailClient({
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
   const [savingPriority, setSavingPriority] = useState(false);
+  const activeTaskIdRef = useRef(taskId);
+  activeTaskIdRef.current = taskId;
 
-  const fetchTask = () => {
+  const fetchTask = (opts?: { clearCurrent?: boolean }) => {
+    const requestedId = taskId;
     setLoading(true);
-    fetch(`/api/v1/tasks/${taskId}`, { credentials: "include" })
+    // Clear only when switching task ids — routine assign/edit/priority refetch
+    // must keep the panel + chat mounted (Bugbot).
+    if (opts?.clearCurrent) {
+      setTask(null);
+      setError(null);
+    }
+    fetch(`/api/v1/tasks/${requestedId}`, { credentials: "include" })
       .then((r) => {
         if (r.status === 404) throw new Error("Not found");
+        if (r.status === 403) throw new Error("Forbidden");
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
       })
       .then((json: { data?: TaskDetail }) => {
+        if (requestedId !== activeTaskIdRef.current) return;
         setTask(json.data ?? null);
         setError(null);
       })
       .catch((e) => {
+        if (requestedId !== activeTaskIdRef.current) return;
         setError(e instanceof Error ? e.message : "Failed to load");
         setTask(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestedId !== activeTaskIdRef.current) return;
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchTask();
+    fetchTask({ clearCurrent: true });
+    // Intentionally only re-run when the selected task id changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTask closes over latest taskId
   }, [taskId]);
 
   useEffect(() => {
