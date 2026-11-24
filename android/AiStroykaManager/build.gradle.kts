@@ -96,7 +96,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.material3:material3")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.14.0")
     implementation("io.coil-kt:coil-compose:2.5.0")
     // Instrumented launch smoke (ManagerAppLaunchInstrumentedTest) — mirrors Worker.
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
