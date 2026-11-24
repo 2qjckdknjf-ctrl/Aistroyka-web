@@ -25,7 +25,7 @@ jobs:
           OWNER_EVIDENCE_E2E_FIXTURE: ${{ secrets.OWNER_EVIDENCE_E2E_FIXTURE }}
           EXPECTED_EVIDENCE_SHA: ${{ inputs.expected_sha }}
         run: python3 scripts/ops/verify_published_evidence_live.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: published-evidence-live-proof
           path: published-evidence-live-proof.json

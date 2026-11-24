@@ -198,7 +198,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload deployment binding evidence
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: governed-ai-deployment-binding-pr${{ inputs.pull_request_number }}
           path: deployment-binding-evidence.json
@@ -715,7 +715,7 @@ jobs:
           steps.e2e_exit.outcome == 'success' &&
           steps.post_e2e_deploy.outcome == 'success' &&
           steps.post_e2e_pr_head.outcome == 'success'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: governed-ai-e2e-harness-sealed-${{ github.run_id }}-${{ github.run_attempt }}
           path: e2e-transfer/governed-ai-e2e-sealed-bundle.json
@@ -803,7 +803,7 @@ jobs:
           rm -rf "$VERIFY_DIR"
 
       - name: Upload authenticated sealed bundle for postprocess
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
           path: e2e-transfer/governed-ai-e2e-sealed-bundle.json
@@ -954,7 +954,7 @@ jobs:
 
       - name: Upload redacted E2E evidence
         if: steps.redact.outcome == 'success'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: governed-ai-pr-e2e-evidence-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
           path: e2e-workspace/e2e-result-redacted.json
