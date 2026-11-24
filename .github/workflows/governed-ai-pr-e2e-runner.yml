@@ -53,7 +53,7 @@ jobs:
       staging_environment_protected: ${{ steps.export.outputs.staging_environment_protected }}
     steps:
       - name: Checkout trusted validator (dispatch commit pin)
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           sparse-checkout: |
@@ -226,7 +226,7 @@ jobs:
       deployments: read
     steps:
       - name: Checkout trusted runner ops from dispatch commit pin
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: trusted-runner-ops
@@ -435,7 +435,7 @@ jobs:
       deployments: read
     steps:
       - name: Checkout trusted harness runner ops from dispatch commit pin
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: trusted-runner-ops
@@ -475,7 +475,7 @@ jobs:
           echo "node_path=${NODE_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout verified PR head
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           path: pr-workspace
@@ -743,7 +743,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout trusted seal ops from dispatch commit pin
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: trusted-runner-ops
@@ -833,7 +833,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout trusted runner ops from dispatch commit pin
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: trusted-runner-ops
