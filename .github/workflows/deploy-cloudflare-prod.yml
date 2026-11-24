@@ -202,7 +202,7 @@ jobs:
         run: bash scripts/release/check-env-config.sh deploy-production
 
       - name: Setup Node for atomic Wrangler deploy
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
 
