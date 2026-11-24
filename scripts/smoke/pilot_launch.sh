@@ -124,7 +124,8 @@ fi
 
 # 1) POST /api/v1/admin/jobs/cron-tick (x-cron-secret when CRON_SECRET set or when required by server)
 if [[ -n "$CRON" ]]; then
-  code=$(curl -sSL -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \
+  # Budget: JOB_CONFIG.WORKER_TIME_BUDGET_MS (25s) + enqueue/list overhead; 30s curled races cold Workers.
+  code=$(curl -sSL -o /tmp/pilot_cron.json -w "%{http_code}" -m 90 -X POST \
     -H "Content-Type: application/json" -H "x-cron-secret: $CRON" \
     "$BASE/api/v1/admin/jobs/cron-tick" || true)
   if [[ "$code" == "200" ]]; then
@@ -139,7 +140,7 @@ if [[ -n "$CRON" ]]; then
     FAIL=1
   fi
 else
-  code=$(curl -sSL -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \
+  code=$(curl -sSL -o /tmp/pilot_cron.json -w "%{http_code}" -m 90 -X POST \
     -H "Content-Type: application/json" \
     "$BASE/api/v1/admin/jobs/cron-tick" || true)
   if [[ "$code" == "200" ]]; then
