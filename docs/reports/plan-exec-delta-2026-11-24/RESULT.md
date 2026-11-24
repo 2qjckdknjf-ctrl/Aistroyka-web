@@ -83,10 +83,10 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 
 | Item | Status |
 |---|---|
-| Independent non-author review / merge | pending (`REVIEW_REQUIRED`) |
-| Production deploy | not authorized |
-| D3a inference retention / vendor ZDR | BLOCKED OWNER_GATE |
-| D3b tenant-scoped AI credentials / rotation | BLOCKED OWNER_GATE |
+| Independent non-author review / merge (#507) | DONE — MERGED `030e089a` |
+| Staging + production deploy | DONE — `buildStamp.sha7=030e089` |
+| D3a vendor ZDR proof | OWNER_GATE (declaration gate coded separately) |
+| D3b tenant vault / rotation | OWNER_GATE (resolver scaffold only) |
 | Full-history gitleaks cleanup | OWNER_GATE (no history rewrite) |
 | Dependabot GitHub feature enablement | OWNER_GATE if org setting off |
 | D7/D9/D11/D12 research vendors | RESEARCH_ONLY — no installs |

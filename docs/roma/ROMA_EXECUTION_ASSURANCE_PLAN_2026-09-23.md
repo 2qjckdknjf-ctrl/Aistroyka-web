@@ -453,12 +453,14 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 
 | ROMA delta item | Status | Evidence |
 |---|---|---|
-| P0 secret block before external transmission | PARTIAL (code+CI) | `secret-detection.ts` + CI gitleaks (tree/PR-range). Credential Broker / short-lived creds OWNER_GATE. Full-history cleanup OWNER_GATE. |
-| P0 inference-provider allowlist + fail-closed fallback | PARTIAL (code) | `AI_PROVIDER_ALLOWLIST`, `AI_FALLBACK_ON_ERROR` (default fail-closed) + unit tests. |
+| P0 secret block before external transmission | IMPLEMENTED (deployed) | #507 → `030e089` staging+prod. Credential Broker / short-lived creds OWNER_GATE. Full-history cleanup OWNER_GATE. |
+| P0 inference-provider allowlist + fail-closed fallback | IMPLEMENTED (deployed) | Allowlist + fail-closed fallback on `030e089`. |
+| P0 retention declaration | PARTIAL (code) | `AI_INFERENCE_RETENTION_MODE` / require gate; vendor ZDR OWNER_GATE. |
+| P0 credential resolver | PARTIAL (scaffold) | Global-env resolver; tenant vault OWNER_GATE. |
 | P0 sandbox Strands/LangSmith eval | BLOCKED / RESEARCH_ONLY | No vendor install; licence check required before any trial. |
-| P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Existing governed-ai-pr-e2e verdict tooling; requirement→test matrix artifact still MISSING. |
-| P1 Dependabot supply-chain | PARTIAL (config) | `.github/dependabot.yml` landed; GitHub enablement OWNER_GATE if alerts off. |
-| P1 supplier fixture negatives (D10) | PARTIAL (code) | VAT/unit/price/injection flags + ACK/idempotency rehearsal; no purchases. |
+| P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Matrix: `docs/reports/plan-exec-delta-2026-11-24/REQUIREMENT_TEST_MATRIX.md`. |
+| P1 Dependabot supply-chain | IMPLEMENTED | Dependabot PRs opening (#509–#517); majors need manual review. |
+| P1 supplier fixture negatives (D10) | IMPLEMENTED (deployed) | On `030e089`. |
 | P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
 
 See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. Independent ROMA reviewer verdict: pending.

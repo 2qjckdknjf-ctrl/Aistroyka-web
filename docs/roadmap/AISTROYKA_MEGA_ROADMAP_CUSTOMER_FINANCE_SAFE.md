@@ -2034,22 +2034,22 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 
 ### Execution status — Cursor 2026-11-24 (branch `cursor/plan-exec-delta-2026-11-24`)
 
-Reconciled against `origin/main` tip at work start and open PRs #488/#501/#503/#504/#505. Evidence report: `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. **Merged via PR #507** → `main` @ `030e089a` with non-author APPROVED (`6262265-cpu`). **No production deploy / purchases authorized by that merge alone.**
+Reconciled against `origin/main` tip at work start and open PRs #488/#501/#503/#504/#505. Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. **Merged via PR #507** → `main` @ `030e089a` (non-author APPROVED). **Deployed:** staging+prod `buildStamp.sha7=030e089` (Deploy Cloudflare Production workflow SUCCESS). Purchases still unauthorized.
 
 | ID | Priority | Status | Notes |
 |---|---|---|---|
-| D1a pre-egress secret detection | P0 | PARTIAL→code+CI landed | `secret-detection.ts` + `runPolicy` rule `secret_detected`; `.github/workflows/gitleaks.yml` + `.gitleaks.toml` (tree + PR-range; full-history legacy FP OWNER_GATE). Not DONE until independent review. |
-| D2a AI_PROVIDER_ALLOWLIST | P0 | PARTIAL→code landed | Env filter in `provider.router.ts` + negative test. |
-| D2b fail-closed fallback on error/null tenant | P0 | PARTIAL→code landed | `AI_FALLBACK_ON_ERROR` default fail-closed + unit tests. |
-| D2c X-AI-Fallback-Reason | P0 | IMPLEMENTED | Unchanged; do not rebuild. |
-| D3a inference retention declaration | P0 | MISSING / BLOCKED | Vendor ZDR OWNER_GATE. |
-| D3b tenant-scoped credentials / rotation | P0 | MISSING / BLOCKED | Global env keys remain; OWNER_GATE. |
+| D1a pre-egress secret detection | P0 | IMPLEMENTED | Merged #507 + deployed `030e089`; full-history FP cleanup still OWNER_GATE. |
+| D2a AI_PROVIDER_ALLOWLIST | P0 | IMPLEMENTED | Merged + deployed. |
+| D2b fail-closed fallback on error/null tenant | P0 | IMPLEMENTED | Merged + deployed. |
+| D2c X-AI-Fallback-Reason | P0 | IMPLEMENTED | Unchanged. |
+| D3a inference retention declaration | P0 | PARTIAL→code | `AI_INFERENCE_RETENTION_MODE` + optional `AI_REQUIRE_RETENTION_DECLARATION`; vendor ZDR proof still OWNER_GATE. |
+| D3b tenant-scoped credentials / rotation | P0 | PARTIAL→scaffold | `resolveAiProviderCredentials` (global_env only); tenant vault OWNER_GATE. |
 | D4 transitive multi-agent authorization | P0 | PARTIAL | Existing tenant/job/RLS tests; no agent-handoff layer. |
-| D5 report GET peer isolation tests | P0 | PARTIAL→code landed | GET cases added to `reports/[id]/route.test.ts`. |
+| D5 report GET peer isolation tests | P0 | IMPLEMENTED | Merged + deployed. |
 | D6 lite-allow-list | P1 | IMPLEMENTED | Unchanged. |
 | D7 sandbox vendor eval | P0 | BLOCKED / RESEARCH_ONLY | No installs. |
 | D9 Graph/Drawing OmniEVIE/GLM | P1 | PARTIAL / RESEARCH_ONLY | No new models. |
-| D10 supplier fixture negatives | P1 | PARTIAL→code landed | Negative fixtures + issue codes (`vat_not_normalized`, `unit_mismatch`, `price_changed`, `catalog_text_unsafe`); ACK/idempotency rehearsal; forbidden-buyer role helper. No purchases. Not DONE until independent review. |
+| D10 supplier fixture negatives | P1 | IMPLEMENTED | Merged #507 + deployed. |
 | D11 Monitor API | P1 | MISSING / RESEARCH_ONLY | |
 | D12 Claude Ship observe-only | P1 | MISSING / RESEARCH_ONLY | |
-| D15 Dependabot.yml | P1 | PARTIAL→config landed | `.github/dependabot.yml` (npm / github-actions / android gradle weekly). Activation still depends on GitHub Dependabot enablement. |
+| D15 Dependabot.yml | P1 | IMPLEMENTED | Config live; Dependabot PRs #509–#517 open (do not auto-merge majors). |

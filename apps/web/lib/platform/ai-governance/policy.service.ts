@@ -8,9 +8,20 @@ import { evaluatePolicy } from "./policy.rules";
 import type { PolicyContext, PolicyResult } from "./policy.types";
 import { getPrivacySettings } from "@/lib/platform/privacy/privacy.service";
 import { containsSecrets } from "./secret-detection";
+import {
+  getInferenceRetentionMode,
+  retentionBlocksEgress,
+  retentionRuleHit,
+} from "./inference-retention";
 
 export type { PolicyResult, PolicyDecision } from "./policy.types";
 export { detectSecrets, containsSecrets } from "./secret-detection";
+export {
+  getInferenceRetentionMode,
+  requireRetentionDeclaration,
+  retentionBlocksEgress,
+  retentionRuleHit,
+} from "./inference-retention";
 
 const POLICY_VERSION = "1.0";
 
@@ -28,6 +39,18 @@ export async function runPolicy(
   traceId?: string | null
 ): Promise<PolicyResult> {
   let result = evaluatePolicy(ctx);
+  const retentionMode = getInferenceRetentionMode();
+  result = {
+    ...result,
+    rule_hits: [...result.rule_hits, retentionRuleHit(retentionMode)],
+  };
+  if (result.decision === "allow" && retentionBlocksEgress(retentionMode)) {
+    result = {
+      decision: "block",
+      rule_hits: [...result.rule_hits, "retention_undeclared_or_blocked"],
+      model_tier: result.model_tier,
+    };
+  }
   if (result.decision === "allow") {
     if (
       containsSecrets(
