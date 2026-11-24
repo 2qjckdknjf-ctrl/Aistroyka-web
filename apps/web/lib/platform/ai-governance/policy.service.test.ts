@@ -118,4 +118,20 @@ describe("policy.service", () => {
     expect(id).toBe("decision-uuid-1");
     expect(supabase.from).toHaveBeenCalledWith("ai_policy_decisions");
   });
+
+  it("blocks when egress text contains a synthetic secret pattern", async () => {
+    const result = await runPolicy(
+      supabase,
+      {
+        tenant_id: "t1",
+        subscription_tier: "free",
+        resource_type: "media",
+        image_count: 1,
+        user_message: "attach sk-abcdefghijklmnopqrstuvwxyz012345",
+      },
+      null
+    );
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("secret_detected");
+  });
 });

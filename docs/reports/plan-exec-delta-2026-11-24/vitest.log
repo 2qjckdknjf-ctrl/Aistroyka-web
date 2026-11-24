@@ -1,0 +1,15 @@
+
+ RUN  v4.0.18 /Users/alex/Projects/AISTROYKA-plan-exec-2026-11-24/apps/web
+
+ ✓ lib/platform/ai/routing/tenant-ai-preferences.test.ts (4 tests) 2ms
+ ✓ lib/platform/ai-governance/secret-detection.test.ts (6 tests) 3ms
+ ✓ lib/platform/ai-governance/policy.service.test.ts (6 tests) 4ms
+ ✓ lib/platform/ai/providers/provider.router.test.ts (8 tests) 4ms
+ ✓ app/api/v1/reports/[id]/route.test.ts (19 tests) 2012ms
+     ✓ still returns the reviewed report when audit insertion stalls  2002ms
+
+ Test Files  5 passed (5)
+      Tests  43 passed (43)
+   Start at  14:00:50
+   Duration  2.21s (transform 299ms, setup 97ms, import 303ms, tests 2.03s, environment 0ms)
+

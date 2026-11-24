@@ -46,6 +46,9 @@ Vercel может встречаться как исторический/доп�
 | `AI_ANALYSIS_URL` | Опционально: URL in-app AI endpoint (по умолчанию `NEXT_PUBLIC_APP_URL` + `/api/ai/analyze-image`). |
 | `ANTHROPIC_API_KEY` | Опционально: альтернативный vision-провайдер. |
 | `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY` | Опционально: Google AI (Gemini vision и **обязательно** для `POST /api/v1/ai/analyze-video-daily`). |
+| `AI_PROVIDER_ALLOWLIST` | Опционально: comma-separated allowlist (`openai`, `anthropic`, `gemini`). Пусто = все встроенные. Провайдеры вне списка не вызываются. |
+| `AI_FALLBACK_ON_ERROR` | Опционально: `true`/`1` — при отсутствии tenant или ошибке чтения флагов оставлять cross-provider fallback. По умолчанию fail-closed (`false`). |
+| `AI_TRUSTED_IMAGE_HOSTS` | Опционально: trusted hosts для media URL при `pii_mode=strict`. |
 
 Хотя бы один из `OPENAI_API_KEY` или `AI_ANALYSIS_URL` нужен для полноценной работы классического анализа изображений; **видео «работа за день»** дополнительно требует ключ Gemini (см. выше).
 

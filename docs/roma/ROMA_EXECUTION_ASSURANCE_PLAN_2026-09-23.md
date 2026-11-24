@@ -405,3 +405,60 @@ Autoresearch использует ROMA-CORPUS-004 / package promotion / schedule
 ## Уточнение Growth OS 2026-10-13
 
 Владелец уточнил: Grow OS в переписке — Growth OS, repo 2qjckdknjf-ctrl/growth-os. [Existing Growth task mapping](https://github.com/2qjckdknjf-ctrl/growth-os/blob/docs/ai-digest-reconciliation-2026-10-13/docs/canonical/AI_CONTROL_PLANE_TASKS.md#growth-os-ai-рекомендации-2026-10-13) фиксирует ownership/aliases/priority/dependencies/AC инженерных рекомендаций. Этот ROMA документ остаётся источником независимых verification/interface contracts; не открывать зеркальный Growth implementation backlog в AISTROYKA. Ранее употреблённое утверждение о ненайденном отдельном Grow repo отменено; full runtime readiness всё ещё зависит от реальных gates.
+
+
+## Weekly AI reconciliation — 2026-11-10 (ROMA)
+
+Planning-only extension to the canonical 2026-10-23 queue; do not duplicate or mark existing assurance contracts complete. Priority P0: independent mandatory action monitor, real credential/sandbox isolation, complete immutable audit of tool calls and externally observed effects; policy revisions and exact SHA must be revalidated after resume. Test valid credential but unauthorized production action, hidden secret in agent settings, prompt injection over multiple steps, tool output contamination, and failure to stop. All denied before external effect and recorded independently. P0 recovery assurance: prove compensation or reconciliation after timeout and crash; git revert alone is insufficient. Test unknown external effects and duplicate events with deterministic fixtures; zero unauthorized or duplicate logical effects. P1: eval/production-parity, source-grounded numerical claims, reviewer provenance, clean-context review, agent lessons valid only for tested versions. Review new models (Fable 5.2, Muse Ember) as untrusted candidate executors, never as policy authority. Dependency: Grow OS durable Supervisor and Sasha Memory OS evidence ACL. Owner: ROMA security lead TBD; independent verifier TBD. Acceptance requires exact-SHA test receipts and approved ADR before moving from advisory to blocking; no merge/deploy implied.
+
+
+### AI feature delta — 2026-11-11
+
+These are **proposed additions to existing workstreams** from the November 11 intelligence review, not claims of shipped functionality or verified vendor capabilities. Validate official release/API/pricing availability before selecting any provider; independent exact-SHA acceptance and existing P0 gates remain mandatory.
+
+- **P0 / model training security:** before any local Qwen LoRA/fine-tune, require signed/traceable training-set provenance, separation of untrusted tool outputs from approved examples, backdoor/trigger regression tests, clean baseline and rollback. Anthropic's November 10 mixed-data results motivate tests but are not proof of a Qwen-specific exploit.
+- **P1 / voice and multi-agent authority:** voice interruption and reconnect never reset mandate; model-to-model messages, /swarm delegates and Agents API tool calls cannot elevate permissions. Each child agent has scoped credentials, independently auditable tool calls and parent ticket linkage.
+- **P1 / security reviewer pilot:** evaluate Codex Security-style verify-fix-reverify on authorized sandbox tasks; keep independent ROMA verdict and human approvals; no unapproved exploit activity.
+
+**Acceptance rule:** record baseline, owner, independent reviewer, test corpus, security/privacy gates, cost per verified task and explicit decision (adopt / defer / reject). No autonomous production actions or merge authorized by this documentation.
+
+
+## Gap-only AI roadmap reconciliation — 2026-11-20
+
+**Review period:** 2026-11-12–2026-11-20. Compared this branch with `main` and the existing Nov 10/11 reconciliation. Only incremental acceptance conditions and candidate evaluations are recorded; pre-existing capabilities must not be rebuilt. **PLANNING ONLY / NOT IMPLEMENTED / NOT MERGED.** The owner and independent reviewer remain TBD until assigned. Recheck exact HEAD, CI and production receipts before any DONE status.
+
+| Priority | Existing owner / workstream | Newly identified gap / acceptance evidence |
+|---|---|---|
+| P0 | ROMA mandatory monitor / authorization | Transitive policy test: three individually authorized agents must not exfiltrate a different tenant's data; preserve origin principal, data classification, allowed recipients and immutable lineage. Deny at action boundary. |
+| P0 | ROMA adversarial corpus / sandbox | Mirror Dimension-inspired synthetic browser/supplier environment: 10–15 repeatable tests of hidden prompt injection in DOM/ARIA/images/tool results, fake checkout, invalid recipient, order duplication and unauthorized network egress; no real purchases. |
+| P0 | ROMA independent verdict | Performance Factory adversarial diagnosis check: independent reviewer attempts to disprove root cause and fix; verify tool actions, diff, unchanged tests, exact SHA, and post-deploy baseline. No agent self-declared PASS. |
+| P1 | ROMA code/security review | Compare Copilot Evals, GitHub AI Scan and secret scanning on permitted synthetic PRs; include skills/MCP supply-chain provenance and transitive handoff tests. Gate paid security tools by budget and scope. |
+| P1 | ROMA external agent boundaries | Review Codex sandbox/Google agent sandbox approaches for filesystem/network/credentials; never assume a sandbox alone replaces policy or monitoring. |
+
+**Source references:** [OpenAI Performance Factory](https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast/), [Google Mirror Dimension](https://blog.google/security/mirror-dimension-for-agents/), [OpenAI frontier risk controls](https://openai.com/index/managing-frontier-ai-risk/). Other recent model/vendor announcements are *candidates requiring independent availability and price validation*, not approved dependencies. No new runtime privileges, model installation, migrations, payments, deployment, PR merge, or trading orders are authorized by this document.
+
+
+## Codex / Cursor execution delta — 2026-11-24
+
+Planning reconciliation for 21–24 November; incorporates previously unrecorded 21–22 November recommendations. Existing workstreams and IDs own these acceptance extensions; do not duplicate implemented features. Vendor names/releases are research candidates from daily digests, not independently verified dependencies. Before execution, read current main, this planning branch and active implementation PRs; reconcile against code and evidence. Main blob at review: `eb0f4b7f333b4cb2d623496d1ebcbb03e4d0d583`. P0 existing blockers first; P1 bounded sandbox pilots; P2 research. Owner/reviewer TBD. No production changes, automatic merge, purchases or live trading authorized.
+
+- P0 existing Action Boundary/Credential Broker: block secrets before push and external transmission, scoped short-lived credentials, final inference-provider allowlist and fail-closed fallback, test revocation/incident response with synthetic tokens; preserve originator and recipient restrictions across agents.
+- P0 existing sandbox: evaluate Strands Box and LangSmith Tool Gateway against current policy; prove filesystem/network/MCP isolation, credential injection outside LLM, child-agent restrictions, pinned plugins and isolated browser profiles. Verify OpenCode/Cursor compatibility independently.
+- P0 existing independent verification: requirement-to-test matrix, immutable test evidence and exact SHA; distinguish FAIL/NOT_RUN/UNKNOWN, reject self-reported PASS. Claude Ship/PR Steward only observe-first; no author self-approval or critical auto-merge.
+- P1 existing model/skill assurance: LoRA provenance, held-out tests, contamination checks, Decider calibration/abstention, provider privacy, cost per verified PR. P2 Shirudo Linux-only research after existing gates, no replacement for patching or sandbox.
+
+**Codex/Cursor execution contract:** produce gap matrix (implemented/partial/missing/blocked), map each item to existing task ID, implement only verified gaps on separate implementation branch, preserve existing tests and add negative/regression tests, report exact SHA, reproducible commands/results, independent reviewer verdict, cost and remaining blockers. Do not mark DONE on documentation or build alone. Validate candidate upstream documentation and licenses before installing or sending data. Stop on missing permissions or unsafe effects.
+
+### Execution status — Cursor 2026-11-24 (Aistroyka-web slice)
+
+| ROMA delta item | Status | Evidence |
+|---|---|---|
+| P0 secret block before external transmission | PARTIAL (code+CI) | `secret-detection.ts` + CI gitleaks (tree/PR-range). Credential Broker / short-lived creds OWNER_GATE. Full-history cleanup OWNER_GATE. |
+| P0 inference-provider allowlist + fail-closed fallback | PARTIAL (code) | `AI_PROVIDER_ALLOWLIST`, `AI_FALLBACK_ON_ERROR` (default fail-closed) + unit tests. |
+| P0 sandbox Strands/LangSmith eval | BLOCKED / RESEARCH_ONLY | No vendor install; licence check required before any trial. |
+| P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Existing governed-ai-pr-e2e verdict tooling; requirement→test matrix artifact still MISSING. |
+| P1 Dependabot supply-chain | PARTIAL (config) | `.github/dependabot.yml` landed; GitHub enablement OWNER_GATE if alerts off. |
+| P1 supplier fixture negatives (D10) | PARTIAL (code) | VAT/unit/price/injection flags + ACK/idempotency rehearsal; no purchases. |
+| P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
+
+See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. Independent ROMA reviewer verdict: pending.

@@ -4,4 +4,5 @@ export type { ModelTier } from "./model-routing.service";
 export { runPolicy, checkPolicy, recordPolicyDecision } from "./policy.service";
 export { evaluatePolicy } from "./policy.rules";
 export { redactText } from "./redaction.service";
+export { detectSecrets, containsSecrets } from "./secret-detection";
 export { getModelForTier } from "./model-routing.service";

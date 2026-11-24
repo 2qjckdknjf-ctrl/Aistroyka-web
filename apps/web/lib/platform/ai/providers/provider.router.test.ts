@@ -25,7 +25,7 @@ vi.mock("./provider.gemini", () => ({
 import { getTenantAIPreferences } from "@/lib/platform/ai/routing/tenant-ai-preferences";
 import { canInvoke, recordSuccess, recordFailure } from "./circuit-breaker";
 import { ProviderRequestError } from "./provider.errors";
-import { invokeVisionWithRouter } from "./provider.router";
+import { getProviderAllowlist, invokeVisionWithRouter, orderProvidersForTest } from "./provider.router";
 
 const supabase = {} as any;
 
@@ -167,5 +167,25 @@ describe("provider.router", () => {
       "https://example.com/img.jpg",
       expect.objectContaining({ model: "gpt-4o-mini", maxTokens: 512 })
     );
+  });
+
+  it("never invokes providers outside AI_PROVIDER_ALLOWLIST", async () => {
+    const orig = process.env.AI_PROVIDER_ALLOWLIST;
+    process.env.AI_PROVIDER_ALLOWLIST = "anthropic";
+    try {
+      expect([...getProviderAllowlist()]).toEqual(["anthropic"]);
+      const ordered = orderProvidersForTest("openai", true);
+      expect(ordered.map((p) => p.name)).toEqual(["anthropic"]);
+
+      mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
+      const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+        maxTokens: 1024,
+      });
+      expect(result?.providerUsed).toBe("anthropic");
+      expect(mockInvokeVision).not.toHaveBeenCalled();
+      expect(mockGeminiInvoke).not.toHaveBeenCalled();
+    } finally {
+      process.env.AI_PROVIDER_ALLOWLIST = orig;
+    }
   });
 });
