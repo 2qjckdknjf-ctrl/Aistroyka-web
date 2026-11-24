@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 
@@ -8,6 +8,28 @@ const root = resolve(__dirname, "../../../../");
 function read(rel: string): string {
   return readFileSync(resolve(root, rel), "utf8");
 }
+
+/**
+ * Apple Silicon + Bun cannot posix_spawn the x86_64 Homebrew shim at
+ * /usr/local/bin/python3 (EBADARCH). Prefer the system/Xcode arm64 binaries.
+ */
+function resolvePython3(): string {
+  const candidates = [
+    process.env.AISTROYKA_PYTHON3,
+    "/usr/bin/python3",
+    "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+    "python3",
+  ].filter((value): value is string => Boolean(value));
+
+  for (const bin of candidates) {
+    if (bin !== "python3" && !existsSync(bin)) continue;
+    const probe = spawnSync(bin, ["-c", "print(1)"], { encoding: "utf8" });
+    if (probe.status === 0) return bin;
+  }
+  throw new Error("No usable python3 found for security-headers mock host tests");
+}
+
+const python3 = resolvePython3();
 
 function dryResolve(env: NodeJS.ProcessEnv, args: string[] = []): { status: number; out: string } {
   const r = spawnSync("bash", ["scripts/smoke/security_headers.sh", ...args], {
@@ -159,7 +181,7 @@ describe("Phase 8 security-headers CI contract", () => {
     "mocked host validates redirect hop headers on 302→200 chain",
     () => {
       const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
-      const ok = spawnSync("python3", [runner, "ok"], {
+      const ok = spawnSync(python3, [runner, "ok"], {
         cwd: root,
         encoding: "utf8",
         env: { ...process.env },
@@ -176,7 +198,7 @@ describe("Phase 8 security-headers CI contract", () => {
     "mocked host rejects missing CSP on intermediate 302 hop",
     () => {
       const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
-      const bad = spawnSync("python3", [runner, "missing-redirect-csp"], {
+      const bad = spawnSync(python3, [runner, "missing-redirect-csp"], {
         cwd: root,
         encoding: "utf8",
         env: { ...process.env },
@@ -193,7 +215,7 @@ describe("Phase 8 security-headers CI contract", () => {
     "mocked host rejects joined duplicate page headers including CSP/HSTS/PP",
     () => {
       const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
-      const bad = spawnSync("python3", [runner, "joined-duplicates"], {
+      const bad = spawnSync(python3, [runner, "joined-duplicates"], {
         cwd: root,
         encoding: "utf8",
         env: { ...process.env },
@@ -212,7 +234,7 @@ describe("Phase 8 security-headers CI contract", () => {
     "mocked host rejects joined duplicate API headers without requiring CSP",
     () => {
       const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
-      const bad = spawnSync("python3", [runner, "joined-api-duplicates"], {
+      const bad = spawnSync(python3, [runner, "joined-api-duplicates"], {
         cwd: root,
         encoding: "utf8",
         env: { ...process.env },
@@ -230,7 +252,7 @@ describe("Phase 8 security-headers CI contract", () => {
     "mocked host ignores 103 Early Hints and validates the final response",
     () => {
       const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
-      const earlyHints = spawnSync("python3", [runner, "early-hints"], {
+      const earlyHints = spawnSync(python3, [runner, "early-hints"], {
         cwd: root,
         encoding: "utf8",
         env: { ...process.env },

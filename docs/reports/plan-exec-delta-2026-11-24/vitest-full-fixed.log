@@ -1,0 +1,633 @@
+$ bun run build:contracts && bun run --cwd apps/web test
+$ bun run --cwd packages/contracts clean && bun run --cwd packages/contracts build
+$ rm -rf dist
+$ tsc -p tsconfig.json
+$ vitest run --maxWorkers=1
+
+ RUN  v4.0.18 /Users/alex/Projects/AISTROYKA-plan-exec-2026-11-24/apps/web
+
+ ✓ lib/ops/deploy-workflow.contract.test.ts (22 tests) 5541ms
+     ✓ mocked host validates redirect hop headers on 302→200 chain  1094ms
+     ✓ mocked host rejects missing CSP on intermediate 302 hop  1092ms
+     ✓ mocked host rejects joined duplicate page headers including CSP/HSTS/PP  1022ms
+     ✓ mocked host rejects joined duplicate API headers without requiring CSP  1026ms
+     ✓ mocked host ignores 103 Early Hints and validates the final response  1180ms
+ ✓ lib/ai/runOneJob.test.ts (15 tests) 2020ms
+     ✓ retries on 5xx and completes when second attempt succeeds  2002ms
+ ✓ app/api/v1/reports/[id]/route.test.ts (19 tests) 2012ms
+     ✓ still returns the reviewed report when audit insertion stalls  2002ms
+ ✓ app/api/v1/tasks/[id]/assign/route.test.ts (9 tests) 2011ms
+     ✓ still returns ok when audit insertion stalls  2003ms
+ ✓ app/api/v1/tasks/route.test.ts (7 tests) 2009ms
+     ✓ still returns the created task when audit insertion stalls  2002ms
+ ✓ lib/ops/governed-ai-pr-e2e-runner.seal-crypto.test.ts (20 tests) 415ms
+ ✓ components/ui/Modal.behavior.test.ts (9 tests) 381ms
+ ✓ components/canon/CanonPortalPhotoGallery.behavior.test.ts (5 tests) 191ms
+ ✓ lib/growth/product-events.test.ts (15 tests) 87ms
+ ✓ lib/ops/governed-ai-pr-e2e-runner.contract.test.ts (73 tests) 88ms
+ ✓ lib/platform/jobs/job.events.test.ts (4 tests) 65ms
+ ✓ app/api/v1/admin/billing/provider-status/route.test.ts (4 tests) 61ms
+ ✓ app/api/v1/ai/analyze-image/route.audit.test.ts (2 tests) 55ms
+ ✓ lib/domain/quantities/quantity-engine.test.ts (24 tests) 48ms
+ ✓ components/canon/CanonPortalActivityPanel.behavior.test.ts (1 test) 44ms
+ ✓ app/api/analysis/process/route.test.ts (6 tests) 31ms
+ ✓ app/api/v1/projects/[id]/completeness/evaluate/route.test.ts (2 tests) 30ms
+ ✓ components/canon/ReportPublicationControls.behavior.test.ts (7 tests) 33ms
+ ✓ app/api/v1/analysis/process/route.test.ts (6 tests) 29ms
+ ✓ app/api/v1/plan-fit/surface/route.test.ts (3 tests) 29ms
+ ✓ app/api/v1/admin/billing/pilot-workspaces/route.test.ts (3 tests) 25ms
+ ✓ app/api/v1/admin/billing/pilot-status/route.test.ts (3 tests) 23ms
+ ✓ app/api/v1/billing/webhooks/stripe/route.test.ts (7 tests) 22ms
+ ✓ lib/platform/jobs/job.handlers/tenant-scope.test.ts (15 tests) 17ms
+ ✓ lib/platform/jobs/job.recovery.test.ts (6 tests) 15ms
+ ✓ lib/ai/runOneJob.scope.test.ts (11 tests) 15ms
+ ✓ lib/platform/media/private-original-download.test.ts (12 tests) 15ms
+ ✓ app/api/ai/transcribe/route.test.ts (1 test) 16ms
+ ✓ lib/platform/jobs/job.claim.test.ts (13 tests) 13ms
+ ✓ app/api/v1/projects/[id]/documents/[documentId]/original/route.test.ts (11 tests) 13ms
+ ✓ lib/ops/provision-staging-stakeholder-persona.test.ts (18 tests) 13ms
+ ✓ app/api/v1/ai/analyze-image/route.auth.test.ts (22 tests) 11ms
+ ✓ lib/platform/ai/openai-http-retry.test.ts (5 tests) 11ms
+ ✓ lib/config/config.test.ts (22 tests) 11ms
+ ✓ lib/domain/customer-intake/portal-intake-tenant.test.ts (14 tests) 11ms
+ ✓ lib/system/system-route-auth.test.ts (7 tests) 10ms
+ ✓ lib/platform/ai/openai-transcription.test.ts (6 tests) 10ms
+stdout | app/api/v1/ai/transcribe/route.test.ts > POST /api/v1/ai/transcribe > returns 200 with text when file present
+{"event":"ai_transcription_complete","route":"POST /api/v1/ai/transcribe","tenant_id":"t1","request_id":"7c9fa8eb-7bee-43ac-81b5-a655d61bc37a","duration_ms":1,"audio_bytes":40,"duration_seconds":2.5,"ts":"2026-11-24T21:54:03.223Z"}
+
+stdout | app/api/v1/ai/transcribe/route.test.ts > POST /api/v1/ai/transcribe > indexes caption segments when project_id and media_id scope match
+{"event":"ai_transcription_complete","route":"POST /api/v1/ai/transcribe","tenant_id":"t1","request_id":"a891d6e1-9531-4462-9fc8-00b4db75db7b","duration_ms":0,"audio_bytes":40,"duration_seconds":2.5,"ts":"2026-11-24T21:54:03.225Z"}
+
+stdout | app/api/v1/ai/transcribe/route.test.ts > POST /api/v1/ai/transcribe > infers WebM when file type is empty
+{"event":"ai_transcription_complete","route":"POST /api/v1/ai/transcribe","tenant_id":"t1","request_id":"242d5ed6-32c5-4e8e-9127-ae046b178c33","duration_ms":0,"audio_bytes":40,"duration_seconds":2.5,"ts":"2026-11-24T21:54:03.225Z"}
+
+ ✓ app/api/v1/ai/transcribe/route.test.ts (8 tests) 10ms
+ ✓ components/projects/reports-export-ui.test.ts (7 tests) 10ms
+ ✓ app/api/v1/ai/analyze-video-daily/route.auth.test.ts (20 tests) 10ms
+ ✓ app/api/v1/auth/telegram/route.test.ts (6 tests) 10ms
+ ✓ lib/security-headers.test.ts (9 tests) 10ms
+ ✓ app/[locale]/(dashboard)/dashboard/notifications/notifications-workspace.utils.test.ts (5 tests) 10ms
+ ✓ lib/domain/field-daily-log/field-daily-log-form.test.ts (5 tests) 10ms
+ ✓ lib/platform/ai/providers/provider.gemini.test.ts (6 tests) 11ms
+ ✓ lib/public/post-public-contact-lead.test.ts (2 tests) 10ms
+ ✓ app/api/v1/share/proof/[token]/media/[mediaId]/route.test.ts (3 tests) 10ms
+ ✓ lib/growth/track-event.test.ts (4 tests) 12ms
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > returns 200 with stream and SSE headers when body valid
+{"event":"ai_copilot_stream_started","stream_phase":"stream_started","request_id":"9608f277-ddcb-4204-af7a-25fa21247d00","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"app_env":"test","ts":"2026-11-24T21:54:04.134Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > returns 200 with stream and SSE headers when body valid
+{"event":"ai_copilot_stream_first_token","stream_phase":"first_token","request_id":"9608f277-ddcb-4204-af7a-25fa21247d00","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":1,"app_env":"test","ts":"2026-11-24T21:54:04.134Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > returns 200 with stream and SSE headers when body valid
+{"event":"ai_copilot_stream_error","request_id":"9608f277-ddcb-4204-af7a-25fa21247d00","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":1,"error_kind":"persistence_failure","retryable":false,"app_env":"test","ts":"2026-11-24T21:54:04.134Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > returns 200 with stream and SSE headers when body valid
+{"event":"ai_copilot_stream_finished","stream_phase":"stream_completed","request_id":"9608f277-ddcb-4204-af7a-25fa21247d00","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":1,"app_env":"test","ts":"2026-11-24T21:54:04.134Z"}
+{"event":"ai_copilot_stream_complete","request_id":"9608f277-ddcb-4204-af7a-25fa21247d00","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","user_id":"u1","latency_ms":1,"output_type":"copilot","streaming":true,"context_trim_applied":false,"memory_used":0,"memory_chunks_count":0,"summary_used":0,"provider":"openai","app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > falls back to deterministic done event when provider returns non-OK
+{"event":"ai_copilot_stream_started","stream_phase":"stream_started","request_id":"aeb3f395-17e0-411e-96aa-172a9f9b245f","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > falls back to deterministic done event when provider returns non-OK
+{"event":"ai_copilot_stream_failed","stream_phase":"stream_error","request_id":"aeb3f395-17e0-411e-96aa-172a9f9b245f","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"error_kind":"provider_unavailable","retryable":true,"app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+{"event":"ai_copilot_stream_error","request_id":"aeb3f395-17e0-411e-96aa-172a9f9b245f","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"error_kind":"provider_unavailable","retryable":true,"app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+{"event":"ai_copilot_stream_error","request_id":"aeb3f395-17e0-411e-96aa-172a9f9b245f","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"error_kind":"persistence_failure","retryable":false,"app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > falls back to deterministic done event when provider returns non-OK
+{"event":"ai_copilot_stream_finished","stream_phase":"stream_completed","request_id":"aeb3f395-17e0-411e-96aa-172a9f9b245f","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+{"event":"ai_copilot_stream_complete","request_id":"aeb3f395-17e0-411e-96aa-172a9f9b245f","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","user_id":"u1","latency_ms":0,"output_type":"copilot","streaming":true,"context_trim_applied":false,"memory_used":0,"memory_chunks_count":0,"summary_used":0,"provider":"none","error_kind":"fallback_invoked","retryable":false,"app_env":"test","ts":"2026-11-24T21:54:04.135Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > injects locale hint into system prompt when locale is provided
+{"event":"ai_copilot_stream_started","stream_phase":"stream_started","request_id":"746a8732-90b1-495e-b48b-76b2ce4bce5b","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"app_env":"test","ts":"2026-11-24T21:54:04.136Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > injects locale hint into system prompt when locale is provided
+{"event":"ai_copilot_stream_failed","stream_phase":"stream_error","request_id":"746a8732-90b1-495e-b48b-76b2ce4bce5b","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"error_kind":"provider_unavailable","retryable":true,"app_env":"test","ts":"2026-11-24T21:54:04.136Z"}
+{"event":"ai_copilot_stream_error","request_id":"746a8732-90b1-495e-b48b-76b2ce4bce5b","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"error_kind":"provider_unavailable","retryable":true,"app_env":"test","ts":"2026-11-24T21:54:04.136Z"}
+{"event":"ai_copilot_stream_error","request_id":"746a8732-90b1-495e-b48b-76b2ce4bce5b","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"error_kind":"persistence_failure","retryable":false,"app_env":"test","ts":"2026-11-24T21:54:04.136Z"}
+
+stdout | app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts > POST /api/v1/projects/:id/copilot/chat/stream > injects locale hint into system prompt when locale is provided
+{"event":"ai_copilot_stream_finished","stream_phase":"stream_completed","request_id":"746a8732-90b1-495e-b48b-76b2ce4bce5b","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","latency_ms":0,"app_env":"test","ts":"2026-11-24T21:54:04.136Z"}
+{"event":"ai_copilot_stream_complete","request_id":"746a8732-90b1-495e-b48b-76b2ce4bce5b","route":"POST /api/v1/projects/:id/copilot/chat/stream","tenant_id":"t1","project_id":"p1","user_id":"u1","latency_ms":0,"output_type":"copilot","streaming":true,"context_trim_applied":false,"memory_used":0,"memory_chunks_count":0,"summary_used":0,"provider":"none","error_kind":"fallback_invoked","retryable":false,"app_env":"test","ts":"2026-11-24T21:54:04.136Z"}
+
+ ✓ app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts (9 tests) 9ms
+ ✓ lib/observability/trace.test.ts (4 tests) 9ms
+ ✓ app/[locale]/(dashboard)/dashboard/ai/ai-requests-workspace.utils.test.ts (6 tests) 9ms
+ ✓ lib/domain/costs/cost.repository.test.ts (8 tests) 9ms
+ ✓ lib/platform/billing/subscription-gate.test.ts (4 tests) 8ms
+ ✓ lib/public/pricing-catalog.test.ts (10 tests) 9ms
+ ✓ lib/tenant/tenant.context.test.ts (3 tests) 9ms
+ ✓ app/[locale]/(dashboard)/dashboard/projects/[id]/gantt-layout.utils.test.ts (3 tests) 9ms
+ ✓ lib/domain/digest/daily-digest.service.test.ts (3 tests) 9ms
+stdout | app/api/v1/ai/analyze-image/route.test.ts > POST /api/v1/ai/analyze-image > returns 400 for http URL in production
+{"event":"ai_vision_analyze_error","request_id":"067cf280-c3ad-4500-ad1d-d8fcd4f728b1","route":"POST /api/v1/ai/analyze-image","latency_ms":0,"error_kind":"validation_failure","http_status":400,"app_env":"production","ts":"2026-11-24T21:54:04.800Z"}
+{"event":"request_finished","request_id":"7fb11fe2-4111-4830-b713-0971e2fbc475","route":"POST /api/v1/ai/analyze-image","method":"POST","status":400,"duration_ms":1,"ts":"2026-11-24T21:54:04.801Z"}
+
+stdout | app/api/v1/ai/analyze-image/route.test.ts > POST /api/v1/ai/analyze-image > does not set legacy Deprecation headers on v1 route
+{"event":"ai_vision_analyze_error","request_id":"469a72f5-6aed-4be4-a8d5-df9d7f5483fe","route":"POST /api/v1/ai/analyze-image","latency_ms":0,"error_kind":"provider_unavailable","http_status":503,"app_env":"production","ts":"2026-11-24T21:54:04.802Z"}
+{"event":"request_finished","request_id":"65192405-235d-4ecb-88c3-d8efc9f2345d","route":"POST /api/v1/ai/analyze-image","method":"POST","status":503,"duration_ms":1,"ts":"2026-11-24T21:54:04.802Z"}
+
+ ✓ app/api/v1/ai/analyze-image/route.test.ts (11 tests) 9ms
+stdout | app/api/ai/analyze-image/route.test.ts > POST /api/ai/analyze-image > returns 400 for http URL in production
+{"event":"ai_vision_analyze_error","request_id":"7423b281-b4c7-4e2a-b8c3-9fa4686de8da","route":"POST /api/v1/ai/analyze-image","latency_ms":0,"error_kind":"validation_failure","http_status":400,"app_env":"production","ts":"2026-11-24T21:54:04.916Z"}
+{"event":"request_finished","request_id":"9ae1c627-99e1-4bd3-962b-8a219298e061","route":"POST /api/v1/ai/analyze-image","method":"POST","status":400,"duration_ms":1,"ts":"2026-11-24T21:54:04.917Z"}
+
+stdout | app/api/ai/analyze-image/route.test.ts > POST /api/ai/analyze-image > includes Deprecation and Sunset headers (legacy route)
+{"event":"ai_vision_analyze_error","request_id":"24ad83b5-1706-4806-baaf-d647fa7dc1a7","route":"POST /api/v1/ai/analyze-image","latency_ms":0,"error_kind":"provider_unavailable","http_status":503,"app_env":"production","ts":"2026-11-24T21:54:04.918Z"}
+{"event":"request_finished","request_id":"b3e2e3b9-d127-4f03-9ea8-ee6c6bbc9624","route":"POST /api/v1/ai/analyze-image","method":"POST","status":503,"duration_ms":0,"ts":"2026-11-24T21:54:04.918Z"}
+
+ ✓ app/api/ai/analyze-image/route.test.ts (10 tests) 8ms
+ ✓ lib/copilot/copilot.openai-provider.test.ts (2 tests) 9ms
+ ✓ app/api/v1/ai/analyze-video-daily/route.test.ts (9 tests) 8ms
+ ✓ lib/platform/ai/resolve-ai-media-image.test.ts (33 tests) 8ms
+ ✓ lib/engine/client.test.ts (4 tests) 8ms
+ ✓ lib/domain/costs/cost-signals.test.ts (4 tests) 8ms
+ ✓ lib/api/deprecation-headers.test.ts (2 tests) 8ms
+ ✓ lib/domain/projects/project-summary.repository.test.ts (9 tests) 7ms
+ ✓ app/api/analysis/process/route.auth.test.ts (30 tests) 8ms
+ ✓ lib/domain/visual-evidence/report-publication.service.test.ts (30 tests) 7ms
+ ✓ app/api/v1/sync/ack/route.test.ts (7 tests) 9ms
+ ✓ lib/platform/jobs/job.service.test.ts (20 tests) 10ms
+ ✓ lib/domain/customer-intake/customer-intake.service.test.ts (33 tests) 10ms
+ ✓ lib/domain/approvals/pending-approvals.service.test.ts (6 tests) 8ms
+ ✓ middleware.security-headers.test.ts (9 tests) 7ms
+ ✓ lib/domain/quantities/stage2a-regressions.test.ts (17 tests) 7ms
+ ✓ app/api/v1/tenant/revoke/route.test.ts (10 tests) 7ms
+ ✓ lib/domain/quantities/commercial.test.ts (33 tests) 8ms
+ ✓ middleware.host-routing.test.ts (9 tests) 7ms
+ ✓ app/api/v1/projects/[id]/documents/[documentId]/upload/route.test.ts (4 tests) 8ms
+ ✓ lib/domain/issues/issue.service.test.ts (12 tests) 5ms
+ ✓ app/api/v1/projects/[id]/documents/decisions/route.test.ts (9 tests) 7ms
+ ✓ app/api/v1/billing/billing-routes.test.ts (3 tests) 7ms
+ ✓ app/api/contact/route.test.ts (7 tests) 9ms
+ ✓ app/api/v1/sync/changes/route.test.ts (5 tests) 8ms
+ ✓ app/api/v1/contact/route.test.ts (6 tests) 8ms
+ ✓ lib/domain/portal/published-evidence.service.test.ts (31 tests) 7ms
+ ✓ app/api/v1/auth/methods/route.test.ts (7 tests) 7ms
+ ✓ app/api/v1/reports/export/route.test.ts (7 tests) 7ms
+ ✓ app/api/v1/media/upload-sessions/route.test.ts (7 tests) 6ms
+ ✓ lib/domain/notifications/manager-notifications.repository.test.ts (13 tests) 6ms
+ ✓ app/api/v1/reports/[id]/publication/route.test.ts (5 tests) 6ms
+ ✓ app/api/v1/portal/intake/route.test.ts (8 tests) 6ms
+ ✓ app/api/v1/worker/issues/[issueId]/route.test.ts (6 tests) 6ms
+ ✓ app/api/v1/ops/metrics/route.test.ts (5 tests) 6ms
+ ✓ app/api/v1/stakeholder-invites/accept/route.test.ts (8 tests) 6ms
+ ✓ lib/platform/jobs/job.handlers/ai-analyze-media.test.ts (11 tests) 6ms
+ ✓ app/api/v1/projects/[id]/documents/route.test.ts (5 tests) 5ms
+ ✓ lib/runtime/request-bound-project-uploads-route.test.ts (4 tests) 5ms
+ ✓ lib/api/lite-idempotency.test.ts (10 tests) 5ms
+ ✓ app/api/v1/ai/analyze-image/route.fallback.test.ts (3 tests) 5ms
+ ✓ lib/platform/ai/resolve-ai-media-image.report-scope.test.ts (11 tests) 6ms
+ ✓ lib/platform/billing-readiness/billing-event-processor.service.test.ts (16 tests) 6ms
+ ✓ app/api/v1/worker/report/submit/route.test.ts (3 tests) 5ms
+ ✓ app/api/v1/tenant/accept-invite/route.test.ts (1 test) 3ms
+ ✓ lib/domain/portal/published-evidence.route.test.ts (5 tests) 5ms
+ ✓ app/api/v1/admin/jobs/cron-tick/route.test.ts (5 tests) 5ms
+ ✓ app/api/v1/ai/analysis/[id]/review/route.test.ts (3 tests) 5ms
+ ✓ lib/platform/push/providers/google-oauth.test.ts (7 tests) 5ms
+ ✓ lib/domain/proof-pack/proof-media.service.test.ts (18 tests) 5ms
+ ✓ app/api/v1/projects/[id]/upload/route.test.ts (5 tests) 4ms
+ ✓ lib/domain/quantities/quantity-commercial-bind.test.ts (7 tests) 5ms
+ ✓ lib/domain/construction-graph/construction-graph.repository.test.ts (5 tests) 5ms
+ ✓ app/api/v1/sync/bootstrap/route.test.ts (3 tests) 5ms
+ ✓ app/api/auth/forgot-password/route.test.ts (3 tests) 5ms
+ ✓ lib/platform/ai/verify-project-tenant.test.ts (4 tests) 3ms
+ ✓ lib/domain/customer-intake/customer-intake-rls.hardening.test.ts (24 tests) 5ms
+ ✓ app/api/v1/ai/risk-decisions/route.test.ts (3 tests) 5ms
+ ✓ app/api/v1/devices/unregister/route.test.ts (4 tests) 5ms
+ ✓ app/api/v1/admin/jobs/schedule-reconcile/route.test.ts (4 tests) 4ms
+ ✓ app/api/v1/integrations/telegram/webhook/route.test.ts (3 tests) 4ms
+ ✓ lib/domain/customer-estimates/customer-estimates.service.test.ts (7 tests) 5ms
+ ✓ app/api/v1/devices/register/route.test.ts (2 tests) 4ms
+stderr | app/api/v1/share/proof/[token]/route.test.ts > GET /api/v1/share/proof/:token > returns 500 when payload contains forbidden internal finance keys
+Blocked customer-finance leak in /api/v1/share/proof/:token: project.margin
+
+ ✓ app/api/v1/share/proof/[token]/route.test.ts (4 tests) 4ms
+ ✓ app/api/v1/projects/[id]/copilot/chat/threads/[threadId]/route.test.ts (3 tests) 4ms
+ ✓ lib/tenant/stakeholder-dashboard-paths.test.ts (13 tests) 4ms
+ ✓ components/onboarding/plan-fit/continue-workspace-setup.view-model.test.ts (37 tests) 4ms
+ ✓ app/api/v1/projects/[id]/costs/[costItemId]/route.test.ts (4 tests) 5ms
+ ✓ lib/copilot/chat-history.service.test.ts (4 tests) 4ms
+ ✓ app/api/v1/tasks/[id]/messages/route.test.ts (4 tests) 4ms
+ ✓ lib/domain/quantities/quantity-storage.test.ts (4 tests) 4ms
+ ✓ app/api/auth/callback/route.test.ts (5 tests) 4ms
+ ✓ lib/platform/billing-readiness/billing-sandbox.service.test.ts (7 tests) 4ms
+ ✓ lib/domain/reports/report.service.submit-audit.test.ts (10 tests) 5ms
+ ✓ app/api/v1/media/upload-sessions/[id]/finalize/route.test.ts (3 tests) 4ms
+ ✓ lib/platform/billing-readiness/billing-readiness.repository.test.ts (12 tests) 4ms
+ ✓ lib/domain/stakeholders/stakeholders.service.test.ts (7 tests) 4ms
+ ✓ app/api/v1/ai/requests/route.test.ts (2 tests) 4ms
+ ✓ lib/domain/client-requests/client-requests.service.test.ts (8 tests) 4ms
+ ✓ app/api/v1/worker/day/start/route.test.ts (3 tests) 4ms
+ ✓ app/api/v1/admin/ops/diagnostics/route.test.ts (3 tests) 4ms
+ ✓ app/api/v1/projects/[id]/client-portal/route.test.ts (4 tests) 4ms
+ ✓ app/api/v1/portal/intake/[id]/route.test.ts (4 tests) 4ms
+ ✓ lib/platform/jobs/job.handlers/push-send.test.ts (7 tests) 4ms
+ ✓ lib/platform/billing-readiness/billing-readiness.service.test.ts (14 tests) 4ms
+ ✓ lib/platform/plan-fit/upgrade-prompt-presentation.test.ts (21 tests) 4ms
+ ✓ lib/domain/upload-session/upload-session.service.test.ts (9 tests) 4ms
+ ✓ lib/domain/costs/cost.service.test.ts (10 tests) 3ms
+ ✓ lib/domain/reports/report.service.task-link.test.ts (14 tests) 4ms
+ ✓ app/api/v1/projects/[id]/client-view/route.test.ts (4 tests) 4ms
+ ✓ lib/domain/change-orders/change-orders.service.test.ts (7 tests) 4ms
+ ✓ lib/platform/ai/providers/provider.router.test.ts (8 tests) 3ms
+ ✓ app/api/v1/projects/[id]/stakeholder-activity/route.test.ts (3 tests) 4ms
+ ✓ lib/account/account-workspace.service.test.ts (7 tests) 4ms
+ ✓ lib/platform-admin/roma-engineering-intelligence.test.ts (13 tests) 5ms
+ ✓ lib/domain/projects/project-access.test.ts (15 tests) 4ms
+ ✓ app/api/v1/projects/[id]/decision-requests/route.test.ts (2 tests) 4ms
+ ✓ components/canon/portal-published-evidence.test.ts (10 tests) 4ms
+ ✓ app/api/v1/projects/[id]/client-requests/route.test.ts (2 tests) 4ms
+ ✓ lib/platform/plan-fit/plan-surface.test.ts (26 tests) 4ms
+ ✓ app/api/v1/projects/[id]/copilot/chat/threads/route.test.ts (3 tests) 4ms
+ ✓ app/api/v1/projects/[id]/graph/route.test.ts (4 tests) 4ms
+ ✓ app/api/v1/tenant/invite/route.test.ts (2 tests) 4ms
+ ✓ lib/platform/ai/ai.service.test.ts (6 tests) 4ms
+ ✓ lib/api/cron-auth.test.ts (7 tests) 4ms
+ ✓ lib/api/require-platform-admin-legacy-route.test.ts (6 tests) 4ms
+ ✓ lib/observability/audit.service.test.ts (4 tests) 4ms
+ ✓ app/api/v1/portal/intake/[id]/submit/route.test.ts (4 tests) 5ms
+ ✓ lib/platform/billing-readiness/billing-pilot-execution.service.test.ts (12 tests) 4ms
+ ✓ app/api/v1/platform/health/route.test.ts (2 tests) 4ms
+ ✓ lib/domain/vision-jobs/create-vision-job.service.test.ts (8 tests) 4ms
+ ✓ lib/domain/materials/draft-comparison.engine.test.ts (8 tests) 4ms
+ ✓ lib/domain/tasks/task.service.test.ts (18 tests) 4ms
+ ✓ app/api/v1/projects/[id]/copilot/route.test.ts (3 tests) 3ms
+ ✓ app/api/auth/reset-password/route.test.ts (3 tests) 4ms
+ ✓ app/api/v1/worker/issues/route.evidence.test.ts (2 tests) 4ms
+ ✓ lib/domain/upload-session/upload-session.repository.test.ts (5 tests) 3ms
+ ✓ lib/domain/field-daily-log/field-daily-log.service.test.ts (10 tests) 3ms
+ ✓ lib/observability/ai-telemetry.test.ts (1 test) 4ms
+ ✓ app/api/v1/projects/[id]/traceability/route.test.ts (3 tests) 4ms
+ ✓ lib/ops/ops-metrics.repository.test.ts (5 tests) 4ms
+ ✓ app/api/v1/portal/intake/[id]/withdraw/route.test.ts (4 tests) 4ms
+ ✓ app/api/health/route.test.ts (3 tests) 4ms
+ ✓ lib/domain/defects/defects.service.test.ts (5 tests) 4ms
+ ✓ app/api/v1/projects/[id]/jobs/route.test.ts (3 tests) 3ms
+ ✓ app/api/v1/worker/route.test.ts (3 tests) 4ms
+ ✓ lib/platform/ai/providers/provider.anthropic.test.ts (5 tests) 4ms
+ ✓ lib/domain/ai-analysis/review.service.test.ts (5 tests) 3ms
+ ✓ lib/supabase/middleware.test.ts (4 tests) 4ms
+ ✓ lib/platform/billing-readiness/billing-adapter-stripe.test.ts (10 tests) 3ms
+ ✓ app/api/v1/projects/[id]/service-requests/route.test.ts (3 tests) 4ms
+ ✓ lib/sync/change-log.repository.test.ts (6 tests) 4ms
+ ✓ app/api/v1/owner/health/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/portal/projects/[id]/decisions/[requestId]/respond/route.test.ts (1 test) 4ms
+ ✓ lib/platform/plan-fit/upgrade-prompt.test.ts (15 tests) 3ms
+ ✓ app/api/v1/approvals/pending/route.test.ts (2 tests) 4ms
+ ✓ app/api/v1/devices/route.test.ts (2 tests) 4ms
+ ✓ lib/domain/construction-graph/construction-graph.persist.test.ts (4 tests) 3ms
+ ✓ lib/domain/projects/project-status.service.test.ts (15 tests) 4ms
+ ✓ app/api/v1/worker/tasks/today/route.test.ts (3 tests) 3ms
+ ✓ app/api/v1/health/route.test.ts (1 test) 3ms
+ ✓ lib/platform-admin/roma-quality-dashboard.service.test.ts (4 tests) 3ms
+ ✓ lib/platform/billing-readiness/stripe-webhook-verification.test.ts (5 tests) 3ms
+ ✓ app/api/v1/health/auth/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/notifications/[id]/opened/route.test.ts (2 tests) 4ms
+ ✓ app/api/v1/workload/route.test.ts (4 tests) 4ms
+ ✓ lib/platform/billing-readiness/stripe-webhook-ingress.service.test.ts (9 tests) 3ms
+ ✓ app/api/v1/worker/issues/route.test.ts (3 tests) 3ms
+ ✓ app/api/v1/notifications/route.test.ts (1 test) 3ms
+ ✓ app/api/v1/config/route.test.ts (2 tests) 3ms
+ ✓ lib/domain/projects/project-timeline.repository.test.ts (7 tests) 3ms
+ ✓ app/api/v1/tenant/profile/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/projects/[id]/defects/route.test.ts (3 tests) 3ms
+ ✓ lib/domain/upload-session/upload-session.finalize.test.ts (10 tests) 3ms
+ ✓ lib/ai-brain/services/recommendation-engine.service.test.ts (7 tests) 3ms
+ ✓ lib/ai-brain/services/missing-evidence.service.test.ts (5 tests) 4ms
+ ✓ lib/api/require-admin.test.ts (6 tests) 5ms
+ ✓ lib/ai-brain/phase-c/storage/memory.repository.test.ts (3 tests) 3ms
+ ✓ app/api/v1/admin/leads/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/tenant/members/route.test.ts (1 test) 4ms
+ ✓ app/api/v1/jobs/process/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/portal/projects/route.test.ts (2 tests) 3ms
+ ✓ lib/domain/materials/material-requirement-draft.test.ts (6 tests) 3ms
+ ✓ app/api/v1/governance/cases/route.test.ts (2 tests) 3ms
+ ✓ app/[locale]/(dashboard)/dashboard/alerts/alerts-workspace.utils.test.ts (3 tests) 2ms
+ ✓ lib/ai-brain/services/cost-signals.service.test.ts (5 tests) 3ms
+ ✓ lib/domain/preproject-extraction/preproject-extraction.service.test.ts (4 tests) 3ms
+ ✓ lib/domain/tasks/task.repository.test.ts (3 tests) 3ms
+ ✓ lib/domain/recurring-operations/recurring-operations.cadence.test.ts (3 tests) 3ms
+ ✓ app/api/v1/worker/tasks/[taskId]/route.test.ts (2 tests) 3ms
+ ✓ lib/ai/normalize.test.ts (11 tests) 3ms
+ ✓ lib/api/lite-allow-list.test.ts (21 tests) 3ms
+ ✓ lib/platform/plan-fit/orchestration/setup-readiness.evaluator.test.ts (10 tests) 3ms
+ ✓ lib/domain/issues/issue-evidence.security.test.ts (6 tests) 3ms
+ ✓ app/api/v1/webhooks/incoming/route.test.ts (2 tests) 3ms
+ ✓ app/robots.test.ts (2 tests) 3ms
+ ✓ lib/sync/sync-conflict.test.ts (3 tests) 3ms
+ ✓ lib/api/engine.test.ts (5 tests) 3ms
+ ✓ lib/platform/billing-readiness/billing-readiness.contracts.test.ts (8 tests) 4ms
+ ✓ lib/platform/billing-readiness/billing-provider-config.test.ts (21 tests) 3ms
+ ✓ lib/platform-admin/deprecation.test.ts (3 tests) 3ms
+ ✓ app/[locale]/(dashboard)/dashboard/projects/[id]/schedule-health.test.ts (5 tests) 3ms
+ ✓ lib/platform/ai-governance/policy.service.test.ts (7 tests) 3ms
+ ✓ lib/plan-fit/api-client.test.ts (4 tests) 4ms
+ ✓ lib/platform-admin/legacy-owner-api.test.ts (1 test) 3ms
+ ✓ lib/platform/plan-fit/add-on-rules.test.ts (12 tests) 3ms
+stderr | app/api/v1/portal/projects/[id]/route.test.ts > GET /api/v1/portal/projects/:id > returns 500 when payload contains forbidden internal finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1: project.budget_pressure
+
+ ✓ app/api/v1/portal/projects/[id]/route.test.ts (3 tests) 3ms
+ ✓ lib/domain/proof-pack/proof-pack.service.test.ts (3 tests) 3ms
+ ✓ lib/platform/ai/media-path-tenant-guard.test.ts (10 tests) 3ms
+ ✓ lib/ai-brain/phase-d/eval/grader.test.ts (5 tests) 3ms
+ ✓ lib/platform/billing-readiness/billing-pilot-cohort.repository.test.ts (5 tests) 3ms
+stderr | app/api/v1/portal/projects/[id]/progress/route.test.ts > GET /api/v1/portal/projects/:id/progress > returns 500 when payload contains forbidden finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1/progress: progress.planned_amount
+
+ ✓ app/api/v1/portal/projects/[id]/progress/route.test.ts (2 tests) 3ms
+ ✓ lib/domain/media-captions/media-caption-index.test.ts (5 tests) 3ms
+ ✓ app/api/v1/projects/[id]/commercial-items/route.test.ts (2 tests) 3ms
+ ✓ lib/domain/vision-jobs/vision-job-lifecycle.test.ts (13 tests) 3ms
+ ✓ lib/ai-brain/phase-d/eval/eval-runner.service.test.ts (3 tests) 3ms
+ ✓ lib/platform/plan-fit/orchestration/orchestration.service.test.ts (9 tests) 3ms
+ ✓ lib/seo/public-canonical.test.ts (9 tests) 3ms
+ ✓ lib/entry/entry-routing.test.ts (18 tests) 3ms
+ ✓ lib/ai-brain/phase-a/truth-snapshot/project-truth-snapshot.assembler.test.ts (4 tests) 4ms
+ ✓ lib/platform/ai/providers/circuit-breaker.test.ts (4 tests) 3ms
+ ✓ app/api/v1/projects/[id]/jobs/[jobId]/route.test.ts (2 tests) 3ms
+ ✓ lib/platform/billing-readiness/billing-pilot-resolution.service.test.ts (10 tests) 3ms
+ ✓ lib/domain/documents/document-event.repository.test.ts (4 tests) 3ms
+ ✓ components/ai/AISignalLine.test.ts (11 tests) 4ms
+ ✓ app/api/v1/system/health/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/projects/[id]/poll-status/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/projects/[id]/costs/route.test.ts (2 tests) 3ms
+ ✓ lib/platform/billing-readiness/billing-adapter.test.ts (12 tests) 3ms
+ ✓ app/api/v1/tasks/[id]/messages/[messageId]/route.test.ts (2 tests) 3ms
+ ✓ lib/ai-brain/phase-c/memory/memory.service.test.ts (7 tests) 3ms
+ ✓ lib/platform/plan-fit/capability.test.ts (20 tests) 3ms
+ ✓ lib/platform/jobs/job.handlers/persist-report-media-analysis.test.ts (4 tests) 3ms
+ ✓ app/api/v1/dashboard/manager-actions/route.test.ts (2 tests) 4ms
+ ✓ lib/dashboard/priority-actions.test.ts (5 tests) 3ms
+ ✓ lib/copilot/context-budget.test.ts (12 tests) 3ms
+ ✓ lib/platform/plan-fit/runtime-capability.service.test.ts (5 tests) 3ms
+ ✓ lib/ai-brain/phase-d/feedback/feedback.service.test.ts (10 tests) 3ms
+ ✓ lib/platform/plan-fit/runtime-plan-context.service.test.ts (7 tests) 2ms
+ ✓ app/api/v1/me/route.test.ts (1 test) 3ms
+ ✓ lib/domain/worker-day/worker-day.service.test.ts (2 tests) 3ms
+ ✓ app/api/health/auth/route.test.ts (2 tests) 3ms
+ ✓ lib/platform/push/providers/provider.fcm_v1.test.ts (5 tests) 3ms
+ ✓ lib/dashboard/operating-center-panel-state.test.ts (7 tests) 3ms
+ ✓ app/api/v1/notifications/read-all/route.test.ts (2 tests) 3ms
+ ✓ lib/sync/sync.service.test.ts (2 tests) 4ms
+stderr | app/api/v1/portal/projects/[id]/proof/route.test.ts > GET /api/v1/portal/projects/:id/proof > returns 500 when payload contains forbidden finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1/proof: budget_pressure
+
+ ✓ app/api/v1/portal/projects/[id]/proof/route.test.ts (2 tests) 3ms
+ ✓ app/api/v1/worker/documents/route.test.ts (2 tests) 3ms
+stderr | app/api/v1/portal/projects/[id]/documents/route.test.ts > GET /api/v1/portal/projects/:id/documents > returns 500 when payload contains forbidden finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1/documents: project.margin
+
+ ✓ app/api/v1/portal/projects/[id]/documents/route.test.ts (2 tests) 3ms
+ ✓ lib/domain/preproject-extraction/heuristic-extractor.test.ts (3 tests) 3ms
+ ✓ lib/domain/client-requests/client-requests.policy.test.ts (5 tests) 2ms
+stderr | app/api/v1/portal/projects/[id]/change-orders/route.test.ts > GET /api/v1/portal/projects/:id/change-orders > returns 500 when payload contains forbidden finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1/change-orders: data.0.internal_cost_item_id
+
+ ✓ app/api/v1/portal/projects/[id]/change-orders/route.test.ts (2 tests) 3ms
+ ✓ lib/domain/task-messages/task-messages.service.test.ts (7 tests) 2ms
+stderr | app/api/v1/portal/projects/[id]/decisions/route.test.ts > GET /api/v1/portal/projects/:id/decisions > returns 500 when payload contains forbidden finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1/decisions: client_requests.0.budget_pressure
+
+ ✓ app/api/v1/portal/projects/[id]/decisions/route.test.ts (2 tests) 3ms
+ ✓ lib/tenant/client-profile.test.ts (2 tests) 1ms
+ ✓ app/api/v1/projects/[id]/estimate/route.test.ts (2 tests) 3ms
+ ✓ components/dashboard-nav.utils.test.ts (6 tests) 3ms
+ ✓ lib/security-headers-ownership.test.ts (5 tests) 3ms
+stderr | app/api/v1/portal/projects/[id]/estimates/route.test.ts > GET /api/v1/portal/projects/:id/estimates > returns 500 when payload contains forbidden finance keys
+Blocked customer-finance leak in /api/v1/portal/projects/p1/estimates: data.0.margin
+
+ ✓ app/api/v1/portal/projects/[id]/estimates/route.test.ts (2 tests) 3ms
+ ✓ lib/platform/plan-fit/entitlements-config.test.ts (9 tests) 3ms
+ ✓ lib/platform/plan-fit/workspace-plan-context.test.ts (7 tests) 2ms
+ ✓ cabinet-dashboard-routing.policy.test.ts (9 tests) 2ms
+ ✓ lib/ai-brain/services/milestone-pressure.service.test.ts (2 tests) 3ms
+ ✓ lib/tenant/idempotency-ai-chat-plan-directory-rls.hardening.test.ts (7 tests) 2ms
+ ✓ lib/auth/multi-provider.test.ts (4 tests) 2ms
+ ✓ lib/platform/jobs/job.handlers/upload-reconcile.test.ts (2 tests) 3ms
+ ✓ lib/tenant/client-requests-costs-estimate-rls.hardening.test.ts (5 tests) 2ms
+ ✓ lib/copilot/copilot-stream-memory.test.ts (3 tests) 2ms
+ ✓ lib/domain/milestones/milestone.schedule.test.ts (6 tests) 3ms
+ ✓ lib/domain/aftercare/aftercare.service.test.ts (4 tests) 4ms
+ ✓ app/api/v1/portfolio/control/route.test.ts (1 test) 3ms
+ ✓ lib/tenant/tenant.policy.test.ts (7 tests) 2ms
+ ✓ lib/ops/incident-hints.test.ts (6 tests) 2ms
+ ✓ lib/domain/tender-reconciliation/finding-ledger.service.test.ts (5 tests) 3ms
+ ✓ lib/ai-brain/services/project-health-v2.service.test.ts (4 tests) 3ms
+ ✓ lib/domain/notifications/report-review-recipients.test.ts (6 tests) 2ms
+ ✓ lib/domain/projects/project-attention.repository.test.ts (4 tests) 2ms
+ ✓ lib/platform/ai/credentials/resolve-ai-provider-credentials.test.ts (3 tests) 2ms
+ ✓ lib/tenant/tenant-writer-rls.hardening.test.ts (4 tests) 2ms
+ ✓ lib/ai-brain/phase-b/planner/action-planner.service.test.ts (6 tests) 2ms
+ ✓ lib/tenant/migration-final-project-write-ordering.hardening.test.ts (5 tests) 2ms
+ ✓ app/[locale]/smoke/page.test.ts (4 tests) 2ms
+ ✓ lib/domain/project-handover/handover-pack.service.test.ts (2 tests) 4ms
+ ✓ app/api/v1/platform/overview/route.test.ts (2 tests) 3ms
+ ✓ lib/tenant/membership-privilege-escalation.rls.test.ts (8 tests) 2ms
+ ✓ lib/copilot/chat-history.transport.test.ts (5 tests) 2ms
+ ✓ lib/platform-admin/host-routing.test.ts (7 tests) 2ms
+ ✓ lib/intelligence/resource-links.test.ts (14 tests) 2ms
+ ✓ lib/platform/push/push.service.test.ts (3 tests) 2ms
+ ✓ lib/domain/client-portal/client-portal.service.test.ts (4 tests) 2ms
+ ✓ lib/domain/stakeholders/stakeholders.project-projection.test.ts (6 tests) 2ms
+ ✓ lib/platform/plan-fit/recommend.test.ts (7 tests) 2ms
+ ✓ app/api/v1/notifications/[id]/read/route.test.ts (1 test) 2ms
+ ✓ lib/observability/intelligence-diagnostics.test.ts (1 test) 2ms
+ ✓ lib/platform/plan-fit/resolve.test.ts (5 tests) 2ms
+ ✓ lib/domain/preproject-extraction/intake-draft-binding.test.ts (3 tests) 2ms
+ ✓ lib/platform/billing-readiness/billing-readiness.types.test.ts (5 tests) 2ms
+ ✓ lib/sre/slo.service.test.ts (2 tests) 2ms
+ ✓ lib/ai-brain/services/executive-summary-v2.service.test.ts (2 tests) 2ms
+ ✓ lib/domain/documents/document.policy.test.ts (8 tests) 2ms
+ ✓ lib/platform-admin/roma-quality-dashboard.page.test.ts (5 tests) 2ms
+ ✓ lib/ai/types.test.ts (9 tests) 2ms
+ ✓ lib/domain/reports/report-approval.repository.test.ts (3 tests) 2ms
+ ✓ lib/domain/task-assignments/task-assignments.repository.test.ts (3 tests) 2ms
+ ✓ lib/domain/media/private-media-display.test.ts (3 tests) 2ms
+ ✓ app/api/v1/owner/overview/route.test.ts (1 test) 2ms
+ ✓ app/api/v1/platform/diagnostics/route.test.ts (1 test) 2ms
+ ✓ lib/private-document-frame-policy.test.ts (7 tests) 2ms
+ ✓ lib/domain/documents/document.repository.test.ts (5 tests) 2ms
+ ✓ lib/domain/reports/report.repository.resubmit.test.ts (2 tests) 2ms
+ ✓ lib/query/queryClient.test.ts (6 tests) 3ms
+ ✓ lib/tenant/worker-report-lifecycle-media.hardening.test.ts (6 tests) 2ms
+ ✓ lib/ai-brain/phase-d/improvement/improvement.service.test.ts (7 tests) 2ms
+ ✓ app/api/v1/projects/[id]/intelligence/route.test.ts (1 test) 2ms
+ ✓ lib/ops/governed-ai-pr-e2e-runner.harness-env.test.ts (5 tests) 3ms
+ ✓ lib/domain/construction-rules/evaluate-trade-completeness.test.ts (5 tests) 2ms
+ ✓ lib/platform/jobs/job.handlers/ops-events-prune.test.ts (1 test) 2ms
+ ✓ lib/roma/assurance-graph.advisory.test.ts (4 tests) 2ms
+ ✓ lib/domain/construction-rules/trade-completeness.service.test.ts (5 tests) 2ms
+ ✓ lib/portfolio/portfolio-summary-shape.test.ts (4 tests) 2ms
+ ✓ app/api/v1/owner/tenants/route.test.ts (1 test) 2ms
+ ✓ lib/platform/ai/providers/provider.errors.test.ts (9 tests) 2ms
+ ✓ app/[locale]/(dashboard)/dashboard/projects/[id]/project-detail-tabs.test.ts (4 tests) 2ms
+ ✓ lib/domain/review-packs/portfolio-review-pack.service.test.ts (1 test) 3ms
+ ✓ app/[locale]/(dashboard)/dashboard/ops-overview-density.utils.test.ts (3 tests) 2ms
+ ✓ lib/tenant/aftercare-bootstrap-portal-scope.hardening.test.ts (6 tests) 2ms
+ ✓ lib/platform/billing-readiness/billing-adapter-registry.test.ts (5 tests) 2ms
+ ✓ app/[locale]/(dashboard)/dashboard/approvals/approvals-workspace.utils.test.ts (3 tests) 2ms
+ ✓ lib/platform/plan-fit/orchestration/orchestration-rules.test.ts (7 tests) 2ms
+ ✓ lib/domain/stakeholders/stakeholders.policy.test.ts (5 tests) 2ms
+ ✓ lib/tenant/tenant-role.server.test.ts (4 tests) 2ms
+ ✓ app/api/v1/platform/tenants/route.test.ts (1 test) 2ms
+ ✓ lib/ai-brain/services/top-risks.service.test.ts (2 tests) 2ms
+ ✓ lib/platform/billing-readiness/stripe-price-mapping.test.ts (8 tests) 2ms
+ ✓ lib/platform/plan-fit/orchestration/setup-continuation.service.test.ts (3 tests) 2ms
+ ✓ lib/domain/vision-jobs/create-analysis-job-request-key.migration.test.ts (6 tests) 2ms
+ ✓ app/[locale]/(dashboard)/dashboard/tasks/tasks-workspace.utils.test.ts (5 tests) 2ms
+ ✓ lib/ai-brain/phase-d/versioning/version-refs.test.ts (3 tests) 2ms
+ ✓ lib/domain/reports/report-export.service.test.ts (5 tests) 2ms
+ ✓ lib/tenant/tenant-membership-priority.test.ts (6 tests) 2ms
+ ✓ lib/platform/billing-readiness/billing-pilot.repository.test.ts (8 tests) 2ms
+ ✓ lib/platform/ai-usage/ai-usage.service.test.ts (7 tests) 2ms
+ ✓ app/api/v1/owner/diagnostics/route.test.ts (1 test) 2ms
+ ✓ lib/domain/traceability/traceability.mappers.test.ts (7 tests) 2ms
+ ✓ lib/platform/ai/media-path-tenant-guard.parity.test.ts (1 test) 2ms
+ ✓ lib/platform/privacy/pii.classifier.test.ts (3 tests) 2ms
+ ✓ lib/config/debug.test.ts (7 tests) 2ms
+ ✓ lib/ai-brain/phase-e/targets/optimization-targets.test.ts (5 tests) 2ms
+ ✓ lib/platform/ai-governance/policy.rules.test.ts (6 tests) 2ms
+ ✓ lib/platform/plan-fit/bridge.test.ts (7 tests) 2ms
+ ✓ lib/platform/ai-governance/secret-detection.test.ts (6 tests) 4ms
+ ✓ lib/domain/dashboard/manager-actions.service.test.ts (2 tests) 2ms
+ ✓ lib/domain/stakeholder-discussions/stakeholder-discussions.service.test.ts (3 tests) 2ms
+ ✓ lib/tenant/field-daily-log-rls.hardening.test.ts (4 tests) 2ms
+ ✓ lib/domain/project-handover/project-handover.service.test.ts (2 tests) 2ms
+ ✓ lib/ai-brain/phase-e/activation/activation-gate.service.test.ts (8 tests) 3ms
+ ✓ lib/platform/ai-governance/inference-retention.test.ts (7 tests) 2ms
+ ✓ lib/domain/change-orders/change-orders.policy.test.ts (2 tests) 2ms
+ ✓ lib/ai/riskCalibration.test.ts (6 tests) 2ms
+ ✓ lib/tenant/service-requests-assignments-sync-rls.hardening.test.ts (4 tests) 2ms
+ ✓ lib/tenant/viewer-project-jobs-estimate-rls.hardening.test.ts (4 tests) 2ms
+ ✓ lib/tenant/tenant.guard.test.ts (5 tests) 2ms
+ ✓ lib/platform/ai/media-path.test.ts (4 tests) 2ms
+ ✓ app/[locale]/(dashboard)/dashboard/projects/[id]/documents-workspace.utils.test.ts (3 tests) 2ms
+ ✓ lib/public/contact-lead-submit.test.ts (2 tests) 2ms
+ ✓ lib/domain/issues/worker-issue-patch.test.ts (6 tests) 2ms
+ ✓ lib/platform/plan-fit/default-runtime-adapter.test.ts (5 tests) 2ms
+ ✓ lib/domain/commercial/commercial.service.test.ts (2 tests) 2ms
+ ✓ lib/platform/plan-fit/plan-fit-backend.service.test.ts (5 tests) 2ms
+ ✓ lib/ai-brain/phase-a/orchestrator/mode-registry.test.ts (3 tests) 2ms
+ ✓ lib/tenant/photo-collab-rls.hardening.test.ts (4 tests) 2ms
+ ✓ lib/domain/portfolio/portfolio-control.signals.test.ts (7 tests) 2ms
+ ✓ lib/platform-admin/roma-live-probes.test.ts (3 tests) 2ms
+ ✓ lib/platform/push/push.provider.test.ts (4 tests) 2ms
+ ✓ lib/public/solutions-roles.test.ts (4 tests) 2ms
+ ✓ lib/platform/exports/sinks/sink.supabase_table.test.ts (2 tests) 2ms
+ ✓ components/projects/ProjectSubnav.test.ts (3 tests) 2ms
+ ✓ lib/platform/billing-readiness/billing-return-cancel-view.test.ts (4 tests) 2ms
+ ✓ lib/platform/ai/routing/tenant-ai-preferences.test.ts (4 tests) 2ms
+ ✓ lib/domain/ai-analysis/review-status.test.ts (3 tests) 2ms
+ ✓ lib/domain/documents/worker-document-open-url.test.ts (3 tests) 2ms
+ ✓ lib/domain/estimate/parse-cost-vision.test.ts (3 tests) 2ms
+ ✓ lib/dashboard/alert-destinations.test.ts (4 tests) 2ms
+ ✓ lib/cockpit/useTablePagination.test.ts (5 tests) 2ms
+ ✓ lib/tenant/ai-chat-role-provenance.hardening.test.ts (5 tests) 2ms
+ ✓ lib/ops/governed-ai-pr-e2e-runner.workflow-registration.test.ts (4 tests) 2ms
+ ✓ lib/platform/idempotency/idempotency.service.test.ts (3 tests) 2ms
+ ✓ lib/plan-fit/orchestration-screen.test.ts (7 tests) 2ms
+ ✓ lib/domain/quantities/quantity-acceptance.test.ts (1 test) 1ms
+ ✓ lib/ai/stages.test.ts (3 tests) 2ms
+ ✓ lib/platform/ai/ai-request-presentation.test.ts (3 tests) 2ms
+ ✓ lib/auth/password-recovery.test.ts (4 tests) 2ms
+ ✓ lib/domain/issues/worker-issue-access.test.ts (4 tests) 2ms
+ ✓ lib/tenant/project-commercial-rls.hardening.test.ts (4 tests) 2ms
+ ✓ lib/domain/projects/stakeholder-activity-timeline.repository.test.ts (2 tests) 2ms
+ ✓ lib/domain/project-handover/handover-readiness.test.ts (2 tests) 2ms
+ ✓ lib/platform/rate-limit/rate-limit.service.test.ts (3 tests) 2ms
+ ✓ lib/platform/ai/ai-media-errors.test.ts (3 tests) 2ms
+ ✓ lib/platform/billing/entitlements.service.test.ts (3 tests) 2ms
+ ✓ lib/tenant/worker-report-media-portal-read.hardening.test.ts (3 tests) 2ms
+ ✓ lib/domain/traceability/traceability-actor-labels.test.ts (4 tests) 2ms
+ ✓ lib/api/rpcClient.test.ts (2 tests) 2ms
+ ✓ lib/platform/push/apns.provider.test.ts (4 tests) 2ms
+ ✓ app/[locale]/(dashboard)/dashboard/daily-reports/reports-list.utils.test.ts (4 tests) 2ms
+ ✓ lib/domain/field-daily-logs/field-daily-logs-confirm.migration.contract.test.ts (4 tests) 2ms
+ ✓ lib/authz/authz.service.test.ts (5 tests) 2ms
+ ✓ lib/domain/construction-graph/construction-graph.model.test.ts (3 tests) 2ms
+ ✓ lib/dashboard/alert-fallback-href.test.ts (6 tests) 2ms
+ ✓ lib/config/diag.test.ts (4 tests) 2ms
+ ✓ lib/domain/documents/document.service.test.ts (3 tests) 3ms
+ ✓ lib/platform-owner/client-ip.test.ts (4 tests) 2ms
+ ✓ lib/platform/flags/flags.service.test.ts (4 tests) 2ms
+ ✓ lib/public/lead-attribution.test.ts (3 tests) 2ms
+ ✓ lib/ai-brain/phase-b/policy/action-policy.evaluator.test.ts (4 tests) 2ms
+ ✓ app/[locale]/(dashboard)/projects/ProjectFieldDailyLogPanel.test.ts (4 tests) 2ms
+ ✓ app/[locale]/(dashboard)/dashboard/workload/workload-inbox.utils.test.ts (3 tests) 2ms
+ ✓ lib/platform/plan-fit/application-capability.test.ts (3 tests) 2ms
+ ✓ lib/ops/ops-events.repository.test.ts (1 test) 2ms
+ ✓ lib/sre/error-budget.service.test.ts (4 tests) 2ms
+ ✓ lib/operations/manager-intelligence-operational.test.ts (2 tests) 2ms
+ ✓ lib/domain/contractor-directory/contractor-directory.metrics.test.ts (2 tests) 2ms
+ ✓ components/ui/modal-focus.test.ts (5 tests) 2ms
+ ✓ lib/tenant/project-ops-tenant-consistency.rls.test.ts (3 tests) 2ms
+ ✓ lib/domain/vision-jobs/analysis-jobs-async-identity.migration.test.ts (3 tests) 2ms
+ ✓ lib/domain/reports/report-list.repository.test.ts (2 tests) 2ms
+ ✓ lib/intelligence/next-action-href.test.ts (4 tests) 2ms
+ ✓ lib/tenant/photo-collab-route-auth.contract.test.ts (3 tests) 2ms
+ ✓ lib/growth/funnel-events.test.ts (1 test) 1ms
+ ✓ lib/domain/construction-graph/construction-graph.ai-context.test.ts (2 tests) 2ms
+ ✓ app/api/v1/worker/site-join/route.test.ts (1 test) 2ms
+ ✓ lib/ai-brain/phase-e/proposal/proposal.service.test.ts (3 tests) 2ms
+ ✓ lib/tenant/ai-policy-decisions-writer.hardening.test.ts (3 tests) 2ms
+ ✓ lib/platform-admin/middleware-paths.test.ts (3 tests) 2ms
+ ✓ lib/tenant/worker-day-project-schema-compat.hardening.test.ts (3 tests) 2ms
+ ✓ lib/domain/quantities/quantity-write-policy.test.ts (3 tests) 2ms
+ ✓ components/DashboardShell.test.ts (2 tests) 1ms
+ ✓ lib/platform-owner/owner-capabilities.test.ts (3 tests) 2ms
+ ✓ lib/tenant/trigger-security-definer-grants.hardening.test.ts (3 tests) 2ms
+ ✓ lib/auth/login-step-debug.test.ts (4 tests) 2ms
+ ✓ lib/account/account-workspace.constants.test.ts (2 tests) 2ms
+ ✓ components/canon/portfolio-reason-label.test.ts (2 tests) 2ms
+ ✓ lib/domain/task-messages/task-messages.media.test.ts (3 tests) 2ms
+ ✓ lib/domain/task-messages/task-messages.repository.test.ts (2 tests) 2ms
+ ✓ app/api/security-headers.test.ts (2 tests) 4ms
+ ✓ components/public/locale-agnostic-path.test.ts (3 tests) 2ms
+ ✓ lib/platform/telegram/telegram-api.client.test.ts (2 tests) 1ms
+ ✓ lib/domain/construction-graph/construction-graph-overlay.rls.test.ts (3 tests) 1ms
+ ✓ lib/tenant/customer-decision-service-writer.contract.test.ts (2 tests) 1ms
+ ✓ lib/security/customer-finance-guard.test.ts (3 tests) 2ms
+ ✓ components/public/v41/v41-pilot-message.test.ts (2 tests) 1ms
+ ✓ lib/seo/public-paths.test.ts (1 test) 2ms
+ ✓ lib/domain/reports/report.policy.test.ts (3 tests) 2ms
+ ✓ lib/design/liquid-glass-roots.test.ts (1 test) 1ms
+ ✓ lib/platform-admin/host-policy.test.ts (3 tests) 1ms
+ ✓ lib/ops/customer-native-auth-urls.test.ts (2 tests) 2ms
+ ✓ components/dashboard/DashboardMobileNav.test.ts (3 tests) 1ms
+ ✓ lib/domain/task-messages/task-messages.attach-meta.test.ts (2 tests) 2ms
+ ✓ lib/domain/reports/report-project-id.test.ts (3 tests) 1ms
+ ✓ lib/ai/map-daily-video-to-analysis.test.ts (1 test) 1ms
+ ✓ lib/platform/ai/audio-sniff.test.ts (3 tests) 2ms
+ ✓ lib/domain/workload/workload.governance.test.ts (2 tests) 1ms
+ ✓ lib/tenant/field-daily-log-route-auth.contract.test.ts (1 test) 1ms
+ ✓ components/canon/select-recent-portal-activity.test.ts (1 test) 1ms
+ ✓ lib/tenant/invitation-errors.test.ts (3 tests) 1ms
+ ✓ lib/domain/stakeholder-notifications/stakeholder-notifications.repository.test.ts (2 tests) 2ms
+ ✓ lib/domain/field-daily-log/field-daily-log-ui.test.ts (2 tests) 1ms
+ ✓ lib/domain/vision-jobs/analysis-jobs-attempt-count.migration.test.ts (1 test) 1ms
+ ✓ lib/domain/preproject-extraction/preproject-extraction-rls.hardening.test.ts (1 test) 1ms
+ ✓ lib/domain/governance/governance.service.test.ts (2 tests) 1ms
+ ✓ lib/auth/telegram-login-ui.test.ts (2 tests) 1ms
+ ✓ lib/dashboard/uploads-route.test.ts (1 test) 2ms
+ ✓ lib/supabase/admin.placeholder.test.ts (3 tests) 1ms
+ ✓ lib/domain/tasks/task.types.test.ts (2 tests) 1ms
+ ✓ lib/domain/issues/issue-evidence-url.test.ts (3 tests) 1ms
+ ✓ lib/tenant/rls-stakeholder-predicates.test.ts (2 tests) 1ms
+ ✓ lib/tenant/project-members-tenant-match.rls.test.ts (2 tests) 2ms
+ ✓ lib/domain/issues/issue.repository.test.ts (2 tests) 2ms
+ ✓ lib/domain/media-captions/index-transcription-result.test.ts (2 tests) 1ms
+ ✓ lib/domain/worker-day/worker-day.policy.test.ts (2 tests) 1ms
+ ✓ lib/domain/issues/issue.repository.evidence.test.ts (1 test) 1ms
+ ✓ lib/domain/client-portal/next-client-milestone.test.ts (2 tests) 1ms
+ ✓ lib/domain/documents/document-upload-path.test.ts (2 tests) 1ms
+ ✓ lib/routing/matches-path-prefix.test.ts (2 tests) 1ms
+ ✓ lib/domain/stakeholders/viewer-role-active-replay.migration.test.ts (1 test) 1ms
+ ✓ lib/domain/milestones/milestone.repository.test.ts (1 test) 1ms
+ ✓ lib/platform/routing/data-plane.router.test.ts (1 test) 1ms
+
+ Test Files  524 passed (524)
+      Tests  3022 passed (3022)
+   Start at  22:53:43
+   Duration  54.67s (transform 2.96s, setup 1.52s, import 7.72s, tests 17.08s, environment 915ms)
+
