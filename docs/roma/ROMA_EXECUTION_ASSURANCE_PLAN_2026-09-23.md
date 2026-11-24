@@ -453,15 +453,15 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 
 | ROMA delta item | Status | Evidence |
 |---|---|---|
-| P0 secret block before external transmission | IMPLEMENTED (deployed) | #507 → `030e089` staging+prod. Credential Broker / short-lived creds OWNER_GATE. Full-history cleanup OWNER_GATE. |
-| P0 inference-provider allowlist + fail-closed fallback | IMPLEMENTED (deployed) | Allowlist + fail-closed fallback on `030e089`. |
-| P0 retention declaration | PARTIAL | Declaration gate live; vendor ZDR OWNER_GATE. |
-| P0 credential resolver | PARTIAL | Wired into openai/anthropic/gemini providers; tenant vault OWNER_GATE. |
+| P0 secret block before external transmission | IMPLEMENTED (deployed) | #507 → later #521 `b2f34ba` staging+prod. Credential Broker / short-lived creds still OWNER_GATE. History FP via gitleaks allowlist. |
+| P0 inference-provider allowlist + fail-closed fallback | IMPLEMENTED (deployed) | Allowlist + fail-closed fallback live. |
+| P0 retention declaration | PARTIAL | Declaration gate + Worker secrets live; vendor ZDR still sales-gated. |
+| P0 credential resolver | PARTIAL | Wired into openai/anthropic/gemini providers; populate `AI_TENANT_PROVIDER_KEYS_JSON` when ready. |
 | P0 transitive handoff authorization | PARTIAL (code) | `evaluateTransitiveAuthorization` + optional `PolicyContext.handoff`. |
 | P0 sandbox Strands/LangSmith eval | DEFER | `RESEARCH_DEFER_2026-11-24.md` — no install. |
 | P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Matrix + research deferral note. |
-| P1 Dependabot supply-chain | IMPLEMENTED | Majors / failed CI Dependabot PRs not auto-merged. |
-| P1 supplier fixture negatives (D10) | IMPLEMENTED (deployed) | On `3895681`. |
+| P1 Dependabot supply-chain | IMPLEMENTED | Majors closed/ignored; #523 Material 1.14 closed. |
+| P1 supplier fixture negatives (D10) | IMPLEMENTED (deployed) | On main / production. |
 | P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
 
-See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. Independent ROMA reviewer verdict: pending.
+See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md` + `OWNER_GATE_CLOSURE_2026-11-24.md`. Independent ROMA reviewer verdict: pending.
