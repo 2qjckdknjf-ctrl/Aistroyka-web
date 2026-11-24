@@ -61,11 +61,20 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 
 `aikido_scan_paths` on changed TS sources: **0 issues**.
 
+## CI on PR #507 (HEAD `704f77a3`)
+
+| Check | Conclusion |
+|---|---|
+| CI Check (`check`) | SUCCESS |
+| Gitleaks | SUCCESS |
+| Cursor Security Agent | SUCCESS |
+| Workers Builds | SUCCESS |
+
 ## Not DONE / remaining blockers
 
 | Item | Status |
 |---|---|
-| Independent non-author review / merge | pending |
+| Independent non-author review / merge | pending (`REVIEW_REQUIRED`) |
 | Production deploy | not authorized |
 | D3a inference retention / vendor ZDR | BLOCKED OWNER_GATE |
 | D3b tenant-scoped AI credentials / rotation | BLOCKED OWNER_GATE |
