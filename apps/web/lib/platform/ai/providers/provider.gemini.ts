@@ -8,6 +8,7 @@ import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
 } from "@/lib/ai/prompts";
+import { resolveAiProviderCredentials } from "@/lib/platform/ai/credentials/resolve-ai-provider-credentials";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 import { ProviderRequestError } from "./provider.errors";
 
@@ -17,11 +18,7 @@ const TIMEOUT_MS = 85_000;
 const IMAGE_FETCH_TIMEOUT_MS = 15_000;
 
 function getConfig(): { apiKey: string; model: string } {
-  const apiKey = (
-    process.env.GOOGLE_AI_API_KEY ??
-    process.env.GEMINI_API_KEY ??
-    ""
-  ).trim();
+  const apiKey = resolveAiProviderCredentials("gemini").apiKey ?? "";
   const model =
     (process.env.GEMINI_VISION_MODEL ?? DEFAULT_MODEL).trim() || DEFAULT_MODEL;
   return { apiKey, model };

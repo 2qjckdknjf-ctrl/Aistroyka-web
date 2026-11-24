@@ -455,12 +455,13 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 |---|---|---|
 | P0 secret block before external transmission | IMPLEMENTED (deployed) | #507 → `030e089` staging+prod. Credential Broker / short-lived creds OWNER_GATE. Full-history cleanup OWNER_GATE. |
 | P0 inference-provider allowlist + fail-closed fallback | IMPLEMENTED (deployed) | Allowlist + fail-closed fallback on `030e089`. |
-| P0 retention declaration | PARTIAL (code) | `AI_INFERENCE_RETENTION_MODE` / require gate; vendor ZDR OWNER_GATE. |
-| P0 credential resolver | PARTIAL (scaffold) | Global-env resolver; tenant vault OWNER_GATE. |
-| P0 sandbox Strands/LangSmith eval | BLOCKED / RESEARCH_ONLY | No vendor install; licence check required before any trial. |
-| P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Matrix: `docs/reports/plan-exec-delta-2026-11-24/REQUIREMENT_TEST_MATRIX.md`. |
-| P1 Dependabot supply-chain | IMPLEMENTED | Dependabot PRs opening (#509–#517); majors need manual review. |
-| P1 supplier fixture negatives (D10) | IMPLEMENTED (deployed) | On `030e089`. |
+| P0 retention declaration | PARTIAL | Declaration gate live; vendor ZDR OWNER_GATE. |
+| P0 credential resolver | PARTIAL | Wired into openai/anthropic/gemini providers; tenant vault OWNER_GATE. |
+| P0 transitive handoff authorization | PARTIAL (code) | `evaluateTransitiveAuthorization` + optional `PolicyContext.handoff`. |
+| P0 sandbox Strands/LangSmith eval | DEFER | `RESEARCH_DEFER_2026-11-24.md` — no install. |
+| P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Matrix + research deferral note. |
+| P1 Dependabot supply-chain | IMPLEMENTED | Majors / failed CI Dependabot PRs not auto-merged. |
+| P1 supplier fixture negatives (D10) | IMPLEMENTED (deployed) | On `3895681`. |
 | P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
 
 See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. Independent ROMA reviewer verdict: pending.

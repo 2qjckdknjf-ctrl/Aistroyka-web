@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildTaskDetailHref,
+  buildTasksWorkspaceHref,
   groupTasksByBoardColumn,
   isTaskOverdue,
+  parseSelectedTaskId,
   parseTasksWorkspaceView,
+  resolveTasksReturnHref,
   sortTasksForPhonePriority,
   taskStatusBadgeVariant,
 } from "./tasks-workspace.utils";
@@ -51,5 +55,44 @@ describe("tasks workspace utils", () => {
     expect(taskStatusBadgeVariant("cancelled")).toBe("danger");
     expect(taskStatusBadgeVariant("in_progress")).toBe("warning");
     expect(taskStatusBadgeVariant("pending")).toBe("neutral");
+  });
+
+  it("parses selected task ids from query values", () => {
+    expect(parseSelectedTaskId(null)).toBeNull();
+    expect(parseSelectedTaskId("  ")).toBeNull();
+    expect(parseSelectedTaskId(" task-1 ")).toBe("task-1");
+  });
+
+  it("builds workspace and detail hrefs with filter/task context", () => {
+    expect(buildTasksWorkspaceHref({})).toBe("/dashboard/tasks");
+    expect(
+      buildTasksWorkspaceHref({
+        view: "board",
+        taskId: "t1",
+        filters: { project_id: "p1", scope: "mine", empty: "" },
+      }),
+    ).toBe("/dashboard/tasks?view=board&task=t1&project_id=p1&scope=mine");
+    expect(buildTaskDetailHref("t1")).toBe("/dashboard/tasks/t1");
+    expect(buildTaskDetailHref("t1", "/dashboard/tasks?view=board")).toBe(
+      `/dashboard/tasks/t1?returnTo=${encodeURIComponent("/dashboard/tasks?view=board")}`,
+    );
+  });
+
+  it("resolves returnTo only for dashboard tasks paths without re-decoding", () => {
+    expect(resolveTasksReturnHref(null)).toBe("/dashboard/tasks");
+    expect(resolveTasksReturnHref("/dashboard/tasks?view=board&task=t1")).toBe(
+      "/dashboard/tasks?view=board&task=t1",
+    );
+    // Already-decoded useSearchParams value must keep filter encodings intact.
+    expect(resolveTasksReturnHref("/dashboard/tasks?q=A%26B&view=board")).toBe(
+      "/dashboard/tasks?q=A%26B&view=board",
+    );
+    // Still-encoded outer values fail closed (do not double-decode).
+    expect(resolveTasksReturnHref(encodeURIComponent("/dashboard/tasks?view=board"))).toBe(
+      "/dashboard/tasks",
+    );
+    expect(resolveTasksReturnHref("https://evil.example/dashboard/tasks")).toBe("/dashboard/tasks");
+    expect(resolveTasksReturnHref("//evil.example")).toBe("/dashboard/tasks");
+    expect(resolveTasksReturnHref("/owner")).toBe("/dashboard/tasks");
   });
 });

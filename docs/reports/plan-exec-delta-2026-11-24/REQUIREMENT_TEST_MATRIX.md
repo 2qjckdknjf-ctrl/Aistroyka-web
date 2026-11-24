@@ -9,8 +9,9 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | D2a | Provider allowlist | `provider.router.test.ts` | PASS | #507 |
 | D2b | Fail-closed fallback | `tenant-ai-preferences.test.ts` | PASS | #507 |
 | D2c | X-AI-Fallback-Reason | existing smoke / unchanged | PASS | pre-existing |
-| D3a | Retention declaration | `inference-retention.test.ts` + `policy.service` retention cases | NOT_RUN until this PR CI | this branch |
-| D3b | Credential resolver scaffold | `resolve-ai-provider-credentials.test.ts` | NOT_RUN until this PR CI | tenant vault still OWNER_GATE |
+| D3a | Retention declaration | `inference-retention.test.ts` + `policy.service` retention cases | PASS | #518 |
+| D3b | Credential resolver wired to providers | `resolve-ai-provider-credentials.test.ts` + provider tests | PASS (local) | tenant vault still OWNER_GATE |
+| D4 | Transitive handoff authorization | `transitive-authorization.test.ts` + policy handoff case | PASS (local) | this branch |
 | D5 | Report GET peer isolation | `app/api/v1/reports/[id]/route.test.ts` | PASS | #507 |
 | D6 | Lite allow-list | existing lite tests | PASS | pre-existing |
 | D10 | Supplier negatives | `draft-comparison.engine.test.ts` | PASS | #507 |

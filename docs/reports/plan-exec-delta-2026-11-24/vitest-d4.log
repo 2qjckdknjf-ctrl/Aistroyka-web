@@ -1,0 +1,20 @@
+
+ RUN  v4.0.18 /Users/alex/Projects/AISTROYKA-plan-exec-2026-11-24/apps/web
+
+ ✓ lib/platform/ai/credentials/resolve-ai-provider-credentials.test.ts (3 tests) 2ms
+ ✓ lib/platform/ai-governance/transitive-authorization.test.ts (7 tests) 3ms
+ ✓ lib/platform/ai/providers/provider.anthropic.test.ts (5 tests) 4ms
+ ✓ lib/platform/ai-governance/policy.service.test.ts (8 tests) 3ms
+ ✓ lib/platform/ai/providers/provider.gemini.test.ts (6 tests) 11ms
+ ✓ lib/ops/deploy-workflow.contract.test.ts (22 tests) 5353ms
+     ✓ mocked host validates redirect hop headers on 302→200 chain  1026ms
+     ✓ mocked host rejects missing CSP on intermediate 302 hop  1105ms
+     ✓ mocked host rejects joined duplicate page headers including CSP/HSTS/PP  1009ms
+     ✓ mocked host rejects joined duplicate API headers without requiring CSP  1033ms
+     ✓ mocked host ignores 103 Early Hints and validates the final response  1057ms
+
+ Test Files  6 passed (6)
+      Tests  51 passed (51)
+   Start at  23:05:05
+   Duration  5.47s (transform 246ms, setup 73ms, import 246ms, tests 5.38s, environment 0ms)
+
