@@ -79,19 +79,28 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 | Cursor Security Agent | SUCCESS |
 | Workers Builds | SUCCESS |
 
+## Follow-on merges (same plan day)
+
+| PR | Topic | merge_sha7 | Deploy |
+|---|---|---|---|
+| #507 | P0/P1 delta | `030e089` | staging+prod |
+| #518–#520 | continue / test-fix / remaining | (see GitHub) | staging+prod |
+| #504/#505 | V2 web slices | `3b8d502` interim | staging+prod |
+| #521 | OWNER_GATE ops closure | `b2f34ba` | staging+prod **live** |
+
 ## Not DONE / remaining blockers
 
 | Item | Status |
 |---|---|
 | Independent non-author review / merge (#507) | DONE — MERGED `030e089a` |
-| Staging + production deploy | DONE — `buildStamp.sha7=030e089` |
-| D3a vendor ZDR proof | OWNER_GATE (declaration gate coded separately) |
-| D3b tenant vault / rotation | OWNER_GATE (resolver scaffold only) |
-| Full-history gitleaks cleanup | OWNER_GATE (no history rewrite) |
-| Dependabot GitHub feature enablement | OWNER_GATE if org setting off |
+| Staging + production deploy (#521) | DONE — `buildStamp.sha7=b2f34ba` on staging + production |
+| D3a Worker retention secrets | DONE — set; full vendor ZDR still sales-gated |
+| D3b tenant key map code | DONE — populate `AI_TENANT_PROVIDER_KEYS_JSON` when ready |
+| Full-history gitleaks cleanup | CLOSED via allowlist (no history rewrite) |
+| Dependabot majors | CLOSED / ignored in config |
+| Mobile Mode B store upload | BLOCKED — assets/APPROVE present; `release/mobile-pilot-rc` missing; no upload orchestrator |
 | D7/D9/D11/D12 research vendors | RESEARCH_ONLY — no installs |
-| D10 supplier VAT/injection fixtures | PARTIAL→code landed (review pending) |
-| Real FCM / aps-environment (mobile) | OWNER_GATE (separate mobile WT) |
+| #488 roadmap PR | still CONFLICTING / needs rebase |
 
 ## Cost
 
