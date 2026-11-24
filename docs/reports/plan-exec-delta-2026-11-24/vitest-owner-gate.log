@@ -1,0 +1,13 @@
+
+ RUN  v4.0.18 /Users/alex/Projects/AISTROYKA-plan-exec-2026-11-24/apps/web
+
+ ✓ lib/platform/ai/credentials/resolve-ai-provider-credentials.test.ts (6 tests) 3ms
+ ✓ lib/platform/ai/providers/provider.anthropic.test.ts (5 tests) 4ms
+ ✓ lib/platform/ai/providers/provider.gemini.test.ts (6 tests) 11ms
+ ✓ lib/platform/ai/providers/provider.router.test.ts (8 tests) 4ms
+
+ Test Files  4 passed (4)
+      Tests  25 passed (25)
+   Start at  23:35:19
+   Duration  120ms (transform 149ms, setup 52ms, import 141ms, tests 22ms, environment 0ms)
+

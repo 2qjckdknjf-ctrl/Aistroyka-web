@@ -283,12 +283,21 @@ export function DashboardAIOperatingCenterClient() {
                     })}
                   </ul>
                 )}
-                <Link
-                  href={effectiveFocus ? `/dashboard/projects/${effectiveFocus}?tab=intelligence` : "#"}
-                  className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
-                >
-                  {tDetail("fullRiskRadar")}
-                </Link>
+                {effectiveFocus ? (
+                  <Link
+                    href={`/dashboard/projects/${effectiveFocus}?tab=intelligence`}
+                    className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {tDetail("fullRiskRadar")}
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard/projects"
+                    className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {tDetail("fullRiskRadar")}
+                  </Link>
+                )}
               </>
             ) : (
               <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noRiskDataYet")}</p>

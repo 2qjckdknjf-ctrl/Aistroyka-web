@@ -1,0 +1,26 @@
+Using destination id=61119C43-B820-4109-9D0D-ACDE809191D6
+    t =     3.40s     Checking `Expect predicate `existsNoRetry == 1` for object "pilot_customer_email" TextField`
+    t =     3.41s         Checking existence of `"pilot_customer_email" TextField`
+    t =     3.43s Checking existence of `"pilot_customer_password" SecureTextField`
+    t =     3.44s Checking existence of `"pilot_customer_sign_in" Button`
+    t =     3.44s Checking existence of `"pilot_customer_apple_sign_in" Button`
+    t =     3.45s Checking existence of `"pilot_customer_google_sign_in" Button`
+    t =     3.45s Tear Down
+Test Case '-[AiStroykaCustomerUITests.CustomerSmokeUITests testLoginScreen_reachableWithPilotIdentifiers]' passed (3.680 seconds).
+Test Suite 'CustomerSmokeUITests' passed at 2026-11-24 22:51:43.663.
+	 Executed 1 test, with 0 failures (0 unexpected) in 3.680 (3.681) seconds
+Test Suite 'AiStroykaCustomerUITests.xctest' passed at 2026-11-24 22:51:43.663.
+	 Executed 1 test, with 0 failures (0 unexpected) in 3.680 (3.681) seconds
+Test Suite 'Selected tests' passed at 2026-11-24 22:51:43.663.
+	 Executed 1 test, with 0 failures (0 unexpected) in 3.680 (3.681) seconds
+2026-11-24 22:51:43.947 xcodebuild[9555:1523018] [MT] IDETestOperationsObserverDebug: 10.709 elapsed -- Testing started completed.
+2026-11-24 22:51:43.947 xcodebuild[9555:1523018] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-11-24 22:51:43.947 xcodebuild[9555:1523018] [MT] IDETestOperationsObserverDebug: 10.709 sec, +10.709 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/alex/Library/Developer/Xcode/DerivedData/AiStroykaCustomer-cyswxihiaqktxqblygmkbayspjrb/Logs/Test/Test-AiStroykaCustomer-2026.11.24_22-51-28-+0100.xcresult
+
+** TEST SUCCEEDED **
+
+Testing started
+OK — Worker, Manager, and Customer UITest smoke passed.

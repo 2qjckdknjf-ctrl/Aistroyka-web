@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { HelpCircle, Menu, MessageCircle, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./CanonLocaleSwitcher";
 import { CanonNotificationBell } from "./CanonNotificationBell";
 
@@ -12,6 +12,7 @@ type CanonTopBarProps = {
   userRoleLabel?: string;
   onMenuClick?: () => void;
   showMenuButton?: boolean;
+  portalOnly?: boolean;
 };
 
 function initialsFromEmail(email?: string): string {
@@ -27,18 +28,48 @@ function displayNameFromEmail(email?: string): string {
   return part.replace(/[._-]/g, " ");
 }
 
+function portalClientProjectId(pathname: string): string | null {
+  const match = pathname.match(/\/dashboard\/projects\/([^/]+)\/client/);
+  return match?.[1] ?? null;
+}
+
 export function CanonTopBar({
   userEmail,
   userRoleLabel,
   onMenuClick,
   showMenuButton = false,
+  portalOnly = false,
 }: CanonTopBarProps) {
   const t = useTranslations("canon");
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const clientProjectId = portalOnly ? portalClientProjectId(pathname) : null;
+  const notificationsHref =
+    portalOnly && clientProjectId
+      ? `/dashboard/projects/${clientProjectId}/client#portal-notifications`
+      : "/dashboard/notifications";
+  const portalBellDisabled = portalOnly && !clientProjectId;
+
+  useEffect(() => {
+    if (portalOnly) return;
+    function onGlobalKeyDown(e: globalThis.KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "k") return;
+      e.preventDefault();
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    }
+    window.addEventListener("keydown", onGlobalKeyDown);
+    return () => window.removeEventListener("keydown", onGlobalKeyDown);
+  }, [portalOnly]);
 
   function runSearch(e?: FormEvent) {
     e?.preventDefault();
+    if (portalOnly) {
+      router.push("/portal/projects");
+      return;
+    }
     const q = query.trim();
     if (!q) {
       router.push("/dashboard/tasks");
@@ -66,28 +97,55 @@ export function CanonTopBar({
             </button>
           ) : null}
 
-          <form className="canon-search-field mx-auto w-full md:max-w-xl" onSubmit={runSearch}>
-            <Search size={18} className="shrink-0 text-[var(--canon-text-muted)]" aria-hidden />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={onSearchKeyDown}
-              placeholder={t("globalSearchPlaceholder")}
-              aria-label={t("globalSearch")}
-            />
-            <span className="canon-kbd canon-hide-mobile">⌘K</span>
-          </form>
+          {portalOnly ? (
+            <p className="mx-auto w-full truncate text-sm text-[var(--canon-text-muted)] md:max-w-xl">
+              {t("portalSearchHint")}
+            </p>
+          ) : (
+            <form className="canon-search-field mx-auto w-full md:max-w-xl" onSubmit={runSearch}>
+              <Search size={18} className="shrink-0 text-[var(--canon-text-muted)]" aria-hidden />
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={onSearchKeyDown}
+                placeholder={t("globalSearchPlaceholder")}
+                aria-label={t("globalSearch")}
+              />
+              <button
+                type="button"
+                className="canon-kbd canon-hide-mobile"
+                onClick={() => {
+                  searchInputRef.current?.focus();
+                  searchInputRef.current?.select();
+                }}
+                aria-label={t("globalSearchShortcut")}
+              >
+                ⌘K
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="canon-topbar-actions flex shrink-0 items-center gap-0.5 sm:gap-2">
-          <CanonNotificationBell />
-          <Link href="/dashboard/support" className="canon-notify-btn" aria-label={t("messages")}>
-            <MessageCircle size={20} aria-hidden />
-          </Link>
-          <Link href="/dashboard/help" className="canon-notify-btn canon-hide-mobile" aria-label={t("help")}>
-            <HelpCircle size={20} aria-hidden />
-          </Link>
+          <CanonNotificationBell
+            href={notificationsHref}
+            mode={portalOnly ? "portal" : "contractor"}
+            projectId={clientProjectId}
+            disabled={portalBellDisabled}
+            disabledTitle={t("portalPickProjectFirst")}
+          />
+          {portalOnly ? null : (
+            <>
+              <Link href="/dashboard/support" className="canon-notify-btn" aria-label={t("support")}>
+                <MessageCircle size={20} aria-hidden />
+              </Link>
+              <Link href="/dashboard/help" className="canon-notify-btn canon-hide-mobile" aria-label={t("help")}>
+                <HelpCircle size={20} aria-hidden />
+              </Link>
+            </>
+          )}
           <LocaleSwitcher />
           <div className="canon-user-chip">
             <span className="canon-user-avatar" aria-hidden>

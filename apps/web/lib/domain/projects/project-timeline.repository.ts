@@ -319,7 +319,7 @@ export async function getProjectTimeline(
       projectId,
       entityType: "service_request",
       entityId: s.id,
-      targetUrl: `${baseUrl}?tab=aftercare`,
+      targetUrl: `${baseUrl}?tab=service-requests`,
     });
     if (s.resolved_at && (s.status === "resolved" || s.status === "closed")) {
       items.push({
@@ -333,7 +333,7 @@ export async function getProjectTimeline(
         projectId,
         entityType: "service_request",
         entityId: s.id,
-        targetUrl: `${baseUrl}?tab=aftercare`,
+        targetUrl: `${baseUrl}?tab=service-requests`,
       });
     }
   }

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PATCH } from "./route";
+import { GET, PATCH } from "./route";
 
 const tenantContext = {
   tenantId: "tenant-1",
@@ -408,6 +408,102 @@ describe("PATCH /api/v1/reports/:id", () => {
     );
     expect(response.status).toBe(200);
     expect(Date.now() - started).toBeLessThan(4000);
+  });
+});
+
+describe("GET /api/v1/reports/:id peer isolation", () => {
+  beforeEach(() => {
+    requireTenant.mockReset();
+    getById.mockReset();
+    listMediaByReportIdWithUrls.mockReset();
+    listMediaByReportIdWithUrls.mockResolvedValue([]);
+    canReviewReport.mockReset();
+    isLiteWorkerClient.mockReset();
+  });
+
+  it("returns 404 when lite worker reads a peer report", async () => {
+    getTenantContextFromRequest.mockResolvedValue({
+      ...tenantContext,
+      userId: "worker-self",
+      role: "worker",
+      clientProfile: "ios_worker",
+    });
+    isLiteWorkerClient.mockReturnValue(true);
+    canReviewReport.mockReturnValue(false);
+    getById.mockResolvedValue({
+      id: "r1",
+      tenant_id: "tenant-1",
+      user_id: "worker-peer",
+      status: "submitted",
+    });
+
+    const response = await GET(new Request("https://test/api/v1/reports/r1"), {
+      params: Promise.resolve({ id: "r1" }),
+    });
+    expect(response.status).toBe(404);
+    expect(listMediaByReportIdWithUrls).not.toHaveBeenCalled();
+  });
+
+  it("returns 200 when lite worker reads own report", async () => {
+    getTenantContextFromRequest.mockResolvedValue({
+      ...tenantContext,
+      userId: "worker-self",
+      role: "worker",
+      clientProfile: "android_worker",
+    });
+    isLiteWorkerClient.mockReturnValue(true);
+    canReviewReport.mockReturnValue(false);
+    getById.mockResolvedValue({
+      id: "r1",
+      tenant_id: "tenant-1",
+      user_id: "worker-self",
+      status: "submitted",
+    });
+
+    const response = await GET(new Request("https://test/api/v1/reports/r1"), {
+      params: Promise.resolve({ id: "r1" }),
+    });
+    expect(response.status).toBe(200);
+    expect(listMediaByReportIdWithUrls).toHaveBeenCalled();
+  });
+
+  it("returns 404 when non-reviewer member reads another's report", async () => {
+    getTenantContextFromRequest.mockResolvedValue({
+      ...tenantContext,
+      userId: "member-1",
+      role: "member",
+      clientProfile: "web",
+    });
+    isLiteWorkerClient.mockReturnValue(false);
+    canReviewReport.mockReturnValue(false);
+    getById.mockResolvedValue({
+      id: "r1",
+      tenant_id: "tenant-1",
+      user_id: "worker-1",
+      status: "submitted",
+    });
+
+    const response = await GET(new Request("https://test/api/v1/reports/r1"), {
+      params: Promise.resolve({ id: "r1" }),
+    });
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 200 when reviewer reads any tenant report", async () => {
+    getTenantContextFromRequest.mockResolvedValue(tenantContext);
+    isLiteWorkerClient.mockReturnValue(false);
+    canReviewReport.mockReturnValue(true);
+    getById.mockResolvedValue({
+      id: "r1",
+      tenant_id: "tenant-1",
+      user_id: "worker-1",
+      status: "submitted",
+    });
+
+    const response = await GET(new Request("https://test/api/v1/reports/r1"), {
+      params: Promise.resolve({ id: "r1" }),
+    });
+    expect(response.status).toBe(200);
   });
 });
 

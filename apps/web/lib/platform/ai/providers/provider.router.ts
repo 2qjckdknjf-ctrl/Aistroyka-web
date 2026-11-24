@@ -15,6 +15,7 @@ import { modelForProviderAndTier, type ModelTier } from "@/lib/platform/ai/routi
 
 const PROVIDERS = [openaiProvider, anthropicProvider, geminiProvider];
 const PROVIDER_BY_NAME = Object.fromEntries(PROVIDERS.map((p) => [p.name, p]));
+const ALL_PROVIDER_NAMES = PROVIDERS.map((p) => p.name);
 
 export interface RouterOptions extends VisionOptions {
   tier?: string;
@@ -23,18 +24,44 @@ export interface RouterOptions extends VisionOptions {
   requestId?: string | null;
 }
 
+/**
+ * Operator allowlist (comma-separated). Empty / unset = all built-in providers.
+ * Forbidden providers are never invoked (Codex delta 2026-11-24 P0).
+ */
+export function getProviderAllowlist(): Set<string> {
+  const raw = (process.env.AI_PROVIDER_ALLOWLIST ?? "").trim();
+  if (!raw) return new Set(ALL_PROVIDER_NAMES);
+  const allowed = raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => ALL_PROVIDER_NAMES.includes(s));
+  return new Set(allowed.length > 0 ? allowed : ALL_PROVIDER_NAMES);
+}
+
 /** Order providers: preferred first (if set), then rest; if fallback disabled, preferred only. */
 function orderProviders(
   preference: "openai" | "anthropic" | "gemini" | undefined,
-  fallbackEnabled: boolean
+  fallbackEnabled: boolean,
+  allowlist: Set<string> = getProviderAllowlist()
 ): typeof PROVIDERS {
-  if (!preference || !PROVIDER_BY_NAME[preference]) {
-    return PROVIDERS;
+  const eligible = PROVIDERS.filter((p) => allowlist.has(p.name));
+  if (eligible.length === 0) return [];
+  if (!preference || !PROVIDER_BY_NAME[preference] || !allowlist.has(preference)) {
+    return eligible;
   }
   const preferred = PROVIDER_BY_NAME[preference];
-  const rest = PROVIDERS.filter((p) => p.name !== preference);
+  const rest = eligible.filter((p) => p.name !== preference);
   if (!fallbackEnabled) return [preferred];
   return [preferred, ...rest];
+}
+
+/** Exported for unit tests. */
+export function orderProvidersForTest(
+  preference: "openai" | "anthropic" | "gemini" | undefined,
+  fallbackEnabled: boolean,
+  allowlist?: Set<string>
+): typeof PROVIDERS {
+  return orderProviders(preference, fallbackEnabled, allowlist ?? getProviderAllowlist());
 }
 
 export async function invokeVisionWithRouter(
@@ -56,6 +83,7 @@ export async function invokeVisionWithRouter(
         maxTokens: options.maxTokens,
         systemPrompt: options.systemPrompt,
         userMessage: options.userMessage,
+        tenantId,
       });
       if (result) {
         await recordSuccess(supabase, provider.name);

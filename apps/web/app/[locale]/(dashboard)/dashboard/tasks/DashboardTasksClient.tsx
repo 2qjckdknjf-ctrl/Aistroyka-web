@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
@@ -27,8 +27,10 @@ import { exportTableToCsv } from "@/lib/cockpit/csvExport";
 import { DashboardTaskDetailClient } from "./[id]/DashboardTaskDetailClient";
 import {
   TASK_BOARD_COLUMNS,
+  buildTaskDetailHref,
   groupTasksByBoardColumn,
   isTaskOverdue,
+  parseSelectedTaskId,
   parseTasksWorkspaceView,
   sortTasksForPhonePriority,
   taskStatusBadgeVariant,
@@ -93,7 +95,11 @@ export function DashboardTasksClient({
   const pathname = usePathname();
   const router = useRouter();
   const view = skin === "canon" ? "board" : parseTasksWorkspaceView(searchParams?.get("view"));
-  const selectedTaskId = searchParams?.get("task")?.trim() || null;
+  const selectedTaskId = parseSelectedTaskId(searchParams?.get("task"));
+  const workspaceReturnTo = useMemo(() => {
+    const qs = searchParams?.toString() ?? "";
+    return qs ? `/dashboard/tasks?${qs}` : "/dashboard/tasks";
+  }, [searchParams]);
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const STATUS_OPTIONS = [
@@ -113,11 +119,14 @@ export function DashboardTasksClient({
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState<string>("");
 
+  // V2-WEB-01: stable openCreate + ref for parent register — avoids effect↔setState loops
+  // when the parent passes a fresh inline onRegisterCreateHandler each render.
+  const openCreateForm = useCallback(() => setCreateOpen(true), []);
+  const onRegisterCreateHandlerRef = useRef(onRegisterCreateHandler);
+  onRegisterCreateHandlerRef.current = onRegisterCreateHandler;
   useEffect(() => {
-    if (onRegisterCreateHandler) {
-      onRegisterCreateHandler(() => setCreateOpen(true));
-    }
-  }, [onRegisterCreateHandler]);
+    onRegisterCreateHandlerRef.current?.(openCreateForm);
+  }, [openCreateForm]);
 
   const setWorkspaceParam = useCallback(
     (key: "view" | "task", value: string | null) => {
@@ -393,7 +402,7 @@ export function DashboardTasksClient({
                     ) : null}
                   </button>
                   <Link
-                    href={`/dashboard/tasks/${r.id}`}
+                    href={buildTaskDetailHref(r.id, workspaceReturnTo)}
                     className="font-medium text-aistroyka-accent hover:underline lg:hidden"
                   >
                     {r.title}
@@ -467,7 +476,7 @@ export function DashboardTasksClient({
           <li key={r.id}>
             <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised/60 p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <Link href={`/dashboard/tasks/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">
+                <Link href={buildTaskDetailHref(r.id, workspaceReturnTo)} className="font-medium text-aistroyka-accent hover:underline">
                   {r.title}
                 </Link>
                 <Badge variant={taskStatusBadgeVariant(r.status)}>{r.status}</Badge>
@@ -583,17 +592,25 @@ export function DashboardTasksClient({
                           {overdue ? ` · ${tDetail("overdue")}` : ""}
                         </p>
                       </button>
-                      {skin !== "canon" ? (
+                      {skin === "canon" ? (
+                        <Link
+                          href={buildTaskDetailHref(r.id, workspaceReturnTo)}
+                          className="mt-1 inline-block px-1 text-xs text-[var(--canon-cyan)] hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {tDetail("openFullTask")}
+                        </Link>
+                      ) : (
                         <>
                           <div className="mt-1 flex flex-wrap gap-1 px-1">{renderTaskActions(r)}</div>
                           <Link
-                            href={`/dashboard/tasks/${r.id}`}
+                            href={buildTaskDetailHref(r.id, workspaceReturnTo)}
                             className="mt-1 inline-block px-1 text-aistroyka-caption text-aistroyka-accent hover:underline lg:hidden"
                           >
                             {tDetail("openFullTask")}
                           </Link>
                         </>
-                      ) : null}
+                      )}
                     </li>
                   );
                 })
@@ -625,11 +642,24 @@ export function DashboardTasksClient({
       ) : null}
       <div
         className={`grid gap-4 ${
-          selectedTaskId && skin !== "canon" ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""
+          selectedTaskId ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""
         }`}
       >
         {skin === "canon" ? (
           <div className={cardShellClass}>
+            {selectedTaskId ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--canon-border-glass)] px-4 py-3">
+                <Link
+                  href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                  className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
+                >
+                  {tDetail("openFullTask")}
+                </Link>
+                <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                  {tDetail("closeTaskInspector")}
+                </Button>
+              </div>
+            ) : null}
             {loading && data.length === 0 ? (
               <div className="p-4">
                 <Skeleton lines={6} />
@@ -714,22 +744,40 @@ export function DashboardTasksClient({
         </DashboardGlassCard>
         )}
 
-        {selectedTaskId && skin !== "canon" ? (
-          <aside className="hidden min-w-0 lg:block" aria-label={tDetail("tasks")}>
-            <div className="sticky top-20 space-y-3">
-              <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
-                <Link
-                  href={`/dashboard/tasks/${selectedTaskId}`}
-                  className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
-                >
-                  {tDetail("openFullTask")}
-                </Link>
-                <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
-                  {tDetail("closeTaskInspector")}
-                </Button>
-              </DashboardGlassCard>
-              <DashboardTaskDetailClient taskId={selectedTaskId} />
-            </div>
+        {selectedTaskId ? (
+          <aside className="min-w-0 lg:sticky lg:top-20" aria-label={tDetail("tasks")}>
+            {/* Single detail instance for all breakpoints (Codex: avoid dual fetch/chat). */}
+            {skin === "canon" ? (
+              <div className="canon-glass space-y-3 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Link
+                    href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                    className="text-sm font-medium text-[var(--canon-cyan)] hover:underline"
+                  >
+                    {tDetail("openFullTask")}
+                  </Link>
+                  <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                    {tDetail("closeTaskInspector")}
+                  </Button>
+                </div>
+                <DashboardTaskDetailClient taskId={selectedTaskId} skin="canon" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
+                  <Link
+                    href={buildTaskDetailHref(selectedTaskId, workspaceReturnTo)}
+                    className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {tDetail("openFullTask")}
+                  </Link>
+                  <Button variant="secondary" size="sm" onClick={() => selectTask(null)}>
+                    {tDetail("closeTaskInspector")}
+                  </Button>
+                </DashboardGlassCard>
+                <DashboardTaskDetailClient taskId={selectedTaskId} />
+              </div>
+            )}
           </aside>
         ) : null}
       </div>

@@ -7,8 +7,30 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { evaluatePolicy } from "./policy.rules";
 import type { PolicyContext, PolicyResult } from "./policy.types";
 import { getPrivacySettings } from "@/lib/platform/privacy/privacy.service";
+import { containsSecrets } from "./secret-detection";
+import {
+  getInferenceRetentionMode,
+  retentionBlocksEgress,
+  retentionRuleHit,
+} from "./inference-retention";
+import { evaluateTransitiveAuthorization } from "./transitive-authorization";
 
 export type { PolicyResult, PolicyDecision } from "./policy.types";
+export { detectSecrets, containsSecrets } from "./secret-detection";
+export {
+  getInferenceRetentionMode,
+  requireRetentionDeclaration,
+  retentionBlocksEgress,
+  retentionRuleHit,
+} from "./inference-retention";
+export { evaluateTransitiveAuthorization } from "./transitive-authorization";
+export type {
+  AuthorizationHop,
+  AuthorizationMandate,
+  DataClassification,
+  HandoffDestination,
+  TransitiveAuthorizationResult,
+} from "./transitive-authorization";
 
 const POLICY_VERSION = "1.0";
 
@@ -26,6 +48,35 @@ export async function runPolicy(
   traceId?: string | null
 ): Promise<PolicyResult> {
   let result = evaluatePolicy(ctx);
+  const retentionMode = getInferenceRetentionMode();
+  result = {
+    ...result,
+    rule_hits: [...result.rule_hits, retentionRuleHit(retentionMode)],
+  };
+  if (result.decision === "allow" && retentionBlocksEgress(retentionMode)) {
+    result = {
+      decision: "block",
+      rule_hits: [...result.rule_hits, "retention_undeclared_or_blocked"],
+      model_tier: result.model_tier,
+    };
+  }
+  if (result.decision === "allow") {
+    if (
+      containsSecrets(
+        ctx.image_url,
+        ctx.video_url,
+        ctx.system_prompt,
+        ctx.user_message,
+        ctx.egress_text
+      )
+    ) {
+      result = {
+        decision: "block",
+        rule_hits: [...result.rule_hits, "secret_detected"],
+        model_tier: result.model_tier,
+      };
+    }
+  }
   if (result.decision === "allow") {
     for (const mediaUrl of [ctx.image_url, ctx.video_url]) {
       if (!mediaUrl) continue;
@@ -39,6 +90,14 @@ export async function runPolicy(
         break;
       }
     }
+  }
+  if (result.decision === "allow" && ctx.handoff) {
+    const handoff = evaluateTransitiveAuthorization(ctx.handoff.mandate, ctx.handoff.hops);
+    result = {
+      decision: handoff.decision === "allow" ? "allow" : "block",
+      rule_hits: [...result.rule_hits, ...handoff.rule_hits],
+      model_tier: result.model_tier,
+    };
   }
   const decisionId = await recordPolicyDecision(
     supabase,

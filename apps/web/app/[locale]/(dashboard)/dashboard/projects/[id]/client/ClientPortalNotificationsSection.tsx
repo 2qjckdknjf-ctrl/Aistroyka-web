@@ -22,8 +22,15 @@ async function fetchNotifications(projectId: string): Promise<{ data: Item[]; un
   return res.json();
 }
 
-export function ClientPortalNotificationsSection({ projectId }: { projectId: string }) {
+export function ClientPortalNotificationsSection({
+  projectId,
+  surface = "legacy",
+}: {
+  projectId: string;
+  surface?: "legacy" | "canon";
+}) {
   const tDetail = useTranslations("dashboardDetail");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["stakeholder-notifications", projectId],
@@ -43,46 +50,103 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
     },
   });
 
+  const shellClass =
+    surface === "canon"
+      ? "canon-glass p-4 scroll-mt-4 border-l-4 border-l-[var(--canon-cyan)]"
+      : "p-4 border-l-4 border-l-aistroyka-info";
+  const titleClass =
+    surface === "canon"
+      ? "font-semibold text-[var(--canon-text-primary)]"
+      : "font-semibold text-aistroyka-text-primary";
+  const mutedClass =
+    surface === "canon" ? "text-sm text-[var(--canon-text-muted)]" : "text-sm text-aistroyka-text-tertiary";
+  const itemTitleClass =
+    surface === "canon" ? "font-medium text-[var(--canon-text-primary)]" : "font-medium text-aistroyka-text-primary";
+  const itemBodyClass =
+    surface === "canon" ? "mt-1 text-[var(--canon-text-secondary)]" : "mt-1 text-aistroyka-text-secondary";
+  const itemMetaClass =
+    surface === "canon" ? "mt-2 text-xs text-[var(--canon-text-muted)]" : "mt-2 text-xs text-aistroyka-text-tertiary";
+  const itemShell =
+    surface === "canon"
+      ? "rounded-lg border border-[var(--canon-border-glass)] p-3 text-sm"
+      : "rounded border border-aistroyka-border-subtle p-3 text-sm";
+
   if (q.isPending) {
-    return (
-      <DashboardGlassCard className="p-4">
-        <p className="text-sm text-aistroyka-text-tertiary">{tDetail("loadingUpdates")}</p>
-      </DashboardGlassCard>
+    const pending = <p className={mutedClass}>{tDetail("loadingUpdates")}</p>;
+    return surface === "canon" ? (
+      <div id="portal-notifications" className={shellClass}>
+        {pending}
+      </div>
+    ) : (
+      <DashboardGlassCard className="p-4">{pending}</DashboardGlassCard>
     );
   }
 
   if (q.isError) {
-    return null;
+    const errorBody = (
+      <div className="space-y-2" role="status">
+        <p className={mutedClass}>{tDetail("updatesLoadError")}</p>
+        <Button variant="secondary" className="text-xs" onClick={() => void q.refetch()}>
+          {tCommon("retry")}
+        </Button>
+      </div>
+    );
+    return surface === "canon" ? (
+      <div id="portal-notifications" className={shellClass}>
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <div className="mt-3">{errorBody}</div>
+      </div>
+    ) : (
+      <DashboardGlassCard className="p-4">
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <div className="mt-3">{errorBody}</div>
+      </DashboardGlassCard>
+    );
   }
 
   const items = q.data?.data ?? [];
   const unread = q.data?.unread ?? 0;
 
   if (items.length === 0) {
-    return null;
+    return surface === "canon" ? (
+      <div id="portal-notifications" className={shellClass}>
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
+        <p className={`mt-2 ${mutedClass}`}>{tDetail("updatesEmpty")}</p>
+      </div>
+    ) : null;
   }
 
-  return (
-    <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-info">
+  const body = (
+    <>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("updatesForYou")}</h3>
+        <h3 className={titleClass}>{tDetail("updatesForYou")}</h3>
         {unread > 0 ? (
-          <Badge className="bg-aistroyka-info/15 text-aistroyka-info">{unread} {tDetail("new")}</Badge>
+          <Badge
+            className={
+              surface === "canon"
+                ? "bg-[rgba(0,212,255,0.15)] text-[var(--canon-cyan)]"
+                : "bg-aistroyka-info/15 text-aistroyka-info"
+            }
+          >
+            {unread} {tDetail("new")}
+          </Badge>
         ) : null}
       </div>
       <ul className="mt-3 space-y-3">
         {items.map((n) => (
           <li
             key={n.id}
-            className={`rounded border border-aistroyka-border-subtle p-3 text-sm ${
-              n.read_at ? "opacity-80" : "bg-aistroyka-surface-raised/50"
+            className={`${itemShell} ${
+              n.read_at
+                ? "opacity-80"
+                : surface === "canon"
+                  ? "bg-[rgba(255,255,255,0.04)]"
+                  : "bg-aistroyka-surface-raised/50"
             }`}
           >
-            <p className="font-medium text-aistroyka-text-primary">{n.title}</p>
-            {n.body ? <p className="mt-1 text-aistroyka-text-secondary">{n.body}</p> : null}
-            <p className="mt-2 text-xs text-aistroyka-text-tertiary">
-              {new Date(n.created_at).toLocaleString()}
-            </p>
+            <p className={itemTitleClass}>{n.title}</p>
+            {n.body ? <p className={itemBodyClass}>{n.body}</p> : null}
+            <p className={itemMetaClass}>{new Date(n.created_at).toLocaleString()}</p>
             {!n.read_at ? (
               <Button
                 type="button"
@@ -98,6 +162,16 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
           </li>
         ))}
       </ul>
-    </DashboardGlassCard>
+    </>
   );
+
+  if (surface === "canon") {
+    return (
+      <div id="portal-notifications" className={shellClass}>
+        {body}
+      </div>
+    );
+  }
+
+  return <DashboardGlassCard className={shellClass}>{body}</DashboardGlassCard>;
 }

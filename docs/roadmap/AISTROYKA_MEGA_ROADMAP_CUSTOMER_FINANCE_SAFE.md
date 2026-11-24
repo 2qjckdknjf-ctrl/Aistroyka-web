@@ -2031,3 +2031,26 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 - P1 existing CI/release gates: evaluate Claude Ship observe-only and requirement-to-test traceability, exact SHA, independent ROMA approval; no automatic critical merge.
 
 **Codex/Cursor execution contract:** produce gap matrix (implemented/partial/missing/blocked), map each item to existing task ID, implement only verified gaps on separate implementation branch, preserve existing tests and add negative/regression tests, report exact SHA, reproducible commands/results, independent reviewer verdict, cost and remaining blockers. Do not mark DONE on documentation or build alone. Validate candidate upstream documentation and licenses before installing or sending data. Stop on missing permissions or unsafe effects.
+
+### Execution status — Cursor 2026-11-24 (branch `cursor/plan-exec-delta-2026-11-24`)
+
+Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519/#520/#521/#524. **Live deploy observed:** staging `buildStamp.sha7=937a046` (#524), production `b2f34ba` (#521). Purchases unauthorized. Dependabot majors closed/ignored; patch #522 needs CI green.
+
+| ID | Priority | Status | Notes |
+|---|---|---|---|
+| D1a pre-egress secret detection | P0 | IMPLEMENTED | Deployed. Full-history FP cleanup via gitleaks allowlist (no rewrite). |
+| D2a AI_PROVIDER_ALLOWLIST | P0 | IMPLEMENTED | Deployed. |
+| D2b fail-closed fallback on error/null tenant | P0 | IMPLEMENTED | Deployed. |
+| D2c X-AI-Fallback-Reason | P0 | IMPLEMENTED | Unchanged. |
+| D3a inference retention declaration | P0 | PARTIAL→ops | Staging+prod secrets set to `ephemeral_no_train_declared` + require=true. Full vendor ZDR org approval still external. |
+| D3b tenant-scoped credentials / rotation | P0 | PARTIAL→ops | `AI_TENANT_PROVIDER_KEYS_JSON` map + tenantId wiring; populate keys when ready. KMS vault later. |
+| D4 transitive multi-agent authorization | P0 | PARTIAL→code | `evaluateTransitiveAuthorization` + optional `PolicyContext.handoff` in `runPolicy`. |
+| D5 report GET peer isolation tests | P0 | IMPLEMENTED | Deployed. |
+| D6 lite-allow-list | P1 | IMPLEMENTED | Unchanged. |
+| D7 sandbox vendor eval | P0 | BLOCKED / DEFER | See `RESEARCH_DEFER_2026-11-24.md`. |
+| D9 Graph/Drawing OmniEVIE/GLM | P1 | DEFER | No new models. |
+| D10 supplier fixture negatives | P1 | IMPLEMENTED | Deployed. |
+| D11 Monitor API | P1 | DEFER | No connector. |
+| D12 Claude Ship observe-only | P1 | DEFER | Keep human APPROVED. |
+| D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; Material 1.14 closed (#523). |
+| Mobile Mode B upload | P1 | BLOCKED | Local APPROVE+certs present; `release/mobile-pilot-rc` absent on remote. |

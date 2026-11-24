@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
@@ -9,6 +9,8 @@ import {
   Button,
   Modal,
   Select,
+  Input,
+  Textarea,
 } from "@/components/ui";
 import { CanonSurface } from "@/components/canon/CanonSurface";
 import { TaskChatPanel } from "@/components/dashboard/TaskChatPanel";
@@ -49,36 +51,58 @@ export function DashboardTaskDetailClient({
   skin?: "default" | "canon";
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tCommon = useTranslations("common");
   const isCanon = skin === "canon";
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
   const [savingPriority, setSavingPriority] = useState(false);
+  const activeTaskIdRef = useRef(taskId);
+  activeTaskIdRef.current = taskId;
 
-  const fetchTask = () => {
+  const fetchTask = (opts?: { clearCurrent?: boolean }) => {
+    const requestedId = taskId;
     setLoading(true);
-    fetch(`/api/v1/tasks/${taskId}`, { credentials: "include" })
+    // Clear only when switching task ids — routine assign/edit/priority refetch
+    // must keep the panel + chat mounted (Bugbot).
+    if (opts?.clearCurrent) {
+      setTask(null);
+      setError(null);
+    }
+    fetch(`/api/v1/tasks/${requestedId}`, { credentials: "include" })
       .then((r) => {
         if (r.status === 404) throw new Error("Not found");
+        if (r.status === 403) throw new Error("Forbidden");
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
       })
       .then((json: { data?: TaskDetail }) => {
+        if (requestedId !== activeTaskIdRef.current) return;
         setTask(json.data ?? null);
         setError(null);
       })
       .catch((e) => {
+        if (requestedId !== activeTaskIdRef.current) return;
         setError(e instanceof Error ? e.message : "Failed to load");
         setTask(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestedId !== activeTaskIdRef.current) return;
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
-    fetchTask();
+    fetchTask({ clearCurrent: true });
+    // Intentionally only re-run when the selected task id changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchTask closes over latest taskId
   }, [taskId]);
 
   useEffect(() => {
@@ -141,6 +165,34 @@ export function DashboardTaskDetailClient({
       .catch(() => {});
   };
 
+  const openEdit = () => {
+    if (!task) return;
+    setEditTitle(task.title);
+    setEditDescription(task.description ?? "");
+    setEditOpen(true);
+  };
+
+  const saveEdit = () => {
+    if (!editTitle.trim() || savingEdit) return;
+    setSavingEdit(true);
+    fetch(`/api/v1/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        title: editTitle.trim(),
+        description: editDescription.trim() || null,
+      }),
+    })
+      .then((r) => {
+        if (!r.ok) return Promise.reject();
+        setEditOpen(false);
+        return fetchTask();
+      })
+      .catch(() => {})
+      .finally(() => setSavingEdit(false));
+  };
+
   if (loading && !task) {
     return (
       <CanonSurface isCanon={isCanon}>
@@ -182,7 +234,10 @@ export function DashboardTaskDetailClient({
               </Select>
             </label>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" onClick={openEdit}>
+              {tDetail("editDetails")}
+            </Button>
             {(task.status === "pending" || task.status === "in_progress") && (
               <>
                 <Button variant="secondary" size="sm" onClick={() => patchStatus("done")}>
@@ -199,7 +254,7 @@ export function DashboardTaskDetailClient({
           </div>
         </div>
         {task.description ? (
-          <p className="text-aistroyka-body text-aistroyka-text-secondary">{task.description}</p>
+          <p className="text-aistroyka-body text-aistroyka-text-secondary whitespace-pre-wrap">{task.description}</p>
         ) : null}
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-aistroyka-caption">
           <div>
@@ -246,6 +301,39 @@ export function DashboardTaskDetailClient({
       </CanonSurface>
 
       <TaskChatPanel taskId={taskId} />
+
+      {editOpen ? (
+        <Modal open={true} title={tDetail("editDetails")} onClose={() => setEditOpen(false)}>
+          <div className="space-y-3">
+            <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+              {tDetail("taskTitle")}
+              <Input
+                className="mt-1"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+              />
+            </label>
+            <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+              {tDetail("description")}
+              <Textarea
+                className="mt-1"
+                rows={4}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </label>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setEditOpen(false)}>
+                {tCommon("cancel")}
+              </Button>
+              <Button type="button" onClick={saveEdit} disabled={savingEdit || !editTitle.trim()}>
+                {savingEdit ? tCommon("loading") : tCommon("save")}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
 
       {assignOpen && (
         <Modal open={true} title={tDetail("assignTask")} onClose={() => setAssignOpen(false)}>

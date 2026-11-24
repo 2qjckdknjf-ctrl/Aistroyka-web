@@ -1,0 +1,54 @@
+# Dependabot version + security update gates (Codex/Cursor delta 2026-11-24 D15).
+# Validated against GitHub Dependabot options reference (version: 2).
+# Ecosystems match this monorepo: npm (root bun/npm locks), GitHub Actions, Android Gradle.
+# open-pull-requests-limit keeps noise bounded; ignore majors for Next/React stability.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - security
+    ignore:
+      - dependency-name: next
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    # Major Actions bumps have been CI-FAILING on this monorepo (2026-11-24).
+    ignore:
+      - dependency-name: "actions/*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: gradle
+    directory: "/android"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - android
+    # AGP 9 / OkHttp 5 / serialization majors need a dedicated Android slice.
+    ignore:
+      - dependency-name: "com.android.application"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "com.squareup.okhttp3:okhttp"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-json"
+        update-types: ["version-update:semver-major"]

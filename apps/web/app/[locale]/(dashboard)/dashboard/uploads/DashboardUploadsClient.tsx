@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -22,11 +23,8 @@ import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
 
 const STUCK_HOURS = 4;
-const UPLOAD_STATUS_OPTIONS = [
-  { value: "created", label: "Created" },
-  { value: "uploaded", label: "Uploaded" },
-  { value: "finalized", label: "Finalized" },
-];
+
+type UploadsTranslator = ReturnType<typeof useTranslations<"dashboard.uploadsPage">>;
 
 interface UploadRow {
   id: string;
@@ -38,16 +36,16 @@ interface UploadRow {
   expires_at: string;
 }
 
-function formatAge(dateStr: string): string {
+function formatAge(dateStr: string, t: UploadsTranslator): string {
   const d = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffM = Math.floor(diffMs / 60000);
   const diffH = Math.floor(diffMs / 3600000);
   const diffD = Math.floor(diffMs / 86400000);
-  if (diffM < 60) return `${diffM}m ago`;
-  if (diffH < 24) return `${diffH}h ago`;
-  return `${diffD}d ago`;
+  if (diffM < 60) return t("ageMinutes", { count: diffM });
+  if (diffH < 24) return t("ageHours", { count: diffH });
+  return t("ageDays", { count: diffD });
 }
 
 function isStuck(row: UploadRow): boolean {
@@ -61,6 +59,13 @@ function isExpired(row: UploadRow): boolean {
 }
 
 export function DashboardUploadsClient() {
+  const t = useTranslations("dashboard.uploadsPage");
+  const locale = useLocale();
+  const uploadStatusOptions = [
+    { value: "created", label: t("statusCreated") },
+    { value: "uploaded", label: t("statusUploaded") },
+    { value: "finalized", label: t("statusFinalized") },
+  ];
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<UploadRow[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -95,7 +100,7 @@ export function DashboardUploadsClient() {
     if (params.to) sp.set("to", params.to);
     fetch(`/api/v1/media/upload-sessions?${sp}`, { credentials: "include" })
       .then((res) => {
-        if (!res.ok) throw new Error(res.statusText);
+        if (!res.ok) throw new Error(t("loadFailed"));
         return res.json();
       })
       .then((json: { data?: UploadRow[]; total?: number }) => {
@@ -104,7 +109,7 @@ export function DashboardUploadsClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : t("loadFailed"));
         setData([]);
         setTotal(0);
       })
@@ -120,7 +125,7 @@ export function DashboardUploadsClient() {
         showWorker={true}
         showDateRange={true}
         showStatus={true}
-        statusOptions={[{ value: "stuck", label: "Stuck >4h (created/uploaded, ≥4h old)" }, ...UPLOAD_STATUS_OPTIONS]}
+        statusOptions={[{ value: "stuck", label: t("statusStuckFilter") }, ...uploadStatusOptions]}
         showSearch={false}
         showSavedViews={false}
       />
@@ -150,7 +155,7 @@ export function DashboardUploadsClient() {
   }
 
   const exportCsv = () => {
-    const headers = ["Session ID", "Status", "Owner", "Purpose", "Created", "Expires"];
+    const headers = [t("colSession"), t("colStatus"), t("colOwner"), t("colPurpose"), t("csvCreated"), t("csvExpires")];
     const rows = (data ?? []).slice(0, 500).map((r) => [
       r.id,
       r.status,
@@ -169,8 +174,8 @@ export function DashboardUploadsClient() {
         <Card>
           <EmptyState
             icon={<span className="text-2xl">📤</span>}
-            title="No upload sessions"
-            subtitle="Upload sessions will appear here when workers create them."
+            title={t("emptyTitle")}
+            subtitle={t("emptySubtitle")}
           />
         </Card>
       </>
@@ -182,18 +187,18 @@ export function DashboardUploadsClient() {
       {filterBar}
       <Card className="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{t("exportCsv")}</Button>
         </div>
-        <Table aria-label="Upload sessions">
+        <Table aria-label={t("tableLabel")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Session</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Owner</TableHeaderCell>
-            <TableHeaderCell>Purpose</TableHeaderCell>
-            <TableHeaderCell>Age</TableHeaderCell>
-            <TableHeaderCell>Finalized / Expires</TableHeaderCell>
-            <TableHeaderCell>Alert</TableHeaderCell>
+            <TableHeaderCell>{t("colSession")}</TableHeaderCell>
+            <TableHeaderCell>{t("colStatus")}</TableHeaderCell>
+            <TableHeaderCell>{t("colOwner")}</TableHeaderCell>
+            <TableHeaderCell>{t("colPurpose")}</TableHeaderCell>
+            <TableHeaderCell>{t("colAge")}</TableHeaderCell>
+            <TableHeaderCell>{t("colFinalizedExpires")}</TableHeaderCell>
+            <TableHeaderCell>{t("colAlert")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -207,13 +212,13 @@ export function DashboardUploadsClient() {
                 <Link href={`/dashboard/workers/${r.user_id}`} className="font-mono text-aistroyka-caption text-aistroyka-accent hover:underline">{r.user_id.slice(0, 8)}…</Link>
               </TableCell>
               <TableCell>{r.purpose}</TableCell>
-              <TableCell className="tabular-nums text-aistroyka-text-secondary">{formatAge(r.created_at)}</TableCell>
+              <TableCell className="tabular-nums text-aistroyka-text-secondary">{formatAge(r.created_at, t)}</TableCell>
               <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                {r.status === "finalized" ? formatAge(r.created_at) : new Date(r.expires_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
+                {r.status === "finalized" ? formatAge(r.created_at, t) : new Date(r.expires_at).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}
               </TableCell>
               <TableCell>
-                {isExpired(r) && <Badge variant="danger">Expired</Badge>}
-                {!isExpired(r) && isStuck(r) && <Badge variant="warning">Stuck</Badge>}
+                {isExpired(r) && <Badge variant="danger">{t("alertExpired")}</Badge>}
+                {!isExpired(r) && isStuck(r) && <Badge variant="warning">{t("alertStuck")}</Badge>}
                 {!isExpired(r) && !isStuck(r) && "—"}
               </TableCell>
             </TableRow>

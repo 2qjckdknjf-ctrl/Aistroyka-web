@@ -8,6 +8,7 @@ import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
 } from "@/lib/ai/prompts";
+import { resolveAiProviderCredentials } from "@/lib/platform/ai/credentials/resolve-ai-provider-credentials";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 
 const NAME = "openai";
@@ -17,7 +18,10 @@ export async function invokeVision(
   options?: VisionOptions
 ): Promise<VisionResult | null> {
   const config = getServerConfig();
-  const apiKey = config.OPENAI_API_KEY?.trim();
+  const apiKey =
+    resolveAiProviderCredentials("openai", options?.tenantId ?? null).apiKey?.trim() ||
+    config.OPENAI_API_KEY?.trim() ||
+    "";
   if (!apiKey) return null;
   const model = options?.model ?? config.OPENAI_VISION_MODEL ?? "gpt-4o";
   const systemPrompt = options?.systemPrompt ?? CONSTRUCTION_VISION_SYSTEM_PROMPT;
