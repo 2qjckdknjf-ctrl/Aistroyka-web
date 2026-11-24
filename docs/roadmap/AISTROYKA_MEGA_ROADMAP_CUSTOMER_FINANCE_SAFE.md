@@ -2019,3 +2019,15 @@ These are **proposed additions to existing workstreams** from the November 11 in
 | P2 | Existing ChatGPT/plugin integration | Study payment-token/wallet patterns only as future architecture; no claim of availability for Spanish customers, no autonomous payment. |
 
 **Source references:** [OpenAI Performance Factory](https://openai.com/index/how-openai-performance-factory-keeps-chatgpt-fast/), [Google Mirror Dimension](https://blog.google/security/mirror-dimension-for-agents/), [OpenAI frontier risk controls](https://openai.com/index/managing-frontier-ai-risk/). Other recent model/vendor announcements are *candidates requiring independent availability and price validation*, not approved dependencies. No new runtime privileges, model installation, migrations, payments, deployment, PR merge, or trading orders are authorized by this document.
+
+
+## Codex / Cursor execution delta — 2026-11-24
+
+Planning reconciliation for 21–24 November; incorporates previously unrecorded 21–22 November recommendations. Existing workstreams and IDs own these acceptance extensions; do not duplicate implemented features. Vendor names/releases are research candidates from daily digests, not independently verified dependencies. Before execution, read current main, this planning branch and active implementation PRs; reconcile against code and evidence. Main blob at review: `6c0e1bb183c9d652e44112e4af24bc9968c02bda`. P0 existing blockers first; P1 bounded sandbox pilots; P2 research. Owner/reviewer TBD. No production changes, automatic merge, purchases or live trading authorized.
+
+- P0 existing pilot/security: pre-egress secret detection, final inference-provider allowlist and retention validation, tenant-scoped credentials and transitive authorization; test forbidden fallback and incident rotation without real secrets.
+- P1 existing Construction Graph/Drawing Intelligence: verify OmniEVIE-4B availability/license and benchmark retrieval across PDF pages, photos and video timestamps with source provenance, tenant ACL and Recall@K; GLM-5.4 candidate for CAD analysis, deterministic geometry and professional approval mandatory.
+- P1 existing market intelligence/supplier workflow: compare Monitor API for competitor tariffs and supplier changes; source timestamps, dedupe, signed events, no autonomous orders.
+- P1 existing CI/release gates: evaluate Claude Ship observe-only and requirement-to-test traceability, exact SHA, independent ROMA approval; no automatic critical merge.
+
+**Codex/Cursor execution contract:** produce gap matrix (implemented/partial/missing/blocked), map each item to existing task ID, implement only verified gaps on separate implementation branch, preserve existing tests and add negative/regression tests, report exact SHA, reproducible commands/results, independent reviewer verdict, cost and remaining blockers. Do not mark DONE on documentation or build alone. Validate candidate upstream documentation and licenses before installing or sending data. Stop on missing permissions or unsafe effects.
