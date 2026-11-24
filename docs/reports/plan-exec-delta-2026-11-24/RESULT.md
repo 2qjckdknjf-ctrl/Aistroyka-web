@@ -29,9 +29,10 @@ Statuses used: `IMPLEMENTED` / `PARTIAL` / `MISSING` / `BLOCKED`. Nothing marked
 4. GET peer-isolation tests for `GET /api/v1/reports/:id`
 5. CI Gitleaks workflow (OSS CLI v8.30.1, Apache-2.0) + `.gitleaks.toml` allowlist for known FP/synthetic fixtures
 
-### P1 (confirmed config gaps)
+### P1 (confirmed gaps)
 
 6. `.github/dependabot.yml` — npm (root), github-actions, android/gradle weekly
+7. D10 supplier fixture negatives — VAT / unit / price drift / malicious catalog flags; lost-ACK + duplicate idempotency rehearsal; forbidden buyer role helper (portal/stakeholder/customer denied)
 
 ## Tests (reproducible)
 
@@ -71,7 +72,7 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 | Full-history gitleaks cleanup | OWNER_GATE (no history rewrite) |
 | Dependabot GitHub feature enablement | OWNER_GATE if org setting off |
 | D7/D9/D11/D12 research vendors | RESEARCH_ONLY — no installs |
-| D10 supplier VAT/injection fixtures | PARTIAL — deferred |
+| D10 supplier VAT/injection fixtures | PARTIAL→code landed (review pending) |
 | Real FCM / aps-environment (mobile) | OWNER_GATE (separate mobile WT) |
 
 ## Cost

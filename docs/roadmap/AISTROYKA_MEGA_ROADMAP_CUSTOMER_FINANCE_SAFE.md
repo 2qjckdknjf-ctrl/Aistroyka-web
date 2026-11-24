@@ -2049,7 +2049,7 @@ Reconciled against `origin/main` tip at work start and open PRs #488/#501/#503/#
 | D6 lite-allow-list | P1 | IMPLEMENTED | Unchanged. |
 | D7 sandbox vendor eval | P0 | BLOCKED / RESEARCH_ONLY | No installs. |
 | D9 Graph/Drawing OmniEVIE/GLM | P1 | PARTIAL / RESEARCH_ONLY | No new models. |
-| D10 supplier fixture negatives | P1 | PARTIAL | Engine exists; VAT/injection cases still open. |
+| D10 supplier fixture negatives | P1 | PARTIAL→code landed | Negative fixtures + issue codes (`vat_not_normalized`, `unit_mismatch`, `price_changed`, `catalog_text_unsafe`); ACK/idempotency rehearsal; forbidden-buyer role helper. No purchases. Not DONE until independent review. |
 | D11 Monitor API | P1 | MISSING / RESEARCH_ONLY | |
 | D12 Claude Ship observe-only | P1 | MISSING / RESEARCH_ONLY | |
 | D15 Dependabot.yml | P1 | PARTIAL→config landed | `.github/dependabot.yml` (npm / github-actions / android gradle weekly). Activation still depends on GitHub Dependabot enablement. |

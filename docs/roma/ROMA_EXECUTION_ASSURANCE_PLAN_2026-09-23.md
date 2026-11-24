@@ -458,6 +458,7 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 | P0 sandbox Strands/LangSmith eval | BLOCKED / RESEARCH_ONLY | No vendor install; licence check required before any trial. |
 | P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Existing governed-ai-pr-e2e verdict tooling; requirement→test matrix artifact still MISSING. |
 | P1 Dependabot supply-chain | PARTIAL (config) | `.github/dependabot.yml` landed; GitHub enablement OWNER_GATE if alerts off. |
+| P1 supplier fixture negatives (D10) | PARTIAL (code) | VAT/unit/price/injection flags + ACK/idempotency rehearsal; no purchases. |
 | P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
 
 See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md`. Independent ROMA reviewer verdict: pending.
