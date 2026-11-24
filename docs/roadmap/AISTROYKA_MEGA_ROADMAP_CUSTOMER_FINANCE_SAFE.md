@@ -2034,11 +2034,11 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 
 ### Execution status — Cursor 2026-11-24 (branch `cursor/plan-exec-delta-2026-11-24`)
 
-Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519. **Live deploy observed:** staging+prod `buildStamp.sha7=3895681` (#518). Purchases unauthorized. Dependabot majors (#515/#516) and actions major bumps with CI FAILURE not auto-merged.
+Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519/#520/#521/#524. **Live deploy observed:** staging `buildStamp.sha7=937a046` (#524), production `b2f34ba` (#521). Purchases unauthorized. Dependabot majors closed/ignored; patch #522 needs CI green.
 
 | ID | Priority | Status | Notes |
 |---|---|---|---|
-| D1a pre-egress secret detection | P0 | IMPLEMENTED | Deployed. Full-history FP cleanup OWNER_GATE. |
+| D1a pre-egress secret detection | P0 | IMPLEMENTED | Deployed. Full-history FP cleanup via gitleaks allowlist (no rewrite). |
 | D2a AI_PROVIDER_ALLOWLIST | P0 | IMPLEMENTED | Deployed. |
 | D2b fail-closed fallback on error/null tenant | P0 | IMPLEMENTED | Deployed. |
 | D2c X-AI-Fallback-Reason | P0 | IMPLEMENTED | Unchanged. |
@@ -2052,4 +2052,5 @@ Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519. **L
 | D10 supplier fixture negatives | P1 | IMPLEMENTED | Deployed. |
 | D11 Monitor API | P1 | DEFER | No connector. |
 | D12 Claude Ship observe-only | P1 | DEFER | Keep human APPROVED. |
-| D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; several Dependabot CI FAILURE. |
+| D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; Material 1.14 closed (#523). |
+| Mobile Mode B upload | P1 | BLOCKED | Local APPROVE+certs present; `release/mobile-pilot-rc` absent on remote. |
