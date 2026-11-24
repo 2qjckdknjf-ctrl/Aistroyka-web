@@ -760,7 +760,21 @@
     "defaultError": "Impossibile completare l'avvio. Riprova.",
     "onboarding": "Avvio",
     "welcomeToAistroyka": "Benvenuto in Aistroyka",
-    "completeStepsToGetStarted": "Completa questi passaggi per iniziare."
+    "completeStepsToGetStarted": "Completa questi passaggi per iniziare.",
+    "demoProject": {
+      "name": "Progetto demo",
+      "badge": "Demo",
+      "description": "Dati di esempio. Crea il primo progetto per vedere attività, report e insight IA.",
+      "tasksHeading": "Attività",
+      "taskFoundation": "Ispezione delle fondazioni",
+      "taskSafety": "Briefing sulla sicurezza",
+      "taskDelivery": "Consegna materiali",
+      "reportsHeading": "Report e foto",
+      "reportsPhotos": "{reports} report, {photos} foto",
+      "aiInsightsHeading": "Insight IA",
+      "aiSummary": "Il progetto è in linea. Fondazioni all'85%. Un'attività in attesa di evidenze.",
+      "cta": "Crea il primo progetto →"
+    }
   },
   "helpCenter": {
     "title": "Guida progetto e base di conoscenza",
