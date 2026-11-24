@@ -4,24 +4,22 @@ Gate verification (same session): `APPROVE_*=YES`, ASC `.p8` + key/issuer, Play 
 
 ## iOS TestFlight
 
-| App | Archive | Export | Upload |
-|---|---|---|---|
-| Worker (`ai.aistroyka.worker`) | SUCCEEDED | SUCCEEDED | **UPLOAD SUCCEEDED** Delivery UUID `44cf132b-1844-48be-8d86-b1aae4c48d70` |
-| Manager (`ai.aistroyka.manager`) | SUCCEEDED | SUCCEEDED | **UPLOAD SUCCEEDED** Delivery UUID `398dd36c-f2d2-489b-993a-070695dcb782` |
+| App | Archive | Export | Upload | ASC processing |
+|---|---|---|---|---|
+| Worker (`ai.aistroyka.worker`) | SUCCEEDED | SUCCEEDED | Delivery UUID `44cf132b-1844-48be-8d86-b1aae4c48d70` | **VALID** build `2026112203` (preRelease `1.0`) |
+| Manager (`ai.aistroyka.manager`) | SUCCEEDED | SUCCEEDED | Delivery UUID `398dd36c-f2d2-489b-993a-070695dcb782` | **VALID** build `2026063001` (preRelease `4.3.0`) |
 
-Build number used: `AISTROYKA_IOS_BUILD_NUMBER=2026112201` (from env). ASC processing continues asynchronously in App Store Connect (no store-live claim until processing/TestFlight availability confirmed in ASC UI).
+Note: `Info.plist` / project `CFBundleVersion` may override `AISTROYKA_IOS_BUILD_NUMBER`; observed ASC versions above are source of truth.
 
 ## Android Google Play (internal)
 
-| App | Prior internal track | New upload `versionCode=2026112501` |
+| App | Prior completed | New `versionCode=2026112501` |
 |---|---|---|
-| Worker | **completed** `2026063001` already on `internal` | Bundle upload OK; **commit rejected**: Play `403 Target SDK of artifact is too low: 2026112501` (bundletool dump shows `targetSdkVersion=35` / `compileSdk=35` — residual Play Console policy/error) |
-| Manager | **completed** `2026063001` already on `internal` | Same commit rejection |
+| Worker | completed `2026063001` | **draft committed** on `internal` (completed status rejected with cryptic `Target SDK of artifact is too low` despite AAB `targetSdkVersion=35`) |
+| Manager | completed `2026063001` | **draft committed** on `internal` (same completed-vs-draft behavior) |
 
-Conclusion: Android Mode B internal track already had a completed release (`2026063001`). Fresh bump blocked at Play commit despite targetSdk 35 in AAB — needs Play Console investigation (not a missing local credential).
+Promote draft→completed in Play Console when store listing / policy gates allow, or keep draft for tester opt-in.
 
-## Artifacts (local, gitignored)
+## Runtime after evidence PR chain
 
-- `/Users/alex/Projects/AISTROYKA-mobile-mode-b-2026-11-25/artifacts/ios/`
-- AABs under `android/*/build/outputs/bundle/release/`
-- JSON: `MODE_B_ANDROID_UPLOAD_2026-11-25.json`
+Staging + production `GET /api/v1/health` → `buildStamp.sha7=733a766` (#525) observed 2026-11-24.

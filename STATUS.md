@@ -2,7 +2,8 @@
 
 ## Plan-exec OWNER_GATE closed — 2026-11-24/25
 
-Protected merges [#521](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/521) (`b2f34ba`) + [#524](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/524) (`937a046`) + roadmap [#488](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/488). Non-author APPROVED. Staging/production health after #524: staging `937a046`, production `b2f34ba` (prod may lag next staging SUCCESS). Retention Worker secrets set; tenant key map coded (populate `AI_TENANT_PROVIDER_KEYS_JSON` when ready). Vendor ZDR still sales-gated. Mobile Mode B: iOS Worker+Manager TestFlight **UPLOAD SUCCEEDED** (ASC processing); Android internal already had `2026063001`, fresh VC blocked by Play Console target-SDK commit error despite AAB `targetSdk=35`. Evidence: `docs/reports/plan-exec-delta-2026-11-24/MODE_B_UPLOAD_2026-11-25.md`.
+Main tip `#525` → `733a766` live on staging + production. Roadmap `#488` MERGED. iOS Mode B TestFlight builds **VALID** (Worker `2026112203`, Manager `2026063001`). Android internal: prior completed `2026063001`; new `2026112501` committed as **draft** (Play rejects `completed` with cryptic target-SDK error despite AAB targetSdk 35). Evidence: `docs/reports/plan-exec-delta-2026-11-24/MODE_B_UPLOAD_2026-11-25.md`. Vendor ZDR + `AI_TENANT_PROVIDER_KEYS_JSON` populate remain external.
+
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
 

@@ -98,7 +98,7 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 | D3b tenant key map code | DONE — populate `AI_TENANT_PROVIDER_KEYS_JSON` when ready |
 | Full-history gitleaks cleanup | CLOSED via allowlist (no history rewrite) |
 | Dependabot majors | CLOSED / ignored in config |
-| Mobile Mode B store upload | BLOCKED — assets/APPROVE present; `release/mobile-pilot-rc` missing; no upload orchestrator |
+| Mobile Mode B store upload | PARTIAL — iOS TestFlight VALID; Android internal draft `2026112501` (completed blocked by Play); no `release/mobile-pilot-rc` |
 | D7/D9/D11/D12 research vendors | RESEARCH_ONLY — no installs |
 | #488 roadmap PR | still CONFLICTING / needs rebase |
 
