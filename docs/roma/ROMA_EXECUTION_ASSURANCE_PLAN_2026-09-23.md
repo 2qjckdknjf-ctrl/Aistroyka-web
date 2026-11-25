@@ -462,6 +462,8 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 | P0 independent verification enum FAIL/NOT_RUN/UNKNOWN | PARTIAL | Matrix + research deferral note. |
 | P1 Dependabot supply-chain | IMPLEMENTED | Majors closed/ignored; #523 Material 1.14 closed. |
 | P1 supplier fixture negatives (D10) | IMPLEMENTED (deployed) | On main / production. |
+| P1 AIS-GRAPH-004 invalidate-on-revoke | IMPLEMENTED (deployed) | #527 + review-service tests for rejected/insufficient_evidence. |
 | P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
+| P1 Mobile Mode B | PARTIAL | iOS TestFlight VALID; Android internal draft. |
 
 See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md` + `OWNER_GATE_CLOSURE_2026-11-24.md`. Independent ROMA reviewer verdict: pending.

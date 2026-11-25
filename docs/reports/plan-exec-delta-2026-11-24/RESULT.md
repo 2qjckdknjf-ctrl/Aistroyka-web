@@ -100,7 +100,9 @@ gitleaks detect --source . --no-git --config .gitleaks.toml --redact --exit-code
 | Dependabot majors | CLOSED / ignored in config |
 | Mobile Mode B store upload | PARTIAL — iOS TestFlight VALID; Android internal draft `2026112501` (completed blocked by Play); no `release/mobile-pilot-rc` |
 | D7/D9/D11/D12 research vendors | RESEARCH_ONLY — no installs |
-| #488 roadmap PR | still CONFLICTING / needs rebase |
+| #488 roadmap PR | DONE — MERGED |
+| AIS-GRAPH-004 invalidate-on-revoke | DONE — #527 deployed; review tests assert prune on reject |
+| Post-deploy health smoke cold-start | DONE — #528 retries |
 
 ## Cost
 

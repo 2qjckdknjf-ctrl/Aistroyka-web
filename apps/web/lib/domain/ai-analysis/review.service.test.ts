@@ -1,16 +1,30 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const invalidateConstructionGraphForSource = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ invalidated: true, removedNodes: 1 })
+);
+
+vi.mock("@/lib/domain/construction-graph/construction-graph.repository", () => ({
+  invalidateConstructionGraphForSource,
+}));
+
 import { reviewAiAnalysis, validateReviewVerdict } from "./review.service";
 
 function mockReviewClient(opts: {
   load: unknown;
   update: unknown;
   correctionInsert?: unknown;
+  mediaProjectId?: string | null;
 }) {
   const loadMaybe = vi.fn().mockResolvedValue({ data: opts.load, error: null });
   const updateMaybe = vi.fn().mockResolvedValue({ data: opts.update, error: null });
   const correctionMaybe = vi
     .fn()
     .mockResolvedValue({ data: opts.correctionInsert ?? { id: "corr-1" }, error: null });
+  const mediaMaybe = vi.fn().mockResolvedValue({
+    data: opts.mediaProjectId ? { project_id: opts.mediaProjectId } : null,
+    error: null,
+  });
   const eq2 = vi.fn().mockReturnValue({
     select: () => ({ maybeSingle: updateMaybe }),
   });
@@ -23,6 +37,15 @@ function mockReviewClient(opts: {
           insert: vi.fn(() => ({
             select: vi.fn(() => ({ maybeSingle: correctionMaybe })),
           })),
+        };
+      }
+      if (table === "media") {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({ maybeSingle: mediaMaybe }),
+            }),
+          }),
         };
       }
       return {
@@ -47,6 +70,10 @@ describe("validateReviewVerdict", () => {
 });
 
 describe("reviewAiAnalysis", () => {
+  beforeEach(() => {
+    invalidateConstructionGraphForSource.mockClear();
+  });
+
   it("returns NOT_FOUND when row missing or tenant mismatches", async () => {
     const supabase = mockReviewClient({ load: null, update: null });
     const missing = await reviewAiAnalysis(supabase as never, {
@@ -75,6 +102,7 @@ describe("reviewAiAnalysis", () => {
       load: {
         id: "a1",
         tenant_id: "t1",
+        media_id: "m1",
         review_status: "pending",
         stage: "rough",
         completion_percent: 40,
@@ -106,6 +134,7 @@ describe("reviewAiAnalysis", () => {
       reviewedBy: "u1",
       correctionId: "corr-1",
     });
+    expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
   });
 
   it("requires correctedPayload for edited and marks graph-eligible", async () => {
@@ -121,6 +150,7 @@ describe("reviewAiAnalysis", () => {
       load: {
         id: "a1",
         tenant_id: "t1",
+        media_id: null,
         review_status: "pending",
         stage: "rough",
         completion_percent: 40,
@@ -150,13 +180,15 @@ describe("reviewAiAnalysis", () => {
       graphEligible: true,
       correctionId: "corr-1",
     });
+    expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
   });
 
-  it("marks insufficient_evidence as not Graph-eligible", async () => {
+  it("marks insufficient_evidence as not Graph-eligible and invalidates overlay", async () => {
     const supabase = mockReviewClient({
       load: {
         id: "a1",
         tenant_id: "t1",
+        media_id: "m1",
         review_status: "pending",
         stage: null,
         completion_percent: null,
@@ -171,6 +203,7 @@ describe("reviewAiAnalysis", () => {
         reviewed_at: "2026-10-28T12:00:00.000Z",
         reviewed_by: "u1",
       },
+      mediaProjectId: "p1",
     });
     const out = await reviewAiAnalysis(supabase as never, {
       analysisId: "a1",
@@ -185,5 +218,54 @@ describe("reviewAiAnalysis", () => {
       graphEligible: false,
       correctionId: "corr-1",
     });
+    expect(invalidateConstructionGraphForSource).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        tenantId: "t1",
+        projectId: "p1",
+        sourceTable: "ai_analysis",
+        sourceId: "a1",
+      })
+    );
+  });
+
+  it("invalidates overlay on rejected without rolling back the verdict", async () => {
+    const supabase = mockReviewClient({
+      load: {
+        id: "a1",
+        tenant_id: "t1",
+        media_id: "m1",
+        review_status: "pending",
+        stage: "rough",
+        completion_percent: 10,
+        risk_level: "low",
+        detected_issues: [],
+        recommendations: [],
+        frame_count: 1,
+      },
+      update: {
+        id: "a1",
+        review_status: "rejected",
+        reviewed_at: "2026-10-28T12:00:00.000Z",
+        reviewed_by: "u1",
+      },
+      mediaProjectId: "p9",
+    });
+    invalidateConstructionGraphForSource.mockRejectedValueOnce(new Error("overlay down"));
+
+    const out = await reviewAiAnalysis(supabase as never, {
+      analysisId: "a1",
+      tenantId: "t1",
+      reviewerUserId: "u1",
+      status: "rejected",
+      note: "wrong source",
+    });
+    expect(out).toMatchObject({
+      ok: true,
+      reviewStatus: "rejected",
+      graphEligible: false,
+      correctionId: "corr-1",
+    });
+    expect(invalidateConstructionGraphForSource).toHaveBeenCalled();
   });
 });

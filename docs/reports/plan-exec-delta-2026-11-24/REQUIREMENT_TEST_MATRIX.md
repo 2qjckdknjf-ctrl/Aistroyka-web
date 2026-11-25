@@ -17,5 +17,7 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | D10 | Supplier negatives | `draft-comparison.engine.test.ts` | PASS | #507 |
 | D15 | Dependabot config | open Dependabot PRs #509–#517 | PASS (enabled) | do not auto-merge majors |
 | Deploy | Staging/prod reflect #507 | `GET /api/v1/health` → `buildStamp.sha7` | PASS | `030e089` staging+prod |
+| GRAPH-004 | Invalidate overlay on non-eligible review | `review.service.test.ts` + `construction-graph.invalidate.test.ts` | PASS | #527 + follow-up tests |
+| Smoke cold-start | Health retry after deploy | `scripts/smoke/pilot_launch.sh` | PASS | #528 |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).
