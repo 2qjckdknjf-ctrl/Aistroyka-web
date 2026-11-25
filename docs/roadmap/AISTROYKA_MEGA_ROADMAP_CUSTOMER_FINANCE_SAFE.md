@@ -29,7 +29,7 @@ Purpose: Deep sequential product/engineering plan to finish AISTROYKA as a produ
 | Security fixes #446/#447 | PR_ONLY, оба OPEN DRAFT; observed required check SUCCESS | #446 exact attachment/project/source enforcement; #447 private helper grants. #447 hosted DDL не доказан. До runtime closure нужен отдельный approved rollout/receipts |
 | Exact quantity/commercial core #448→#449 | PR_ONLY, bounded pure core; #448 observed check SUCCESS; #449 main-only required CI не запускался | Storage/evidence/spec bindings, UI, professional confirmation и independent C05 gold acceptance не закрыты |
 | #453 полный V2 audit | PR_ONLY / docs-only, 97 proposed packages; 406 AC, 243 planned checks | Ни один пакет автоматически не completed. Frozen JSON/97 mappings сохранять; актуальный acceptance ledger обновлять отдельно |
-| Workflow supply chain | PARTIAL: часть actions закреплена SHA, `ci-check.yml` и другие workflows ещё используют tags | Инвентаризация всех third-party actions, immutable SHA, least privilege, dependency provenance и tested exception path |
+| Workflow supply chain | PARTIAL→ops: `.github/workflows` third-party actions pinned to SHA (2026-11-25 inventory); Dependabot alerts API still owner-gated | Keep pins on new workflows; enable Dependabot alerts when admin scope available; least privilege / provenance still open |
 
 ### Один ID на одно требование
 
