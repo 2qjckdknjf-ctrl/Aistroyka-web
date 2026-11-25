@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Main tip `#529` → confirm `GET /api/v1/health` `buildStamp.sha7=4b66e27` on staging+prod. Graph invalidate-on-revoke + health smoke retries live. Next slice: GitHub Actions SHA pins across workflows. Mode B: iOS TestFlight VALID; Android internal draft `2026112501`. Remaining external: vendor ZDR, `AI_TENANT_PROVIDER_KEYS_JSON`, Play draft→completed, Dependabot alerts enablement. Evidence: `docs/reports/plan-exec-delta-2026-11-24/`, `docs/security/GITHUB_ACTIONS_SHA_PIN_INVENTORY_2026-11-25.md`.
+Main tip `#531` Actions SHA pins — confirm `GET /api/v1/health` after deploy. Graph invalidate-on-revoke (#527) + health smoke retries (#528) live. Manager completeness/recon UI hard audit: **CODE_PRESENT** (do not rebuild) — `docs/reports/plan-exec-delta-2026-11-24/MANAGER_COMPLETENESS_RECON_UI_INVENTORY_2026-11-25.md`. Mode B: iOS TestFlight VALID; Android internal draft. Remaining external: vendor ZDR, `AI_TENANT_PROVIDER_KEYS_JSON`, Play draft→completed, Dependabot alerts enablement.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
