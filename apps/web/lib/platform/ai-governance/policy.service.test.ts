@@ -135,6 +135,27 @@ describe("policy.service", () => {
     expect(result.rule_hits).toContain("secret_detected");
   });
 
+  it("does not treat Supabase signed-URL JWT query tokens as secret_detected", async () => {
+    // Synthetic JWT fixture (not a live credential); assembled to avoid naive secret scanners.
+    const syntheticJwt = ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9", "eyJzdWIiOiIxMjM0NTY3ODkwIn0", "abcDEFghiJKLmnoPQRstuVWXyz0123456789"].join(
+      "."
+    );
+    const signed = `https://vthfrxehrursfloevnlp.supabase.co/storage/v1/object/sign/media/x.jpg?token=${syntheticJwt}`;
+    const result = await runPolicy(
+      supabase,
+      {
+        tenant_id: "t1",
+        subscription_tier: "free",
+        resource_type: "media",
+        image_count: 1,
+        image_url: signed,
+      },
+      null
+    );
+    expect(result.decision).toBe("allow");
+    expect(result.rule_hits).not.toContain("secret_detected");
+  });
+
   it("blocks cross-tenant multi-agent handoff when handoff context is provided", async () => {
     const result = await runPolicy(
       supabase,
