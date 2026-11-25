@@ -25,7 +25,7 @@ Purpose: Deep sequential product/engineering plan to finish AISTROYKA as a produ
 | Область | Подтверждённый уровень | Оставшийся gate |
 |---|---|---|
 | Customer iOS/portal/gallery, ручной intake, report publication | CODE_PRESENT в main; historical deployed/device evidence описан в [план/факт](CURRENT_EXECUTION_STATE_2026-10-11.md) | Полный актуальный UX/device/role/revoke сценарий; не создавать приложения и CRUD повторно |
-| Async image analysis, request_key; Construction Graph repository/overlay | CODE_PRESENT и тестовые файлы в main; image job имеет historical live proof | Report-media handler `apps/web/lib/platform/jobs/job.handlers/ai-analyze-media.ts` вызывает `analyzeImage`, но не сохраняет его результат; полное video→review→Graph ещё PARTIAL |
+| Async image analysis, request_key; Construction Graph repository/overlay | CODE_PRESENT; durable persist + human review gate on main (#457/#458); Graph invalidate-on-revoke (#527) | Полное video→review→Graph live evidence ещё PARTIAL; AIS-GRAPH-004 code path IMPLEMENTED for ai_analysis revoke |
 | Security fixes #446/#447 | PR_ONLY, оба OPEN DRAFT; observed required check SUCCESS | #446 exact attachment/project/source enforcement; #447 private helper grants. #447 hosted DDL не доказан. До runtime closure нужен отдельный approved rollout/receipts |
 | Exact quantity/commercial core #448→#449 | PR_ONLY, bounded pure core; #448 observed check SUCCESS; #449 main-only required CI не запускался | Storage/evidence/spec bindings, UI, professional confirmation и independent C05 gold acceptance не закрыты |
 | #453 полный V2 audit | PR_ONLY / docs-only, 97 proposed packages; 406 AC, 243 planned checks | Ни один пакет автоматически не completed. Frozen JSON/97 mappings сохранять; актуальный acceptance ledger обновлять отдельно |
@@ -2053,4 +2053,5 @@ Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519/#520
 | D11 Monitor API | P1 | DEFER | No connector. |
 | D12 Claude Ship observe-only | P1 | DEFER | Keep human APPROVED. |
 | D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; Material 1.14 closed (#523). |
-| Mobile Mode B upload | P1 | BLOCKED | Local APPROVE+certs present; `release/mobile-pilot-rc` absent on remote. |
+| Mobile Mode B upload | P1 | PARTIAL | iOS TestFlight VALID; Android internal draft `2026112501` (completed blocked by Play); no `release/mobile-pilot-rc`. |
+| AIS-GRAPH-004 invalidate-on-revoke | P1 | IMPLEMENTED | #527 + review-service tests: non-eligible verdicts prune overlay best-effort. |

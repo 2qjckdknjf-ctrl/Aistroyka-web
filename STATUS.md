@@ -1,8 +1,8 @@
 # STATUS — AISTROYKA
 
-## Plan-exec OWNER_GATE closed — 2026-11-24/25
+## Plan-exec follow-through — 2026-11-25
 
-Main tip `#525` → `733a766` live on staging + production. Roadmap `#488` MERGED. iOS Mode B TestFlight builds **VALID** (Worker `2026112203`, Manager `2026063001`). Android internal: prior completed `2026063001`; new `2026112501` committed as **draft** (Play rejects `completed` with cryptic target-SDK error despite AAB targetSdk 35). Evidence: `docs/reports/plan-exec-delta-2026-11-24/MODE_B_UPLOAD_2026-11-25.md`. Vendor ZDR + `AI_TENANT_PROVIDER_KEYS_JSON` populate remain external.
+Main tip after #527/#528: Graph invalidate-on-revoke live; post-deploy health smoke cold-start retries merged. Confirm `GET /api/v1/health` `buildStamp.sha7` on staging+prod (expect `c280ee0` after #528 deploy). Roadmap #488 MERGED. Mode B: iOS TestFlight VALID; Android internal draft `2026112501`. Remaining external: vendor ZDR, populate `AI_TENANT_PROVIDER_KEYS_JSON`, Play draft→completed. Evidence: `docs/reports/plan-exec-delta-2026-11-24/`.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
