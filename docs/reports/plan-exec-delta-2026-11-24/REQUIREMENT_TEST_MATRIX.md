@@ -19,5 +19,8 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | Deploy | Staging/prod reflect #507 | `GET /api/v1/health` → `buildStamp.sha7` | PASS | `030e089` staging+prod |
 | GRAPH-004 | Invalidate overlay on non-eligible review | `review.service.test.ts` + `construction-graph.invalidate.test.ts` | PASS | #527 + follow-up tests |
 | Smoke cold-start | Health retry after deploy | `scripts/smoke/pilot_launch.sh` | PASS | #528 |
+| PILOT-001 unit | Role/RLS/revoke/peer/finance/lite suites | `bunx vitest run` (12 files, see evidence) | PASS (159) | tip `80ff987` / runtime `91ff124` |
+| PILOT-001 staging | Completeness templates + recon findings + unknown report | curl staging with SMOKE_* | PASS (200/200/404) | evidence 2026-11-25 |
+| Completeness UI | Manager panels hard audit | inventory markdown | CODE_PRESENT | #534 |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).

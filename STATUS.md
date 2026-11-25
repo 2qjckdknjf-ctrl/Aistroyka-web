@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Main tip `#531` Actions SHA pins — confirm `GET /api/v1/health` after deploy. Graph invalidate-on-revoke (#527) + health smoke retries (#528) live. Manager completeness/recon UI hard audit: **CODE_PRESENT** (do not rebuild) — `docs/reports/plan-exec-delta-2026-11-24/MANAGER_COMPLETENESS_RECON_UI_INVENTORY_2026-11-25.md`. Mode B: iOS TestFlight VALID; Android internal draft. Remaining external: vendor ZDR, `AI_TENANT_PROVIDER_KEYS_JSON`, Play draft→completed, Dependabot alerts enablement.
+Runtime health staging+prod `buildStamp.sha7=91ff124` (#531 Actions pins). Tip `80ff987` (#534 docs). Graph revoke (#527) live. Manager completeness/recon: **CODE_PRESENT** + staging API smoke 200 (templates/findings). AIS-PILOT-001: unit 159 PASS + staging unknown-report 404 — evidence `docs/reports/plan-exec-delta-2026-11-24/AIS_PILOT_001_EVIDENCE_2026-11-25.md` (still PARTIAL for multi-persona revoke/RPC). Mode B: iOS TestFlight VALID; Android internal draft. OWNER_GATE: ZDR, tenant key JSON, Play promote, Dependabot alerts admin.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
