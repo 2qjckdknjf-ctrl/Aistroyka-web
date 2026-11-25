@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { createClientFromRequest, getSessionUser } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { createAnalysisJob, MEDIA_BUCKET } from "@/lib/api/engine";
@@ -42,7 +42,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: projectId } = await params;
-  const supabase = await createClient();
+  // Request-bound client so Authorization: Bearer (smoke/mobile) works, not only cookies.
+  const supabase = await createClientFromRequest(request);
   const user = await getSessionUser(supabase);
   if (!user) {
     return NextResponse.json(
@@ -90,7 +91,9 @@ export async function POST(
     );
   }
 
-  const ext = file.name.split(".").pop() || "bin";
+  // Sanitize extension only — object key is projectId + UUID (no user path segments).
+  const rawExt = (file.name.split(".").pop() || "bin").toLowerCase();
+  const ext = /^[a-z0-9]{1,16}$/.test(rawExt) ? rawExt : "bin";
   const path = `${projectId}/${crypto.randomUUID()}.${ext}`;
 
   // Если задан SUPABASE_SERVICE_ROLE_KEY — создаём бакет при отсутствии
