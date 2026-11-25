@@ -72,16 +72,26 @@ describe("private project upload", () => {
   it("denies upload when current bucket visibility cannot be verified", async () => {
     fake.getBucket.mockResolvedValue({ data: null, error: { message: "network unavailable" } });
     const form = new FormData(); form.append("file", new Blob(["synthetic"]), "fixture.png");
-    const r = await POST({ headers: new Headers(), formData: async () => form } as Request, { params: Promise.resolve({ id: "project" }) });
+    const r = await POST({ headers: new Headers(), formData: async () => form } as Request, { params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" }) });
     expect(r.status).toBe(503); expect(fake.upload).not.toHaveBeenCalled();
   });
 
   it("requires server private-bucket access without advertising a manual retry fix", async () => {
     fake.adminAvailable = false;
     const form = new FormData(); form.append("file", new Blob(["synthetic"]), "fixture.png");
-    const r = await POST({ headers: new Headers(), formData: async () => form } as Request, { params: Promise.resolve({ id: "project" }) });
+    const r = await POST({ headers: new Headers(), formData: async () => form } as Request, { params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" }) });
     expect(r.status).toBe(503); expect(fake.upload).not.toHaveBeenCalled();
     expect((await r.json()).error).toBe("File storage is unavailable. Contact the project administrator.");
+  });
+
+  it("rejects non-UUID project ids before storage", async () => {
+    const form = new FormData();
+    form.append("file", new Blob(["synthetic"]), "fixture.png");
+    const r = await POST({ headers: new Headers(), formData: async () => form } as Request, {
+      params: Promise.resolve({ id: "not-a-uuid" }),
+    });
+    expect(r.status).toBe(400);
+    expect(fake.upload).not.toHaveBeenCalled();
   });
 
 });
