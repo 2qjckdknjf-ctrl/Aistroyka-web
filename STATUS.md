@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Tip `8cb0c302` (#535 PILOT-001 evidence). Runtime `buildStamp.sha7=91ff124`. Graph revoke + completeness/recon CODE_PRESENT. AIS-PILOT-001 PARTIAL (unit+staging; multi-persona open). AIS-EVID-002/VISION-003 hard audit: **CODE_PRESENT**, live provider NO-GO locally — `docs/reports/plan-exec-delta-2026-11-24/AIS_EVID_002_VISION_003_INVENTORY_2026-11-25.md`. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, live AI auth for require-live.
+Tip `8cb0c302` (#535). Runtime `91ff124`. AIS-PILOT-001 PARTIAL. AIS-EVID-002/VISION: CODE_PRESENT + staging `ai_live_provider --require-live` **GO** (vision_router/gpt-4o-mini) — inventory PR #536. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts; EVID full job→review E2E still open.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
