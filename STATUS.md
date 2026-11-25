@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-EVID: analysis/process drains jobs; same-origin `AI_ANALYSIS_URL` was CF self-fetch **403** → in-process vision fix in flight. AIS-PILOT-001 PARTIAL; require-live GO; RULE-015 evaluate PASS. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic allow-list.
+Staging `d84232f`: EVID upload→analysis/process→**completed**+`ai_analysis` persist PASS (#541/#542). AIS-PILOT-001 PARTIAL (CF 1010 multi-persona). require-live GO; RULE-015 evaluate PASS. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic allow-list; next human review/device.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен

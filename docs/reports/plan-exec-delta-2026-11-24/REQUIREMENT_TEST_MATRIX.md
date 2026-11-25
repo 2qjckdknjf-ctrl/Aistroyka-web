@@ -26,5 +26,6 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | AI LIVE gate | `ai_live_provider.sh --require-live` | staging + SMOKE_* | **GO** | vision_router / gpt-4o-mini; no fallback |
 | RULE-015 evaluate | POST completeness/evaluate empty inventory | staging SMOKE_* | PASS | verdict INSUFFICIENT_EVIDENCE |
 | PILOT multi-persona | synthetic JWT → staging /api/v1 | CF edge | BLOCKED (1010) | Auth OK; API WAF |
+| EVID media E2E | upload → analysis/process → ai_analysis | staging SMOKE_* | **PASS** completed | #542 `d84232f` |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).
