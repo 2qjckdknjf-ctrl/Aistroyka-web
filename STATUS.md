@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Tip `8cb0c302` (#535). Runtime `91ff124`. AIS-PILOT-001 PARTIAL. AIS-EVID-002/VISION: CODE_PRESENT + staging `ai_live_provider --require-live` **GO** (vision_router/gpt-4o-mini) — inventory PR #536. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts; EVID full job→review E2E still open.
+Tip `a7b4f767` (#536 EVID inventory + staging require-live GO). Runtime `91ff124`. Completeness evaluate staging **INSUFFICIENT_EVIDENCE** smoke PASS. Multi-persona synthetic→staging API **BLOCKED** (CF 1010). AIS-PILOT-001 still PARTIAL. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF allow-list for synthetic personas / EVID job→review E2E.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
