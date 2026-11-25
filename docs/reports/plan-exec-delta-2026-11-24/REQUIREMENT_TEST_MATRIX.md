@@ -30,5 +30,7 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | EVID human review | POST /ai/analysis/:id/review (4 verdicts) | staging SMOKE_* | **PASS** | corrections + graph_eligible |
 | CLIENT-005A live | POST/GET preproject/extractions + obs review + review-pack | staging SMOKE_* | **PASS** | 201 extract + 200 obs/pack |
 | MATERIAL-008 | draft-comparison + requirement-draft units | vitest 14 | PASS | inventory 2026-11-25; staging list 404 |
+| MATERIAL-008 live | snapshot→acceptance→draft→fixture→compare→quote | staging SMOKE_* | **PASS** | qty 8.82→need 9.702; ranked offers; YYYY-MM-DD quote |
+| VISION video | POST /api/v1/ai/analyze-video-daily | staging SMOKE_* | **BLOCKED** | 503 Gemini key missing on Worker; code present |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).

@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Staging `d84232f`: EVID full image chain + human review PASS; CLIENT-005A extract+obs review+review-pack PASS; MATERIAL-008 CODE_PRESENT (14 unit PASS; no staging acceptance fixture). AIS-PILOT-001 PARTIAL (CF 1010). Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic; next device/video or quantity acceptance for materials live.
+Staging `d84232f`: EVID image+review PASS; CLIENT-005A PASS; MATERIAL-008 live PASS (snapshot→acceptance→draft→fixture→compare→manual quote). Video daily: CODE_PRESENT, staging LIVE BLOCKED (no Gemini Worker key). AIS-PILOT-001 PARTIAL (CF 1010). Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Gemini video, Play, Dependabot, CF synthetic. Next: Gemini staging key → video smoke, or device.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
