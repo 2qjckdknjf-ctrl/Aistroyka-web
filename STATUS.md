@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Staging `d84232f`: EVID upload→process→completed→**human review** (accepted/edited/rejected/IE) + corrections PASS; CLIENT-005A extract+review-pack 200/201. AIS-PILOT-001 PARTIAL (CF 1010). Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic allow-list; next device/video.
+Staging `d84232f`: EVID full image chain + human review PASS; CLIENT-005A extract+obs review+review-pack PASS; MATERIAL-008 CODE_PRESENT (14 unit PASS; no staging acceptance fixture). AIS-PILOT-001 PARTIAL (CF 1010). Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic; next device/video or quantity acceptance for materials live.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
