@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClientFromRequest, getSessionUser } from "@/lib/supabase/server";
+import { createClientFromRequest, getSessionUser, ServiceRoleForbiddenError } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { createAnalysisJob, MEDIA_BUCKET } from "@/lib/api/engine";
@@ -46,7 +46,15 @@ export async function POST(
     return NextResponse.json({ success: false, error: "Invalid project id" }, { status: 400 });
   }
   // Request-bound client so Authorization: Bearer (smoke/mobile) works, not only cookies.
-  const supabase = await createClientFromRequest(request);
+  let supabase: Awaited<ReturnType<typeof createClientFromRequest>>;
+  try {
+    supabase = await createClientFromRequest(request);
+  } catch (e) {
+    if (e instanceof ServiceRoleForbiddenError) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+    throw e;
+  }
   const user = await getSessionUser(supabase);
   if (!user) {
     return NextResponse.json(
