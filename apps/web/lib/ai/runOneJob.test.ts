@@ -13,6 +13,13 @@ vi.mock("@/lib/platform/ai/ai.service", async () => {
   );
   return {
     ...actual,
+    analyzeImage: vi.fn(async () => ({
+      stage: "structure",
+      completion_percent: 12,
+      risk_level: "low" as const,
+      detected_issues: [],
+      recommendations: ["ok"],
+    })),
     analyzeVideoDailyWork: vi.fn(async () => ({
       work_date: "2026-10-28",
       summary: "Site video daily",
@@ -25,8 +32,8 @@ vi.mock("@/lib/platform/ai/ai.service", async () => {
   };
 });
 import { describe, expect, it, vi } from "vitest";
-import { processOneJob } from "./runOneJob";
-import { analyzeVideoDailyWork } from "@/lib/platform/ai/ai.service";
+import { processOneJob, shouldUseInProcessVision } from "./runOneJob";
+import { analyzeImage, analyzeVideoDailyWork } from "@/lib/platform/ai/ai.service";
 
 function createMockSupabase(overrides: {
   dequeue?: { data: unknown; error: { message: string } | null };
@@ -309,6 +316,40 @@ describe("processOneJob", () => {
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     expect(await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase })).toMatchObject({ status: "failed" });
     expect(fetch).not.toHaveBeenCalled(); expect(supabase.rpc).toHaveBeenCalledWith("fail_session_analysis_job", expect.objectContaining({ p_error_type: retryable ? "provider_unavailable" : "validation_error" }));
+  });
+
+  it("shouldUseInProcessVision detects same-origin analyze-image URLs", () => {
+    const prev = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.aistroyka.ai";
+    expect(shouldUseInProcessVision("https://staging.aistroyka.ai/api/ai/analyze-image")).toBe(true);
+    expect(shouldUseInProcessVision("https://staging.aistroyka.ai/api/v1/ai/analyze-image")).toBe(true);
+    expect(shouldUseInProcessVision("https://api.example.com/analyze")).toBe(false);
+    process.env.NEXT_PUBLIC_APP_URL = prev;
+  });
+
+  it("runs in-process vision for same-origin AI_ANALYSIS_URL (avoids CF self-fetch 403)", async () => {
+    const prev = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.aistroyka.ai";
+    const jobId = "job-inproc";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
+      media: {
+        data: { file_url: "proj-1/photo.jpg", project_id: "proj-1", type: "image" },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOneJob(supabase, "https://staging.aistroyka.ai/api/ai/analyze-image", {
+      tenantId: "tenant-a",
+      callerClient: supabase,
+    });
+    vi.unstubAllGlobals();
+    process.env.NEXT_PUBLIC_APP_URL = prev;
+    expect(out).toEqual({ ok: true, jobId, status: "completed" });
+    expect(analyzeImage).toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("completes video jobs via Gemini daily mapper without AI_ANALYSIS_URL", async () => {
