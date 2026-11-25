@@ -22,5 +22,7 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | PILOT-001 unit | Role/RLS/revoke/peer/finance/lite suites | `bunx vitest run` (12 files, see evidence) | PASS (159) | tip `80ff987` / runtime `91ff124` |
 | PILOT-001 staging | Completeness templates + recon findings + unknown report | curl staging with SMOKE_* | PASS (200/200/404) | evidence 2026-11-25 |
 | Completeness UI | Manager panels hard audit | inventory markdown | CODE_PRESENT | #534 |
+| EVID-002/VISION | Persist/review/vision job units | 7 vitest files (50) | PASS | inventory 2026-11-25 |
+| AI LIVE gate | `ai_live_provider.sh --require-live` | staging + SMOKE_* | **GO** | vision_router / gpt-4o-mini; no fallback |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).
