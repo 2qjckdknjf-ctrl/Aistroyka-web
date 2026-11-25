@@ -100,7 +100,15 @@ case "$STRICT_HEALTH" in
 esac
 
 # 0) Health (no auth) — must pass
-code=$(curl -sSL -o /tmp/pilot_health.json -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
+# Cold Cloudflare Workers after deploy can exceed 15s on first hit; retry with longer budget.
+code="000"
+for health_try in 1 2 3; do
+  code=$(curl -sSL -o /tmp/pilot_health.json -w "%{http_code}" -m 45 "$BASE/api/v1/health" || true)
+  if [[ "$code" == "200" ]] || [[ "$ALLOW_HEALTH_503" -eq 1 && "$code" == "503" ]]; then
+    break
+  fi
+  sleep 2
+done
 if [[ "$code" != "200" && ! ( "$ALLOW_HEALTH_503" -eq 1 && "$code" == "503" ) ]]; then
   echo "  FAIL: GET /api/v1/health → HTTP $code"
   FAIL=1
@@ -114,7 +122,7 @@ else
 fi
 
 # 0b) Config (worker-critical, no auth) — must return 200
-code=$(curl -sSL -o /tmp/pilot_config.json -w "%{http_code}" -m 10 "$BASE/api/v1/config" || true)
+code=$(curl -sSL -o /tmp/pilot_config.json -w "%{http_code}" -m 30 "$BASE/api/v1/config" || true)
 if [[ "$code" != "200" ]]; then
   echo "  FAIL: GET /api/v1/config → HTTP $code"
   FAIL=1
