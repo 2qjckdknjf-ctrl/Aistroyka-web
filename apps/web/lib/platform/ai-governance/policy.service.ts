@@ -53,14 +53,15 @@ export async function runPolicy(
     ...result,
     rule_hits: [...result.rule_hits, retentionRuleHit(retentionMode)],
   };
-  if (result.decision === "allow" && retentionBlocksEgress(retentionMode)) {
+  // Degraded requests still reach providers, so every egress gate applies to them.
+  if (result.decision !== "block" && retentionBlocksEgress(retentionMode)) {
     result = {
       decision: "block",
       rule_hits: [...result.rule_hits, "retention_undeclared_or_blocked"],
       model_tier: result.model_tier,
     };
   }
-  if (result.decision === "allow") {
+  if (result.decision !== "block") {
     if (
       containsSecrets(
         ctx.image_url,
@@ -77,7 +78,7 @@ export async function runPolicy(
       };
     }
   }
-  if (result.decision === "allow") {
+  if (result.decision !== "block") {
     for (const mediaUrl of [ctx.image_url, ctx.video_url]) {
       if (!mediaUrl) continue;
       const piiResult = await checkPiiMediaUrl(supabase, ctx.tenant_id, mediaUrl);
@@ -91,10 +92,10 @@ export async function runPolicy(
       }
     }
   }
-  if (result.decision === "allow" && ctx.handoff) {
+  if (result.decision !== "block" && ctx.handoff) {
     const handoff = evaluateTransitiveAuthorization(ctx.handoff.mandate, ctx.handoff.hops);
     result = {
-      decision: handoff.decision === "allow" ? "allow" : "block",
+      decision: handoff.decision === "allow" ? result.decision : "block",
       rule_hits: [...result.rule_hits, ...handoff.rule_hits],
       model_tier: result.model_tier,
     };
