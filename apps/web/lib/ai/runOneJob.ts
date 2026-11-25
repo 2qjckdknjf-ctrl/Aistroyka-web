@@ -347,10 +347,7 @@ export async function processOneJob(
         : err instanceof AIPolicyBlockedError
           ? { errorType: "validation_error" as const, retryable: false }
           : err instanceof AIVisionFailedError
-            ? {
-                errorType: err.retryable ? ("provider_unavailable" as const) : ("invalid_request" as const),
-                retryable: err.retryable,
-              }
+            ? { errorType: "provider_unavailable" as const, retryable: true }
             : err instanceof AIVideoDailyFailedError
               ? classifyVisionFailure(err.message)
               : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");

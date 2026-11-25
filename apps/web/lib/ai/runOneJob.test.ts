@@ -33,7 +33,8 @@ vi.mock("@/lib/platform/ai/ai.service", async () => {
 });
 import { describe, expect, it, vi } from "vitest";
 import { processOneJob, shouldUseInProcessVision } from "./runOneJob";
-import { analyzeImage, analyzeVideoDailyWork } from "@/lib/platform/ai/ai.service";
+import { analyzeImage, analyzeVideoDailyWork, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
+import { AI_ERROR_CODES } from "@/lib/platform/ai/ai-media-errors";
 
 function createMockSupabase(overrides: {
   dequeue?: { data: unknown; error: { message: string } | null };
@@ -351,6 +352,47 @@ describe("processOneJob", () => {
     expect(analyzeImage).toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["AI returned non-JSON", AI_ERROR_CODES.AI_PROVIDER_INVALID_RESPONSE],
+    ["All AI providers failed", AI_ERROR_CODES.AI_PROVIDER_FAILED],
+    ["provider auth failed", AI_ERROR_CODES.AI_PROVIDER_AUTH_ERROR],
+    ["AI provider not configured", AI_ERROR_CODES.AI_PROVIDER_NOT_CONFIGURED],
+  ] as const)(
+    "stores non-retryable in-process vision failure %s as provider_unavailable",
+    async (message, code) => {
+      const prev = process.env.NEXT_PUBLIC_APP_URL;
+      process.env.NEXT_PUBLIC_APP_URL = "https://staging.aistroyka.ai";
+      const jobId = "job-vision-fail";
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      vi.mocked(analyzeImage).mockRejectedValueOnce(new AIVisionFailedError(message, code, false));
+      const supabase = createMockSupabase({
+        dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
+        media: {
+          data: { file_url: "proj-1/photo.jpg", project_id: "proj-1", type: "image" },
+          error: null,
+        },
+        claim: { data: true, error: null },
+      });
+      const out = await processOneJob(supabase, "https://staging.aistroyka.ai/api/v1/ai/analyze-image", {
+        tenantId: "tenant-a",
+        callerClient: supabase,
+      });
+      vi.unstubAllGlobals();
+      process.env.NEXT_PUBLIC_APP_URL = prev;
+      expect(out).toEqual({ ok: true, jobId, status: "failed" });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "fail_session_analysis_job",
+        expect.objectContaining({
+          p_job_id: jobId,
+          p_error_type: "provider_unavailable",
+          p_error_message: message,
+        })
+      );
+    }
+  );
 
   it("completes video jobs via Gemini daily mapper without AI_ANALYSIS_URL", async () => {
     const jobId = "job-video";
