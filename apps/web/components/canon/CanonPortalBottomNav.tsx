@@ -65,7 +65,7 @@ export function CanonPortalBottomNav() {
             className={`canon-portal-bottom-nav-item ${item.active ? "canon-portal-bottom-nav-item--active" : ""}`}
             onClick={(event) => {
               if (!item.hash || !clientBase) return;
-              const onClientPage = pathname.includes(`/dashboard/projects/${projectId}/client`);
+              const onClientPage = pathname.replace(/\/+$/, "") === clientBase;
               if (!onClientPage) return;
               event.preventDefault();
               applyPortalHash(item.hash);

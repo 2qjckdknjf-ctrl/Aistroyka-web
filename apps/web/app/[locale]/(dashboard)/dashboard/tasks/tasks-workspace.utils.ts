@@ -135,9 +135,19 @@ export function buildTaskDetailHref(taskId: string, returnTo?: string | null): s
  * do not decodeURIComponent again or filter encodings like `%26` break into extra params.
  */
 export function resolveTasksReturnHref(returnTo: string | null | undefined): string {
-  if (typeof returnTo !== "string" || !returnTo.trim()) return "/dashboard/tasks";
+  const fallback = "/dashboard/tasks";
+  if (typeof returnTo !== "string" || !returnTo.trim()) return fallback;
   const path = returnTo.trim();
-  if (!path.startsWith("/dashboard/tasks")) return "/dashboard/tasks";
-  if (path.startsWith("//") || path.includes("://")) return "/dashboard/tasks";
-  return path;
+  if (!path.startsWith(fallback) || path.includes("://") || /[\\\u0000-\u001f]/.test(path)) return fallback;
+  try {
+    // URL normalization removes literal/encoded dot segments without decoding filters.
+    const target = new URL(path, "https://return-target.invalid");
+    if (target.origin !== "https://return-target.invalid") return fallback;
+    if (target.pathname !== fallback && !target.pathname.startsWith(`${fallback}/`)) return fallback;
+    // Encoded separators must not change the route after downstream decoding.
+    if (/%(?:2f|5c)/i.test(target.pathname)) return fallback;
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return fallback;
+  }
 }

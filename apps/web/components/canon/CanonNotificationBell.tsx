@@ -74,7 +74,7 @@ export function CanonNotificationBell({
     const hashIndex = href.indexOf("#");
     if (hashIndex < 0 || !projectId) return;
     const hash = href.slice(hashIndex);
-    const onClientPage = pathname.includes(`/dashboard/projects/${projectId}/client`);
+    const onClientPage = pathname.replace(/\/+$/, "") === `/dashboard/projects/${projectId}/client`;
     if (!onClientPage) return;
     event.preventDefault();
     applyPortalHash(hash);

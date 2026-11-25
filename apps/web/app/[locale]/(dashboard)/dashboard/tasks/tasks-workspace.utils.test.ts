@@ -95,4 +95,25 @@ describe("tasks workspace utils", () => {
     expect(resolveTasksReturnHref("//evil.example")).toBe("/dashboard/tasks");
     expect(resolveTasksReturnHref("/owner")).toBe("/dashboard/tasks");
   });
+
+  it.each([
+    "/dashboard/tasks/../../owner",
+    "/dashboard/tasks/%2e%2e/owner",
+    "/dashboard/tasks/.%2e/owner",
+    "/dashboard/tasks-other",
+    "/dashboard/tasks\\..\\owner",
+    "/dashboard/tasks/%2f..%2fowner",
+    "/dashboard/tasks/%5c..%5cowner",
+  ])("rejects a return target outside the tasks route: %s", (target) => {
+    expect(resolveTasksReturnHref(target)).toBe("/dashboard/tasks");
+  });
+
+  it("keeps encoded filter characters and normalizes safe task paths", () => {
+    expect(resolveTasksReturnHref("/dashboard/tasks/task-1?search=A%23B%26C#details")).toBe(
+      "/dashboard/tasks/task-1?search=A%23B%26C#details",
+    );
+    expect(resolveTasksReturnHref("/dashboard/tasks/child/../?view=board")).toBe(
+      "/dashboard/tasks/?view=board",
+    );
+  });
 });
