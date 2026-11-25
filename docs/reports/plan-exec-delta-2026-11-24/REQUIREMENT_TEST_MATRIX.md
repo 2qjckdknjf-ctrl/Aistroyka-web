@@ -27,5 +27,7 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | RULE-015 evaluate | POST completeness/evaluate empty inventory | staging SMOKE_* | PASS | verdict INSUFFICIENT_EVIDENCE |
 | PILOT multi-persona | synthetic JWT → staging /api/v1 | CF edge | BLOCKED (1010) | Auth OK; API WAF |
 | EVID media E2E | upload → analysis/process → ai_analysis | staging SMOKE_* | **PASS** completed | #542 `d84232f` |
+| EVID human review | POST /ai/analysis/:id/review (4 verdicts) | staging SMOKE_* | **PASS** | corrections + graph_eligible |
+| CLIENT-005A live | POST/GET preproject/extractions + review-pack | staging SMOKE_* | **PASS** | 201 extract + 200 pack |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).
