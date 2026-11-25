@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Tip `c9e3f2c3` (#537 evaluate smoke + CF 1010). Runtime `91ff124`. Project upload now request-bound (Bearer) so staging media→job smoke can run after merge. AIS-PILOT-001 PARTIAL; EVID require-live GO. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic allow-list.
+Tip `d3e66c5` (#538). Staging+prod health `d3e66c5`. Bearer upload→job enqueue PASS (`mediaId`/`jobId` recorded). Job stayed QUEUED; trigger was cookie-only — fix in flight. AIS-PILOT-001 PARTIAL; require-live GO. Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Play promote, Dependabot alerts, CF synthetic allow-list.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
