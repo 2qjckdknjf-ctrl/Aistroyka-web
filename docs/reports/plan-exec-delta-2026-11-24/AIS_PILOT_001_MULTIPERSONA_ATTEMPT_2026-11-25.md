@@ -18,7 +18,7 @@ Smoke user (`SMOKE_*`) continues to reach the app (projects/completeness/reports
 | Synthetic → staging API peer isolation | **BLOCKED** (CF 1010 / WAF) |
 | Smoke-user staging API | PASS (separate evidence) |
 
-**Overall multi-persona live matrix:** still **PARTIAL/BLOCKED** until synthetic (or second real) personas are allow-listed for staging Workers, or an alternate non-blocked persona set exists.
+**Overall multi-persona live matrix:** superseded 2026-11-26 — with browser `User-Agent`, synthetic personas reach staging API; isolation matrix PASS (see `OWNER_GATE_FOLLOWTHROUGH_2026-11-26.md`). Prior CF 1010 was signature/UA, not a persona allow-list.
 
 ## Explicit non-claims
 
