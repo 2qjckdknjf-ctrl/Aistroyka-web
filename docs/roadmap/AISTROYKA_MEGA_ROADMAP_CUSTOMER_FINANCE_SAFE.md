@@ -2054,3 +2054,17 @@ Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519/#520
 | D12 Claude Ship observe-only | P1 | DEFER | Keep human APPROVED. |
 | D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; Material 1.14 closed (#523). |
 | Mobile Mode B upload | P1 | BLOCKED | Local APPROVE+certs present; `release/mobile-pilot-rc` absent on remote. |
+
+
+## Cursor execution specification — 2026-11-26
+
+Planning-only delta for 25–26 November. Read current main and active implementation PRs first; map to existing IDs, implement only confirmed gaps. Vendor claims require primary-source verification. Existing P0 gates remain first. Proposed numerical thresholds are initial configurable test defaults, not measured results. No auto-merge, deployment, purchases, ad activation or live trading. Owner/reviewer TBD.
+
+### P1 — existing voice intake / Construction Graph / MCP
+Prototype CUGA-inspired multilingual voice retrieval (RU/ES first) using existing STT/TTS and document index. Pipeline: consented audio → transcript → tenant/site-scoped retrieval → cited answer → speech. Return document version/page and source excerpt; abstain if missing/conflicting; no invented measurements or instructions. Test 20 representative questions, wrong-tenant denial, noisy speech, stale documents and unsupported answers. Reuse current tasks/roles; no second assistant backend.
+Expose existing read-only project status and report preparation via capability-negotiated MCP Skills/Tasks; task ID maps to existing job, cancel/reconnect idempotent, Elicitation binds exact approval before sending report or commercial action. No autonomous orders. Validate upstream CUGA/MCP capabilities before integration.
+### P1 — analytics
+Detect material-overrun hypotheses from historical verified quantities, independent deterministic comparison and holdout; no automatic budget changes. Existing pilot and release P0 gates take precedence.
+
+### Cursor delivery contract
+Work in a separate implementation branch; report gap matrix, changed files, reproducible commands, test receipts, exact commit SHA, independent verdict, rollback and remaining blockers. Never mark DONE from documentation/build alone. Stop on missing authorization, hardware access or provider compatibility; report NOT_RUN rather than fabricate evidence.
