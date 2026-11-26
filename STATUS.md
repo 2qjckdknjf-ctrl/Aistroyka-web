@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Main `101c824` (#548 list GET). OWNER follow-through: Dependabot+secret scanning enabled; multi-persona CF 1010 cleared (browser UA) — isolation matrix PASS. Gemini video still BLOCKED (no key on staging/prod Workers). Remaining OWNER: Gemini key material, ZDR, Play/TestFlight Mode B, physical device.
+Staging/prod `101c824`: MATERIAL list GET live PASS; Graph read + completeness/recon GET PASS; iOS simulator UITest (W/M/C) PASS. Main tip may include later docs merges. Dependabot enabled (1 critical proxy-addr + highs inventoried, no blind bumps). Gemini video still BLOCKED (no Worker key). Remaining OWNER: Gemini key, ZDR, Mode B upload, physical device.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен

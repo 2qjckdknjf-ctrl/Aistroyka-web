@@ -34,6 +34,9 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | MATERIAL-008 | draft-comparison + requirement-draft units | vitest 14 | PASS | inventory 2026-11-25; staging list 404 |
 | MATERIAL-008 live | snapshot→acceptance→draft→fixture→compare→quote | staging SMOKE_* | **PASS** | qty 8.82→need 9.702; ranked offers; YYYY-MM-DD quote |
 | VISION video | POST /api/v1/ai/analyze-video-daily | staging SMOKE_* | **BLOCKED** | 503 Gemini key missing on Worker; code present |
-| MATERIAL-008 list GET | GET …/materials/requirement-drafts + panel list | vitest 8 + i18n | **PASS** (local) | staging smoke after deploy |
+| MATERIAL-008 list GET | GET …/materials/requirement-drafts + panel list | staging SMOKE_* | **PASS** | 200 draft; client 403; sha7 `101c824` |
+| GRAPH-004 live read | GET …/projects/:id/graph | staging SMOKE_* | **PASS** | nodes:3 edges:2 |
+| Manager completeness/recon API | templates + findings GET | staging SMOKE_* | **PASS** | 1 template; findings [] |
+| iOS UITest smoke | Worker+Manager+Customer login | simulator local | **PASS** | `run-ios-uitest-smoke-local.sh` 2026-11-26 |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).
