@@ -10,7 +10,7 @@ Hard audit before expanding purchasing scope (read/draft slice only).
 | Supplier quote draft + fixture offers | **CODE_PRESENT** |
 | Immutable draft comparison engine | **CODE_PRESENT** |
 | Unit (engine + draft service) | **14 PASS** (2026-11-25) |
-| Staging list endpoints (`…/materials/requirement-drafts`, `…/quantities`) | **MISSING** as collection GETs (404 HTML) — create path is nested under acceptances |
+| Staging list endpoints (`…/materials/requirement-drafts`) | **ADDED** 2026-11-26 (`GET` collection + Manager list; deploy smoke after merge). Bare `…/quantities` still not a collection — use `…/quantities/snapshots` |
 | Purchasing / continuous observer | **OUT OF SCOPE** (P2 / LATER) |
 
 **Do not rebuild** calculator/core. Next live slice needs an existing quantity acceptance on a project, then POST material-requirement-draft → quotes → comparisons.

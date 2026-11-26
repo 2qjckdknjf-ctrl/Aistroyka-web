@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Staging `d84232f`: EVID image+review PASS; CLIENT-005A PASS; MATERIAL-008 live PASS (snapshot→acceptance→draft→fixture→compare→manual quote). Video daily: CODE_PRESENT, staging LIVE BLOCKED (no Gemini Worker key). AIS-PILOT-001 PARTIAL (CF 1010). Mode B: iOS VALID; Android draft. OWNER_GATE: ZDR, tenant keys, Gemini video, Play, Dependabot, CF synthetic. Next: Gemini staging key → video smoke, or device.
+Tip after MATERIAL list GET slice (PR pending): EVID/CLIENT/MATERIAL live PASS; collection GET for requirement-drafts + Manager list. Video daily BLOCKED (no Gemini Worker key). AIS-PILOT-001 PARTIAL (CF 1010). OWNER_GATE: ZDR, tenant keys, Gemini video, Play, Dependabot, CF synthetic, device. Staging runtime may lag tip until Deploy Cloudflare.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
