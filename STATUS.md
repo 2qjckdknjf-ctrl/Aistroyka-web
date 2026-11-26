@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Tip after MATERIAL list GET slice (PR pending): EVID/CLIENT/MATERIAL live PASS; collection GET for requirement-drafts + Manager list. Video daily BLOCKED (no Gemini Worker key). AIS-PILOT-001 PARTIAL (CF 1010). OWNER_GATE: ZDR, tenant keys, Gemini video, Play, Dependabot, CF synthetic, device. Staging runtime may lag tip until Deploy Cloudflare.
+Main `101c824` (#548 list GET). OWNER follow-through: Dependabot+secret scanning enabled; multi-persona CF 1010 cleared (browser UA) — isolation matrix PASS. Gemini video still BLOCKED (no key on staging/prod Workers). Remaining OWNER: Gemini key material, ZDR, Play/TestFlight Mode B, physical device.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
