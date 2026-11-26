@@ -465,3 +465,16 @@ Planning reconciliation for 21–24 November; incorporates previously unrecorded
 | P1 model/skill assurance / Shirudo | RESEARCH_ONLY / BLOCKED | No LoRA or Shirudo work. |
 
 See `docs/reports/plan-exec-delta-2026-11-24/RESULT.md` + `OWNER_GATE_CLOSURE_2026-11-24.md`. Independent ROMA reviewer verdict: pending.
+
+
+## Cursor execution specification — 2026-11-26
+
+Planning-only delta for 25–26 November. Read current main and active implementation PRs first; map to existing IDs, implement only confirmed gaps. Vendor claims require primary-source verification. Existing P0 gates remain first. Proposed numerical thresholds are initial configurable test defaults, not measured results. No auto-merge, deployment, purchases, ad activation or live trading. Owner/reviewer TBD.
+
+### P0 — existing assurance / Action Boundary
+For remote MCP skills, pin source/version/hash, inspect shell commands before execution, deny unapproved filesystem/network/credentials, revalidate on update; test malicious skill and child-agent escalation. MCP Tasks preserve mandate and task ID through reconnect/cancel; Elicitation approval bound to principal, exact payload, expiry and one-time use; reject replay or changed payload. Verify actual client support; hook alone is not sandbox.
+### P1 — independent modernization and model assurance
+Map existing assurance evidence to proposed L0 docs/code, L1 smoke/rollback, L2 input-output parity, L3 partial automated tests, L4 agreed full automated acceptance; not a second engine. Critical release requires existing mandatory gates regardless of label. Require disconfirming evidence, unchanged holdout tests, exact SHA, independent reviewer; monitor review queue and regressions. Validate doc-and-modernize skill provenance before use. For local model routing test memory pressure, fallback egress denial, budget stop, cancellation, false PASS and replay; no policy authority for classifier.
+
+### Cursor delivery contract
+Work in a separate implementation branch; report gap matrix, changed files, reproducible commands, test receipts, exact commit SHA, independent verdict, rollback and remaining blockers. Never mark DONE from documentation/build alone. Stop on missing authorization, hardware access or provider compatibility; report NOT_RUN rather than fabricate evidence.
