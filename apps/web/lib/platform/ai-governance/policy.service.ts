@@ -41,6 +41,22 @@ function getTrustedImageHosts(): string[] {
   return raw.split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
 }
 
+/**
+ * Strip query/hash before secret scan. Supabase signed URLs embed JWTs in `?token=eyJ…`
+ * which must not fail-closed the media egress path (still scan prompts fully).
+ */
+export function mediaUrlForSecretScan(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 /** Run policy and persist decision. Returns result with decisionId; callers must check result.decision before running AI. */
 export async function runPolicy(
   supabase: SupabaseClient,
@@ -63,8 +79,8 @@ export async function runPolicy(
   if (result.decision === "allow") {
     if (
       containsSecrets(
-        ctx.image_url,
-        ctx.video_url,
+        mediaUrlForSecretScan(ctx.image_url),
+        mediaUrlForSecretScan(ctx.video_url),
         ctx.system_prompt,
         ctx.user_message,
         ctx.egress_text
