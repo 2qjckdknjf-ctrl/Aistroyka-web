@@ -39,13 +39,17 @@ export async function replaceMediaCaptionSegments(
   | { ok: true; inserted: number }
   | { ok: false; error: string; code: string }
 > {
-  const tenantId = input.tenantId.trim();
-  const projectId = input.projectId.trim();
-  const mediaId = input.mediaId.trim();
-  const actorUserId = input.actorUserId.trim();
+  const tenantId = input.tenantId.trim().toLowerCase();
+  const projectId = input.projectId.trim().toLowerCase();
+  const mediaId = input.mediaId.trim().toLowerCase();
+  const actorUserId = input.actorUserId.trim().toLowerCase();
   const sourceKind = input.sourceKind ?? "transcription";
+  const language = input.language?.trim() || null;
   if (!tenantId || !projectId || !mediaId || !actorUserId) {
     return { ok: false, error: "required ids missing", code: "INVALID_INPUT" };
+  }
+  if (language !== null && (language.length < 2 || language.length > 16)) {
+    return { ok: false, error: "language must contain 2 to 16 characters", code: "INVALID_INPUT" };
   }
 
   let segments = input.segments.filter((s) => s.text.trim().length > 0);
@@ -62,17 +66,7 @@ export async function replaceMediaCaptionSegments(
     return { ok: false, error: "no caption text to index", code: "INVALID_INPUT" };
   }
 
-  const { error: deleteError } = await supabase
-    .from("media_caption_segments")
-    .delete()
-    .eq("tenant_id", tenantId)
-    .eq("media_id", mediaId)
-    .eq("source_kind", sourceKind);
-  if (deleteError) {
-    return { ok: false, error: deleteError.message, code: "DELETE_FAILED" };
-  }
-
-  const rows = segments.slice(0, 2000).map((segment, index) => {
+  const rows = segments.slice(0, 2000).map((segment) => {
     const startMs = secondsToMs(segment.startSeconds);
     const endMs = secondsToMs(segment.endSeconds);
     const clock =
@@ -82,25 +76,44 @@ export async function replaceMediaCaptionSegments(
           ? "estimated"
           : "unknown";
     return {
-      tenant_id: tenantId,
-      project_id: projectId,
-      media_id: mediaId,
-      source_kind: sourceKind,
-      segment_index: index,
       start_ms: startMs,
       end_ms: endMs,
       text: segment.text.trim().slice(0, 4000),
-      language: input.language?.trim() ? input.language.trim().slice(0, 16) : null,
+      language,
       clock_uncertainty: clock,
-      created_by: actorUserId,
     };
   });
 
-  const { error: insertError } = await supabase.from("media_caption_segments").insert(rows);
-  if (insertError) {
-    return { ok: false, error: insertError.message, code: "INSERT_FAILED" };
+  try {
+    // The database authorizes the caller, binds all ids, locks the parent media,
+    // and replaces rows in one transaction. Never fall back to delete + insert.
+    const { data, error } = await supabase.rpc("replace_media_caption_segments", {
+      p_tenant_id: tenantId,
+      p_project_id: projectId,
+      p_media_id: mediaId,
+      p_actor_user_id: actorUserId,
+      p_source_kind: sourceKind,
+      p_segments: rows,
+    });
+    if (error) {
+      if (error.code === "P0002") {
+        return { ok: false, error: "Media does not belong to this project", code: "MEDIA_SCOPE_MISMATCH" };
+      }
+      if (error.code === "42501") {
+        return { ok: false, error: "Insufficient rights", code: "INSUFFICIENT_RIGHTS" };
+      }
+      if (["22023", "22P02", "22003", "23502", "23514"].includes(error.code)) {
+        return { ok: false, error: "Invalid caption segments", code: "INVALID_INPUT" };
+      }
+      return { ok: false, error: "Caption replacement failed", code: "REPLACE_FAILED" };
+    }
+    if (data !== rows.length) {
+      return { ok: false, error: "Caption replacement failed", code: "REPLACE_FAILED" };
+    }
+    return { ok: true, inserted: data };
+  } catch {
+    return { ok: false, error: "Caption replacement failed", code: "REPLACE_FAILED" };
   }
-  return { ok: true, inserted: rows.length };
 }
 
 export type SearchCaptionSegmentsInput = {

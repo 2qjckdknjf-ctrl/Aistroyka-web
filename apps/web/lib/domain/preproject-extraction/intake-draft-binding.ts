@@ -56,9 +56,9 @@ export async function resolveIntakeDraftForExtraction(
   | { ok: true; draft: IntakeDraftExtractionSummary }
   | { ok: false; error: string; code: "DRAFT_NOT_FOUND" | "DRAFT_PROJECT_MISMATCH" | "DRAFT_WITHDRAWN" | "LOOKUP_FAILED" }
 > {
-  const tenantId = input.tenantId.trim();
-  const projectId = input.projectId.trim();
-  const intakeDraftId = input.intakeDraftId.trim();
+  const tenantId = input.tenantId.trim().toLowerCase();
+  const projectId = input.projectId.trim().toLowerCase();
+  const intakeDraftId = input.intakeDraftId.trim().toLowerCase();
   if (!tenantId || !projectId || !intakeDraftId || !isLikelyUuid(intakeDraftId)) {
     return { ok: false, error: "Intake draft not found", code: "DRAFT_NOT_FOUND" };
   }
@@ -88,6 +88,16 @@ export async function resolveIntakeDraftForExtraction(
       code: "DRAFT_PROJECT_MISMATCH",
     };
   }
+  const { data: run, error: runError } = await supabase
+    .from("preproject_extraction_runs")
+    .select("project_id")
+    .eq("tenant_id", tenantId)
+    .eq("intake_draft_id", intakeDraftId)
+    .maybeSingle();
+  if (runError) return { ok: false, error: runError.message, code: "LOOKUP_FAILED" };
+  if (isRecord(run) && asString(run.project_id) !== projectId) {
+    return { ok: false, error: "Intake draft is already used by another project", code: "DRAFT_PROJECT_MISMATCH" };
+  }
   return { ok: true, draft };
 }
 
@@ -102,8 +112,8 @@ export async function listProjectIntakeDraftsForExtraction(
   | { ok: true; drafts: IntakeDraftExtractionSummary[] }
   | { ok: false; error: string; code: string }
 > {
-  const tenantId = input.tenantId.trim();
-  const projectId = input.projectId.trim();
+  const tenantId = input.tenantId.trim().toLowerCase();
+  const projectId = input.projectId.trim().toLowerCase();
   if (!tenantId || !projectId || !isLikelyUuid(projectId)) {
     return { ok: false, error: "tenantId and projectId required", code: "INVALID_INPUT" };
   }
@@ -125,5 +135,15 @@ export async function listProjectIntakeDraftsForExtraction(
     const parsed = parseSummary(row);
     if (parsed) drafts.push(parsed);
   }
-  return { ok: true, drafts };
+  if (drafts.length === 0) return { ok: true, drafts };
+  const { data: bindings, error: bindingsError } = await supabase
+    .from("preproject_extraction_runs")
+    .select("intake_draft_id, project_id")
+    .eq("tenant_id", tenantId)
+    .in("intake_draft_id", drafts.map((draft) => draft.id));
+  if (bindingsError) return { ok: false, error: bindingsError.message, code: "LOOKUP_FAILED" };
+  const unavailable = new Set((bindings ?? []).filter(isRecord)
+    .filter((run) => asString(run.project_id) !== projectId)
+    .map((run) => asString(run.intake_draft_id)));
+  return { ok: true, drafts: drafts.filter((draft) => !unavailable.has(draft.id)) };
 }

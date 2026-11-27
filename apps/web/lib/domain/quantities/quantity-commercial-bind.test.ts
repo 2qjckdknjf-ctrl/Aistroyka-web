@@ -36,6 +36,59 @@ function exampleCommercial(): CommercialInput {
   };
 }
 
+function acceptedQuantityFixture() {
+  const writes: unknown[] = [];
+  const rows: Record<string, Record<string, unknown>> = {
+    quantity_acceptance_decisions: { id: "acc-1", tenant_id: "t1", project_id: "p1", decision: "accepted", calculation_revision_id: "calc-1" },
+    quantity_calculation_revisions: { id: "calc-1", tenant_id: "t1", project_id: "p1", input_snapshot_id: "snap-1", quantity: "10.000000", unit: "m2", quantity_basis: "physical_net" },
+    quantity_input_snapshots: { id: "snap-1", tenant_id: "t1", project_id: "p1", request_hash: "a".repeat(64) },
+  };
+  const from = vi.fn((table: string) => {
+    let row: Record<string, unknown> | null = rows[table] ?? null;
+    const query = {
+      select: () => query,
+      eq: (key: string, value: unknown) => { if (row && row[key] !== value) row = null; return query; },
+      insert: (value: Record<string, unknown>) => { writes.push(value); row = { id: "bind-1", ...value }; return query; },
+      maybeSingle: async () => ({ data: row, error: null }),
+    };
+    return query;
+  });
+  return { client: { from } as never, rows, writes };
+}
+
+describe("commercial binding matches the accepted calculation identity", () => {
+  it.each(["quantity", "unit", "basis", "hash"])("rejects a different %s before locking the immutable binding", async (field) => {
+    const db = acceptedQuantityFixture();
+    const commercial = exampleCommercial();
+    if (field === "quantity") commercial.quantity.value = "11.000000";
+    if (field === "unit") { commercial.quantity.context.unit = "m"; commercial.price.rate.unit = "m"; commercial.quantity.context.quantity_basis = "joint_length"; }
+    if (field === "basis") commercial.quantity.context.quantity_basis = "system_area";
+    if (field === "hash") commercial.quantity.context.work_spec_hash = "b".repeat(64);
+    expect(calculateCommercialLine(commercial).ok).toBe(true);
+    const result = await bindAcceptedQuantityCommercial(db.client, {
+      tenantId: "t1", projectId: "p1", actorUserId: "u1", acceptanceDecisionId: "acc-1", commercialInput: commercial,
+    });
+    expect(result).toMatchObject({ ok: false, code: "QUANTITY_MISMATCH" });
+    expect(db.writes).toEqual([]);
+  });
+
+  it.each(["quantity_calculation_revisions", "quantity_input_snapshots"])("fails closed when linked %s belongs to another project", async (table) => {
+    const db = acceptedQuantityFixture(); db.rows[table].project_id = "other-project";
+    expect((await bindAcceptedQuantityCommercial(db.client, {
+      tenantId: "t1", projectId: "p1", actorUserId: "u1", acceptanceDecisionId: "acc-1", commercialInput: exampleCommercial(),
+    })).ok).toBe(false);
+    expect(db.writes).toEqual([]);
+  });
+
+  it("binds a valid cost calculation to exactly the accepted revision", async () => {
+    const db = acceptedQuantityFixture();
+    const result = await bindAcceptedQuantityCommercial(db.client, {
+      tenantId: "t1", projectId: "p1", actorUserId: "u1", acceptanceDecisionId: "acc-1", commercialInput: exampleCommercial(),
+    });
+    expect(result.ok).toBe(true); expect(db.writes).toHaveLength(1);
+  });
+});
+
 describe("Stage2a A05 commercial bind gate", () => {
   it("only accepted decisions are commercially bindable", () => {
     expect(isQuantityCommerciallyBindable("accepted")).toBe(true);
@@ -109,58 +162,10 @@ describe("Stage2a A05 commercial bind gate", () => {
   });
 
   it("bindAcceptedQuantityCommercial inserts when accepted and commercial ok", async () => {
-    const commercial = exampleCommercial();
-    const maybeSingleAcceptance = vi.fn().mockResolvedValue({
-      data: {
-        id: "acc-1",
-        tenant_id: "t1",
-        project_id: "p1",
-        decision: "accepted",
-      },
-      error: null,
-    });
-    const maybeSingleInsert = vi.fn().mockResolvedValue({
-      data: {
-        id: "bind-1",
-        acceptance_decision_id: "acc-1",
-        work_spec_hash: "a".repeat(64),
-        issues: [],
-        result_payload: { ok: true },
-      },
-      error: null,
-    });
-
-    const supabase = {
-      from: vi.fn((table: string) => {
-        if (table === "quantity_acceptance_decisions") {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => ({
-                    maybeSingle: maybeSingleAcceptance,
-                  })),
-                })),
-              })),
-            })),
-          };
-        }
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              maybeSingle: maybeSingleInsert,
-            })),
-          })),
-        };
-      }),
-    };
-
-    const result = await bindAcceptedQuantityCommercial(supabase as never, {
-      tenantId: "t1",
-      projectId: "p1",
-      actorUserId: "u1",
-      acceptanceDecisionId: "acc-1",
-      commercialInput: commercial,
+    const db = acceptedQuantityFixture();
+    const result = await bindAcceptedQuantityCommercial(db.client, {
+      tenantId: "t1", projectId: "p1", actorUserId: "u1", acceptanceDecisionId: "acc-1",
+      commercialInput: exampleCommercial(),
     });
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected ok");

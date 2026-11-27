@@ -15,9 +15,17 @@ import {
 } from "@/lib/platform/ai/ai.service";
 import {
   getServerConfig,
+  getConfiguredVisionProviders,
   isAnyVisionProviderConfigured,
   isGeminiConfigured,
 } from "@/lib/config/server";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import {
+  checkQuota,
+  checkBudgetAlert,
+  estimateMaxVisionCostUsd,
+  estimateGeminiVideoDailyQuotaReserveUsd,
+} from "@/lib/platform/ai-usage/ai-usage.service";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
 import { mapDailyVideoToAnalysisResult } from "./map-daily-video-to-analysis";
@@ -56,6 +64,40 @@ export type ProcessOneJobResult =
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Preserve the image/video HTTP routes' pre-egress limits when avoiding a Worker self-fetch. */
+async function checkInProcessLimits(
+  admin: SupabaseClient,
+  options: { tenantId: string; subscriptionTier?: string | null; requestIp?: string; traceId?: string },
+  isVideo: boolean
+): Promise<void> {
+  const endpoint = isVideo ? "POST /api/v1/ai/analyze-video-daily" : "POST /api/v1/ai/analyze-image";
+  let rateResult;
+  try {
+    rateResult = await checkRateLimit(admin, {
+      tenantId: options.tenantId, ip: options.requestIp ?? "unknown", endpoint,
+    });
+  } catch {
+    // Match the public routes' availability behavior; quota validation still runs.
+    logStructured({ event: "rate_limit_unavailable", endpoint, tenant_id: options.tenantId, request_id: options.traceId });
+  }
+  if (rateResult?.limited) {
+    throw new VisionProviderError({
+      message: rateResult.message, httpStatus: 429, errorType: "provider_unavailable", retryable: true,
+    });
+  }
+  const tier = options.subscriptionTier ?? "free";
+  const estimatedCost = isVideo
+    ? estimateGeminiVideoDailyQuotaReserveUsd(tier)
+    : estimateMaxVisionCostUsd(getConfiguredVisionProviders(), tier);
+  const quotaMessage = await checkQuota(admin, options.tenantId, estimatedCost);
+  if (quotaMessage) {
+    throw new VisionProviderError({
+      message: quotaMessage, httpStatus: 402, errorType: "invalid_request", retryable: false,
+    });
+  }
+  await checkBudgetAlert(admin, options.tenantId, estimatedCost);
 }
 
 /** Structured job lifecycle logs (job_started / job_succeeded / job_failed). */
@@ -194,7 +236,10 @@ async function markJobFailed(
 export async function processOneJob(
   supabase: SupabaseClient,
   aiAnalysisUrl: string | undefined,
-  options: { tenantId: string; callerClient: SupabaseClient; traceId?: string; aiRequestHeaders?: HeadersInit }
+  options: {
+    tenantId: string; callerClient: SupabaseClient; traceId?: string; aiRequestHeaders?: HeadersInit;
+    userId?: string | null; subscriptionTier?: string | null; requestIp?: string;
+  }
 ): Promise<ProcessOneJobResult> {
   const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
   // Image jobs still need AI_ANALYSIS_URL; video jobs use Gemini and are checked after media type.
@@ -293,19 +338,24 @@ export async function processOneJob(
         errorType: retryable ? "provider_unavailable" : "validation_error", retryable });
     }
 
+    const inProcess = isVideo || shouldUseInProcessVision(aiAnalysisUrl);
+    if (inProcess) await checkInProcessLimits(supabase, { ...options, tenantId, traceId }, isVideo);
+    const aiContext = {
+      tenantId, userId: options.userId ?? null, subscriptionTier: options.subscriptionTier ?? "free", traceId,
+    };
     let result: AnalysisResult;
     if (isVideo) {
       const daily = await analyzeVideoDailyWork(
         supabase,
-        { tenantId, userId: null, traceId },
+        aiContext,
         { videoUrl: source.imageUrl, projectId, mediaId }
       );
       result = mapDailyVideoToAnalysisResult(daily);
-    } else if (shouldUseInProcessVision(aiAnalysisUrl)) {
+    } else if (inProcess) {
       // Avoid Worker→public self-fetch (CF 403). Same path as analyze-image route.
       result = await analyzeImage(
         supabase,
-        { tenantId, userId: null, traceId },
+        aiContext,
         { imageUrl: source.imageUrl, mediaId, projectId }
       );
     } else {
@@ -347,10 +397,8 @@ export async function processOneJob(
         : err instanceof AIPolicyBlockedError
           ? { errorType: "validation_error" as const, retryable: false }
           : err instanceof AIVisionFailedError
-            ? {
-                errorType: err.retryable ? ("provider_unavailable" as const) : ("invalid_request" as const),
-                retryable: err.retryable,
-              }
+            // The HTTP route exposes provider failures as 502/504, never a caller 400.
+            ? classifyVisionFailure({ message: err.message, httpStatus: 502 })
             : err instanceof AIVideoDailyFailedError
               ? classifyVisionFailure(err.message)
               : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");

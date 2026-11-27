@@ -206,7 +206,9 @@ export async function POST(
           ? 422
           : result.code === "CONFLICT"
             ? 409
-            : 500;
+            : result.code === "FORBIDDEN"
+              ? 403
+              : result.code === "PERSISTENCE_UNAVAILABLE" ? 503 : 500;
     return NextResponse.json({ error: result.error, code: result.code }, { status: http });
   }
 

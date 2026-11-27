@@ -20,7 +20,8 @@ const requestBoundSupabase = () => ({
     },
   }),
 });
-vi.mock("@/lib/supabase/server", () => ({
+vi.mock("@/lib/supabase/server", async (original) => ({
+  ...await original<typeof import("@/lib/supabase/server")>(),
   getSessionUser: async () => ({ id: "caller" }),
   createClientFromRequest: (...args: unknown[]) => fake.createClientFromRequest(...args),
   createClient: (...args: unknown[]) => fake.createClient(...args),
@@ -29,6 +30,7 @@ vi.mock("@/lib/supabase/rpc", () => ({ getProjectById: async () => ({ data: { te
 vi.mock("@/lib/auth/tenant", () => ({ hasMinRole: async () => true }));
 vi.mock("@/lib/api/engine", () => ({ MEDIA_BUCKET: "media", createAnalysisJob: async () => ({ id: "job" }) }));
 import { POST } from "./route";
+import { ServiceRoleForbiddenError } from "@/lib/supabase/server";
 beforeEach(() => {
   fake.adminAvailable = true;
   vi.clearAllMocks();
@@ -53,6 +55,26 @@ describe("private project upload", () => {
     expect(response.status).toBe(200);
     expect(fake.createClientFromRequest).toHaveBeenCalledWith(request);
     expect(fake.createClient).not.toHaveBeenCalled();
+  });
+  it("returns 403 for a service-role token before reading or writing storage", async () => {
+    fake.createClientFromRequest.mockRejectedValueOnce(new ServiceRoleForbiddenError());
+    const request = new Request("https://test/api/v1/projects/project/upload", { method: "POST" });
+    const response = await POST(request, {
+      params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" }),
+    });
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ success: false, error: "Service role JWT not allowed" });
+    expect(fake.getBucket).not.toHaveBeenCalled();
+    expect(fake.upload).not.toHaveBeenCalled();
+    expect(fake.insert).not.toHaveBeenCalled();
+  });
+  it("does not misclassify an unexpected client failure as forbidden", async () => {
+    const failure = new Error("Synthetic client failure");
+    fake.createClientFromRequest.mockRejectedValueOnce(failure);
+    await expect(POST(new Request("https://test/api/v1/projects/project/upload", { method: "POST" }), {
+      params: Promise.resolve({ id: "00000000-0000-4000-8000-000000000001" }),
+    })).rejects.toBe(failure);
+    expect(fake.upload).not.toHaveBeenCalled();
   });
   it("creates a private bucket and persists an object path for guarded previews", async () => {
     fake.getBucket.mockResolvedValueOnce({ data: null, error: { message: "Bucket not found" } });

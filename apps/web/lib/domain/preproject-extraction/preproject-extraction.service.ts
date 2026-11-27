@@ -1,8 +1,8 @@
+import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   assertObservationPayloadSafe,
   extractHeuristicObservations,
-  type HeuristicObservationDraft,
 } from "./heuristic-extractor";
 import { resolveIntakeDraftForExtraction } from "./intake-draft-binding";
 
@@ -85,31 +85,7 @@ export type CreateHeuristicExtractionInput = {
   text: string;
 };
 
-async function loadRunWithObservations(
-  supabase: SupabaseClient,
-  tenantId: string,
-  runRow: Record<string, unknown>
-): Promise<{ ok: true; run: PreprojectRunDto } | { ok: false; error: string; code: string }> {
-  const runId = asString(runRow.id);
-  if (!runId) return { ok: false, error: "run missing id", code: "LOOKUP_FAILED" };
-  const listed = await listObservationsForRun(supabase, tenantId, runId);
-  if (!listed.ok) return listed;
-  return {
-    ok: true,
-    run: {
-      id: runId,
-      tenant_id: tenantId,
-      project_id: asString(runRow.project_id),
-      intake_draft_id: asString(runRow.intake_draft_id),
-      status: asString(runRow.status) ?? "pending_review",
-      source_kind: asString(runRow.source_kind) ?? "text_heuristic",
-      source_ref: asString(runRow.source_ref),
-      created_at: asString(runRow.created_at) ?? new Date().toISOString(),
-      observations: listed.observations,
-    },
-  };
-}
-
+/** Run identity and every observation are committed together; reuse is verified in the transaction. */
 export async function createHeuristicExtractionRun(
   supabase: SupabaseClient,
   input: CreateHeuristicExtractionInput
@@ -117,139 +93,59 @@ export async function createHeuristicExtractionRun(
   | { ok: true; run: PreprojectRunDto; reused?: boolean }
   | { ok: false; error: string; code: string }
 > {
-  const tenantId = input.tenantId.trim();
-  const actorUserId = input.actorUserId.trim();
-  if (!tenantId || !actorUserId) {
-    return { ok: false, error: "tenantId and actorUserId required", code: "INVALID_INPUT" };
+  const tenantId = input.tenantId.trim().toLowerCase();
+  const actorUserId = input.actorUserId.trim().toLowerCase();
+  const intakeDraftId = input.intakeDraftId?.trim().toLowerCase() || null;
+  const projectId = input.projectId?.trim().toLowerCase() || null;
+  if (!tenantId || !actorUserId || !input.text.trim()) {
+    return { ok: false, error: "tenantId, actorUserId and text required", code: "INVALID_INPUT" };
   }
-
-  const intakeDraftId = input.intakeDraftId?.trim() || null;
-  const projectId = input.projectId?.trim() || null;
-
-  // AIS-CLIENT-005A: bind intake_draft_id to a real tenant draft (project match or unassigned).
   if (intakeDraftId) {
-    if (!projectId) {
-      return {
-        ok: false,
-        error: "projectId required when intakeDraftId is set",
-        code: "INVALID_INPUT",
-      };
-    }
-    const resolved = await resolveIntakeDraftForExtraction(supabase, {
-      tenantId,
-      projectId,
-      intakeDraftId,
-    });
-    if (!resolved.ok) {
-      return { ok: false, error: resolved.error, code: resolved.code };
-    }
+    if (!projectId) return { ok: false, error: "projectId required when intakeDraftId is set", code: "INVALID_INPUT" };
+    const resolved = await resolveIntakeDraftForExtraction(supabase, { tenantId, projectId, intakeDraftId });
+    if (!resolved.ok) return resolved;
   }
-
-  // AIS-CLIENT-005A: repeated confirmation for the same intake draft must not duplicate entities.
-  if (intakeDraftId) {
-    const { data: existing, error: existingError } = await supabase
-      .from("preproject_extraction_runs")
-      .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
-      .eq("tenant_id", tenantId)
-      .eq("intake_draft_id", intakeDraftId)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (existingError) {
-      return { ok: false, error: existingError.message, code: "LOOKUP_FAILED" };
-    }
-    if (existing && isRecord(existing)) {
-      const loaded = await loadRunWithObservations(supabase, tenantId, existing);
-      if (!loaded.ok) return loaded;
-      return { ok: true, run: loaded.run, reused: true };
-    }
-  }
-
   const drafts = extractHeuristicObservations(input.text);
   for (const draft of drafts) {
     const bad = assertObservationPayloadSafe(draft.payload);
     if (bad) return { ok: false, error: bad, code: "COMMERCIAL_FORBIDDEN" };
   }
-
-  const { data: runRow, error: runError } = await supabase
-    .from("preproject_extraction_runs")
-    .insert({
-      tenant_id: tenantId,
-      project_id: projectId,
-      intake_draft_id: intakeDraftId,
-      status: "pending_review",
-      source_kind: "text_heuristic",
-      source_ref: "text_heuristic.v1",
-      provider_meta: { engine: "text_heuristic.v1", observation_count: drafts.length },
-      created_by: actorUserId,
-    })
-    .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
-    .maybeSingle();
-
-  if (runError || !runRow || !isRecord(runRow)) {
-    // Concurrent create for same draft: race → unique violation → reuse winner.
-    if (intakeDraftId && runError?.code === "23505") {
-      const { data: raced } = await supabase
-        .from("preproject_extraction_runs")
-        .select("id, tenant_id, project_id, intake_draft_id, status, source_kind, source_ref, created_at")
-        .eq("tenant_id", tenantId)
-        .eq("intake_draft_id", intakeDraftId)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (raced && isRecord(raced)) {
-        const loaded = await loadRunWithObservations(supabase, tenantId, raced);
-        if (!loaded.ok) return loaded;
-        return { ok: true, run: loaded.run, reused: true };
-      }
-    }
-    return { ok: false, error: runError?.message ?? "run insert failed", code: "INSERT_FAILED" };
+  const { data, error } = await supabase.rpc("create_preproject_extraction_atomic", {
+    p_tenant_id: tenantId,
+    p_project_id: projectId,
+    p_actor_user_id: actorUserId,
+    p_intake_draft_id: intakeDraftId,
+    p_input_hash: createHash("sha256").update(input.text).digest("hex"),
+    p_observations: drafts,
+  });
+  if (error) {
+    const expected = new Set(["DRAFT_NOT_FOUND", "DRAFT_WITHDRAWN", "DRAFT_PROJECT_MISMATCH", "DRAFT_INPUT_MISMATCH", "RUN_INCOMPLETE"]);
+    const code = expected.has(error.message) ? error.message : error.code === "22023" ? "INVALID_INPUT" :
+      error.code === "42501" ? "FORBIDDEN" : error.code === "PGRST202" || error.code === "42883" ? "PERSISTENCE_UNAVAILABLE" : "INSERT_FAILED";
+    return { ok: false, error: code === "PERSISTENCE_UNAVAILABLE" ? "Atomic extraction persistence is not available" : error.message, code };
   }
-
-  const runId = asString(runRow.id);
-  if (!runId) return { ok: false, error: "run insert returned no id", code: "INSERT_FAILED" };
-
-  const observationRows = drafts.map((draft: HeuristicObservationDraft) => ({
-    tenant_id: tenantId,
-    run_id: runId,
-    kind: draft.kind,
-    label: draft.label,
-    payload: draft.payload,
-    uncertainty: draft.uncertainty,
-    source_coords: draft.source_coords,
-    review_status: "pending",
-  }));
-
-  const { data: obsData, error: obsError } = await supabase
-    .from("preproject_observations")
-    .insert(observationRows)
-    .select(
-      "id, run_id, kind, label, payload, uncertainty, source_coords, review_status, reviewed_by, reviewed_at, review_note, created_at"
-    );
-
-  if (obsError) {
-    return { ok: false, error: obsError.message, code: "INSERT_FAILED" };
+  if (!isRecord(data) || !isRecord(data.run) || !Array.isArray(data.run.observations) || typeof data.reused !== "boolean") {
+    return { ok: false, error: "malformed atomic extraction response", code: "INSERT_FAILED" };
   }
-
-  const observations: PreprojectObservationDto[] = [];
-  for (const row of obsData ?? []) {
-    if (!isRecord(row)) continue;
-    const parsed = parseObservation(row);
-    if (parsed) observations.push(parsed);
+  const row = data.run;
+  const id = asString(row.id);
+  const createdAt = asString(row.created_at);
+  const observationRows: unknown[] = data.run.observations;
+  const observations = observationRows.filter(isRecord).map(parseObservation).filter((o): o is PreprojectObservationDto => o !== null);
+  const expectedCount = isRecord(row.provider_meta) ? row.provider_meta.observation_count : null;
+  if (!id || !createdAt || row.tenant_id !== tenantId || asString(row.project_id) !== projectId ||
+      asString(row.intake_draft_id) !== intakeDraftId || !Number.isInteger(expectedCount) ||
+      expectedCount !== observations.length || observations.some((o) => o.run_id !== id)) {
+    return { ok: false, error: "extraction identity or completeness mismatch", code: "RUN_INCOMPLETE" };
   }
-
   return {
     ok: true,
+    reused: data.reused || undefined,
     run: {
-      id: runId,
-      tenant_id: tenantId,
-      project_id: asString(runRow.project_id),
-      intake_draft_id: asString(runRow.intake_draft_id),
-      status: asString(runRow.status) ?? "pending_review",
-      source_kind: asString(runRow.source_kind) ?? "text_heuristic",
-      source_ref: asString(runRow.source_ref),
-      created_at: asString(runRow.created_at) ?? new Date().toISOString(),
-      observations,
+      id, tenant_id: tenantId, project_id: projectId, intake_draft_id: intakeDraftId,
+      status: asString(row.status) ?? "pending_review",
+      source_kind: asString(row.source_kind) ?? "text_heuristic",
+      source_ref: asString(row.source_ref), created_at: createdAt, observations,
     },
   };
 }
@@ -334,7 +230,7 @@ export async function reviewPreprojectObservation(
   | { ok: false; error: string; code: string }
 > {
   const observationId = input.observationId.trim();
-  const tenantId = input.tenantId.trim();
+  const tenantId = input.tenantId.trim().toLowerCase();
   const reviewerUserId = input.reviewerUserId.trim();
   if (!observationId || !tenantId || !reviewerUserId) {
     return { ok: false, error: "observationId, tenantId and reviewerUserId required", code: "INVALID_INPUT" };

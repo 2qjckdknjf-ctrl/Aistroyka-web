@@ -5,7 +5,7 @@
  * Missing evidence → questions / INSUFFICIENT_EVIDENCE. Never workmanship PASS.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, EmptyState, Skeleton } from "@/components/ui";
@@ -51,6 +51,13 @@ const EVIDENCE_KINDS = [
   "signoff_document",
 ] as const;
 
+const WATERPROOFING_REQUIREMENTS = new Set([
+  "wp.contract_scope", "wp.work_spec", "wp.measured_qty", "wp.substrate", "wp.thickness",
+  "wp.photo", "wp.material", "wp.inspection", "wp.signoff",
+]);
+const ITEM_STATUSES = new Set(["present", "missing", "unverified", "conflicting"]);
+const VERDICTS = new Set(["ABSTAIN", "INSUFFICIENT_EVIDENCE", "NEEDS_REVIEW", "READY_FOR_HUMAN_REVIEW"]);
+
 async function fetchTemplates(projectId: string): Promise<Template[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/completeness/templates`, {
     credentials: "include",
@@ -88,6 +95,7 @@ export function ProjectTradeCompletenessPanel({
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [lastEval, setLastEval] = useState<Evaluation | null>(null);
+  const inputRevision = useRef(0);
 
   const { data: templates, isPending, isError } = useQuery({
     queryKey: ["completeness-templates", projectId],
@@ -96,6 +104,12 @@ export function ProjectTradeCompletenessPanel({
   });
 
   const templateId = templates?.[0]?.id ?? "trade.waterproofing.wet_area";
+
+  useEffect(() => {
+    inputRevision.current += 1;
+    setSelected({});
+    setLastEval(null);
+  }, [projectId, templateId]);
 
   const inventory = useMemo(
     () =>
@@ -107,12 +121,28 @@ export function ProjectTradeCompletenessPanel({
   );
 
   const evalMutation = useMutation({
-    mutationFn: () => evaluate(projectId, templateId, inventory),
-    onSuccess: (evaluation) => {
-      setLastEval(evaluation);
-      queryClient.invalidateQueries({ queryKey: ["completeness-templates", projectId] });
+    mutationFn: (input: { projectId: string; templateId: string; inventory: typeof inventory; revision: number }) =>
+      evaluate(input.projectId, input.templateId, input.inventory),
+    onSuccess: (evaluation, input) => {
+      if (input.revision === inputRevision.current) setLastEval(evaluation);
+      queryClient.invalidateQueries({ queryKey: ["completeness-templates", input.projectId] });
     },
   });
+
+  function requirementLabel(item: EvalItem): string {
+    return lastEval?.templateId === "trade.waterproofing.wet_area" && WATERPROOFING_REQUIREMENTS.has(item.requirementId)
+      ? t(`completenessRequirement_${item.requirementId.replace(".", "_")}`)
+      : t("completenessRequirementUnknown");
+  }
+
+  function requirementQuestion(item: EvalItem): string {
+    const label = requirementLabel(item);
+    if (item.status === "conflicting") return t("completenessConflictQuestion", { label });
+    if (item.status === "unverified") return t("completenessVerifyQuestion", { label });
+    return lastEval?.templateId === "trade.waterproofing.wet_area" && WATERPROOFING_REQUIREMENTS.has(item.requirementId)
+      ? t(`completenessMissing_${item.requirementId.replace(".", "_")}`)
+      : t("completenessQuestionUnknown");
+  }
 
   const body = (
     <div className="space-y-6 p-4">
@@ -136,9 +166,11 @@ export function ProjectTradeCompletenessPanel({
       {(templates ?? []).map((tpl) => (
         <div key={tpl.id} className="rounded-md border border-aistroyka-border p-3 text-sm">
           <p className="font-medium text-aistroyka-text-primary">
-            {tpl.trade} · v{tpl.version}
+            {t(tpl.id === "trade.waterproofing.wet_area" ? "completenessWaterproofing" : "completenessTradeUnknown")} · v{tpl.version}
           </p>
-          <p className="mt-1 text-aistroyka-text-secondary">{tpl.jurisdiction_note}</p>
+          <p className="mt-1 text-aistroyka-text-secondary">
+            {t(tpl.id === "trade.waterproofing.wet_area" ? "completenessWaterproofingNote" : "completenessTemplateUnknown")}
+          </p>
           <p className="mt-1 text-xs text-aistroyka-text-secondary">
             {t("completenessRequirements", { count: tpl.requirement_count })}
           </p>
@@ -154,9 +186,12 @@ export function ProjectTradeCompletenessPanel({
             <input
               type="checkbox"
               checked={Boolean(selected[kind])}
-              onChange={(e) =>
-                setSelected((prev) => ({ ...prev, [kind]: e.target.checked }))
-              }
+              onChange={(e) => {
+                const checked = e.target.checked;
+                inputRevision.current += 1;
+                setLastEval(null);
+                setSelected((prev) => ({ ...prev, [kind]: checked }));
+              }}
             />
             <span>{t(`completenessKind_${kind}` as "completenessKind_contract_scope")}</span>
           </label>
@@ -165,12 +200,12 @@ export function ProjectTradeCompletenessPanel({
 
       <Button
         type="button"
-        disabled={evalMutation.isPending}
-        onClick={() => evalMutation.mutate()}
+        disabled={evalMutation.isPending || isPending || isError || !templates?.length}
+        onClick={() => evalMutation.mutate({ projectId, templateId, inventory, revision: inputRevision.current })}
       >
         {evalMutation.isPending ? t("completenessEvaluating") : t("completenessEvaluate")}
       </Button>
-      {evalMutation.isError ? (
+      {evalMutation.isError && evalMutation.variables?.revision === inputRevision.current ? (
         <p className="text-sm text-red-400" role="alert">
           {t("completenessEvalFailed")}
         </p>
@@ -179,17 +214,18 @@ export function ProjectTradeCompletenessPanel({
       {lastEval ? (
         <div className="space-y-3 rounded-md border border-aistroyka-border p-3">
           <p className="text-sm font-medium text-aistroyka-text-primary">
-            {t("completenessVerdict")}: {lastEval.verdict}
+            {t("completenessVerdict")}: {t(`completenessVerdict_${VERDICTS.has(lastEval.verdict) ? lastEval.verdict : "unknown"}`)}
           </p>
           <p className="text-xs text-aistroyka-text-secondary">{t("completenessNoPass")}</p>
           <ul className="space-y-2 text-sm">
             {lastEval.items.map((item) => (
               <li key={item.requirementId} className="border-t border-aistroyka-border pt-2">
                 <p className="text-aistroyka-text-primary">
-                  {item.label} · {item.status} ({item.severity})
+                  {requirementLabel(item)} · {t(`completenessStatus_${ITEM_STATUSES.has(item.status) ? item.status : "unknown"}`)}
+                  {" ("}{t(item.severity === "required" ? "completenessSeverity_required" : "completenessSeverity_recommended")}{")"}
                 </p>
                 {item.question ? (
-                  <p className="text-aistroyka-text-secondary">{item.question}</p>
+                  <p className="text-aistroyka-text-secondary">{requirementQuestion(item)}</p>
                 ) : null}
               </li>
             ))}
