@@ -32,17 +32,22 @@ Commit SHA: `475d970de9fe4535f57a59c440a270c3628d7065`.
 
 Aikido `aikido_scan_paths` on touched governance files: **0 issues**.
 
+## Protected merges completed
+
+See `MERGE_RECEIPTS_2026-11-27.md`. P0 #557 and monthly #547/#552–#556 squash-merged with non-author APPROVED + required `check`/`gitleaks`.
+
 ## Remaining blockers
 
 | Item | Status |
 |---|---|
+| Hosted DB apply for #553/#554/#556 migrations | OWNER_GATE — run `migration_receipts_preflight.py` + fresh export before apply |
 | Gemini video Worker key | BLOCKED |
 | Vendor ZDR org | OWNER_GATE |
 | Mode B upload / physical device | OWNER_GATE / PARTIAL |
 | Nemotron bake-off | RESEARCH_DEFER |
 | Competitor price snapshots | DEFER (no connector) |
-| Draft PRs #547, #552–#556 | Separate protected merges; #552 large deps — needs careful review |
+| Deploy lag for main tip `5debb153` (#552) | Staging/prod observed at `9a64a4c` — wait CI deploy chain |
 
 ## Independent review note
 
-This RESULT is author evidence. Marking the P0 slice DONE requires non-author `APPROVED` on the protected PR and green required checks — not self-declared PASS alone.
+P0 code DONE only after non-author APPROVED + green required checks on #557 (completed). Live migration apply and owner gates remain open — not claimed complete.
