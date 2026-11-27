@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-25
 
-Main tip after #527/#528: Graph invalidate-on-revoke live; post-deploy health smoke cold-start retries merged. Confirm `GET /api/v1/health` `buildStamp.sha7` on staging+prod (expect `c280ee0` after #528 deploy). Roadmap #488 MERGED. Mode B: iOS TestFlight VALID; Android internal draft `2026112501`. Remaining external: vendor ZDR, populate `AI_TENANT_PROVIDER_KEYS_JSON`, Play draft→completed. Evidence: `docs/reports/plan-exec-delta-2026-11-24/`.
+Staging/prod `101c824`: MATERIAL list GET live PASS; Graph read + completeness/recon GET PASS; iOS simulator UITest (W/M/C) PASS. Main tip may include later docs merges. Dependabot enabled (1 critical proxy-addr + highs inventoried, no blind bumps). Gemini video still BLOCKED (no Worker key). Remaining OWNER: Gemini key, ZDR, Mode B upload, physical device.
 
 
 ## P0 закрыт — 2026-11-19: Supabase снова доступен
