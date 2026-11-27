@@ -1,0 +1,45 @@
+name: Caption Integrity
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'apps/web/lib/domain/media-captions/**'
+      - 'apps/web/app/api/v1/ai/transcribe/**'
+      - 'apps/web/app/api/v1/projects/**/media-captions/**'
+      - 'apps/web/supabase/migrations/**'
+      - 'scripts/ops/verify_caption_integrity_postgres.mjs'
+      - '.github/workflows/caption-integrity.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caption-integrity-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - name: Caption authorization and rollback contracts
+        run: |
+          set -euo pipefail
+          caption_test_dir="$RUNNER_TEMP/aistroyka-caption-contracts"
+          mkdir -p "$caption_test_dir"
+          npm install --prefix "$caption_test_dir" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.8 pg@8.23.1
+          cp scripts/ops/verify_caption_integrity_postgres.mjs "$caption_test_dir/captions.mjs"
+          node "$caption_test_dir/captions.mjs" "$GITHUB_WORKSPACE"
+      - name: Native concurrent caption replacements
+        run: |
+          set -euo pipefail
+          sudo systemctl start postgresql
+          caption_test_user="$(id -un)"
+          sudo -u postgres createuser --superuser "$caption_test_user"
+          sudo -u postgres createdb --owner="$caption_test_user" aistroyka_caption_integrity_ci
+          CAPTION_NATIVE_DATABASE_URL="postgresql://$caption_test_user@localhost/aistroyka_caption_integrity_ci?host=/var/run/postgresql" \
+            node "$RUNNER_TEMP/aistroyka-caption-contracts/captions.mjs" "$GITHUB_WORKSPACE"
