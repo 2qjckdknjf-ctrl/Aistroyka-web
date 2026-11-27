@@ -2068,3 +2068,14 @@ Detect material-overrun hypotheses from historical verified quantities, independ
 
 ### Cursor delivery contract
 Work in a separate implementation branch; report gap matrix, changed files, reproducible commands, test receipts, exact commit SHA, independent verdict, rollback and remaining blockers. Never mark DONE from documentation/build alone. Stop on missing authorization, hardware access or provider compatibility; report NOT_RUN rather than fabricate evidence.
+
+
+## Cursor / Codex execution delta — 2026-11-27
+
+Planning-only extension to November 26 specification. Reconcile current main, active PRs and actual code before execution; map to existing IDs, implement only confirmed gaps. P0 blockers first. Vendor claims from daily digest require primary-source verification before adoption. Numerical corpus sizes are proposed test defaults, not measured results. Owner/reviewer TBD.
+
+- P1 existing Document Intelligence/Construction Graph: verify Nemotron 3.5 Parse weights, OpenMDW license and Apple Silicon compatibility; compare existing OCR on 50 deidentified Spanish construction documents (estimates, invoices, specifications, catalogs, scanned tables). Extract rows, columns, quantities, units, prices, IVA, page and bounding-region provenance. Measure field exact match, table alignment, abstention, latency and cost; independently recompute totals, flag discrepancies, require professional confirmation before persistence. No duplicate calculator or OCR service; no fine-tuning on customer data without consent.
+- P0 existing security gates: deny protected resources consistently across MCP, direct API, shell, filesystem and child-agent routes; synthetic secrets only, verify no external effect.
+- P1 existing market intelligence: historical competitor price snapshots with source timestamp and strict cutoff; prioritize verified customer feedback against existing product backlog.
+
+Delivery: separate implementation branch, baseline and gap matrix, reproducible tests, exact SHA, independent verdict, rollback and blockers. No automatic merge, production deployment, purchases or live trading. Sources for verification: https://huggingface.co/nvidia/Nemotron-3.5-Parse ; https://onchainbench.ai/methodology ; https://www.perplexity.ai/en-GB/hub/blog/freeze-the-web-with-perplexity-time-machine ; https://openclaw.ai/blog/shellbench ; https://sakana.ai/marlin-update-2/ .
