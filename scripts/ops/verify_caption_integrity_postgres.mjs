@@ -8,9 +8,12 @@ const nativeUrl = process.env.CAPTION_NATIVE_DATABASE_URL;
 let Client;
 let db;
 if (nativeUrl) {
+  assert(['localhost', '127.0.0.1'].includes(new URL(nativeUrl).hostname), 'Native checks require an isolated local database');
   ({ Client } = await import('pg'));
   const client = new Client({ connectionString: nativeUrl });
+  assert(['localhost', '127.0.0.1', '/var/run/postgresql'].includes(client.connectionParameters.host), 'Native connection must remain local');
   await client.connect();
+  assert.equal((await client.query("select count(*)::int as n from pg_tables where schemaname in ('public','auth','app_private')")).rows[0].n, 0, 'Use an empty isolated database');
   db = { query: (sql, params = []) => client.query(sql, params), exec: sql => client.query(sql), close: () => client.end() };
 } else {
   db = new PGlite();
