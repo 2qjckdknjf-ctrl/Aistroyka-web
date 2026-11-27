@@ -23,7 +23,7 @@ functional: PASS (13/13 vitest)
 security: PASS (Aikido scan_paths: 0 issues on touched files; synthetic secrets only)
 repeatability: PASS (vitest re-run identical)
 runs: ≥2 local
-sha: (set after commit)
+sha: 475d970de9fe4535f57a59c440a270c3628d7065
 ```
 
 `combineEvidenceVerdict` accepts only when all axes PASS with runs≥3 when counted as critical evidence package; this code slice records unit evidence as PASS and awaits protected PR + non-author APPROVED before DONE.
