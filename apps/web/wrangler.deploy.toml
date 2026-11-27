@@ -4,6 +4,8 @@
 name = "aistroyka-web-dev"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+# Preserve the pre-4.150 upload policy, including the prebuilt deployment path.
+upload_source_maps = false
 main = ".open-next/worker.js"
 
 [assets]

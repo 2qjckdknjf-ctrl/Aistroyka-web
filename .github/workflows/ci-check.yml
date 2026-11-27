@@ -140,3 +140,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           NEXT_PUBLIC_APP_URL: https://staging.aistroyka.ai
         run: bun run cf:build
+
+      - name: Worker upload packaging (dry run)
+        run: node scripts/ci/verify-worker-upload-bundle.cjs
