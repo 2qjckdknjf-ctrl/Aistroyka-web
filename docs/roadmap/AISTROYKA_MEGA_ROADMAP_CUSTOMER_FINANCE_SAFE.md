@@ -2055,3 +2055,40 @@ Evidence: `docs/reports/plan-exec-delta-2026-11-24/`. Merged #507/#518/#519/#520
 | D15 Dependabot.yml | P1 | IMPLEMENTED | Majors need manual review; Material 1.14 closed (#523). |
 | Mobile Mode B upload | P1 | PARTIAL | iOS TestFlight VALID; Android internal draft `2026112501` (completed blocked by Play); no `release/mobile-pilot-rc`. |
 | AIS-GRAPH-004 invalidate-on-revoke | P1 | IMPLEMENTED | #527 + review-service tests: non-eligible verdicts prune overlay best-effort. |
+
+
+## Cursor execution specification — 2026-11-26
+
+Planning-only delta for 25–26 November. Read current main and active implementation PRs first; map to existing IDs, implement only confirmed gaps. Vendor claims require primary-source verification. Existing P0 gates remain first. Proposed numerical thresholds are initial configurable test defaults, not measured results. No auto-merge, deployment, purchases, ad activation or live trading. Owner/reviewer TBD.
+
+### P1 — existing voice intake / Construction Graph / MCP
+Prototype CUGA-inspired multilingual voice retrieval (RU/ES first) using existing STT/TTS and document index. Pipeline: consented audio → transcript → tenant/site-scoped retrieval → cited answer → speech. Return document version/page and source excerpt; abstain if missing/conflicting; no invented measurements or instructions. Test 20 representative questions, wrong-tenant denial, noisy speech, stale documents and unsupported answers. Reuse current tasks/roles; no second assistant backend.
+Expose existing read-only project status and report preparation via capability-negotiated MCP Skills/Tasks; task ID maps to existing job, cancel/reconnect idempotent, Elicitation binds exact approval before sending report or commercial action. No autonomous orders. Validate upstream CUGA/MCP capabilities before integration.
+### P1 — analytics
+Detect material-overrun hypotheses from historical verified quantities, independent deterministic comparison and holdout; no automatic budget changes. Existing pilot and release P0 gates take precedence.
+
+### Cursor delivery contract
+Work in a separate implementation branch; report gap matrix, changed files, reproducible commands, test receipts, exact commit SHA, independent verdict, rollback and remaining blockers. Never mark DONE from documentation/build alone. Stop on missing authorization, hardware access or provider compatibility; report NOT_RUN rather than fabricate evidence.
+
+
+## Cursor / Codex execution delta — 2026-11-27
+
+Planning-only extension to November 26 specification. Reconcile current main, active PRs and actual code before execution; map to existing IDs, implement only confirmed gaps. P0 blockers first. Vendor claims from daily digest require primary-source verification before adoption. Numerical corpus sizes are proposed test defaults, not measured results. Owner/reviewer TBD.
+
+- P1 existing Document Intelligence/Construction Graph: verify Nemotron 3.5 Parse weights, OpenMDW license and Apple Silicon compatibility; compare existing OCR on 50 deidentified Spanish construction documents (estimates, invoices, specifications, catalogs, scanned tables). Extract rows, columns, quantities, units, prices, IVA, page and bounding-region provenance. Measure field exact match, table alignment, abstention, latency and cost; independently recompute totals, flag discrepancies, require professional confirmation before persistence. No duplicate calculator or OCR service; no fine-tuning on customer data without consent.
+- P0 existing security gates: deny protected resources consistently across MCP, direct API, shell, filesystem and child-agent routes; synthetic secrets only, verify no external effect.
+- P1 existing market intelligence: historical competitor price snapshots with source timestamp and strict cutoff; prioritize verified customer feedback against existing product backlog.
+
+Delivery: separate implementation branch, baseline and gap matrix, reproducible tests, exact SHA, independent verdict, rollback and blockers. No automatic merge, production deployment, purchases or live trading. Sources for verification: https://huggingface.co/nvidia/Nemotron-3.5-Parse ; https://onchainbench.ai/methodology ; https://www.perplexity.ai/en-GB/hub/blog/freeze-the-web-with-perplexity-time-machine ; https://openclaw.ai/blog/shellbench ; https://sakana.ai/marlin-update-2/ .
+
+### Execution status — Cursor 2026-11-27 (branch `cursor/weekly-delta-exec-2026-11-27`)
+
+Reconciled against main tip `#532` / `ac64d2d` and open drafts #547/#552–#556. Evidence: `docs/reports/plan-exec-delta-2026-11-27/`.
+
+| Item | Priority | Status | Note |
+|---|---|---|---|
+| Transport-independent Action Boundary | P0 | IMPLEMENTED | `evaluateActionBoundary` + cross-transport deny tests (13 vitest with evidence-verdict) |
+| Independent evidence FAIL/NOT_RUN/UNKNOWN | P0 | IMPLEMENTED | `combineEvidenceVerdict` rejects functional PASS + security FAIL |
+| Nemotron 3.5 Parse bake-off | P1 | RESEARCH_DEFER | OpenMDW 1.1; CUDA quickstart; Apple Silicon not verified; no install |
+| Competitor price snapshots | P1 | DEFER | Same as D11 — no Monitor/API connector |
+| Gemini video / ZDR / Mode B / device | — | BLOCKED / OWNER_GATE | Unchanged |

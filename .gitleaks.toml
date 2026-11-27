@@ -18,9 +18,6 @@ paths = [
   '''(^|/)\.env(\.[^/]+)?\.example$''',
   '''(^|/)\.dev\.vars\.example$''',
   '''(^|/)ios/Config/Config\.example\.xcconfig$''',
-  '''(^|/)ios/Config/Secrets\.xcconfig$''',
-  '''(^|/)TestLogs/''',
-  '''(^|/)engine/Aistroyk/''',
 ]
 # Matched against the extracted secret (not the full line).
 regexes = [
