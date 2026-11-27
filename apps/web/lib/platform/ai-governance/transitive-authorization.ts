@@ -86,6 +86,12 @@ export function evaluateTransitiveAuthorization(
       rule_hits.push("forbidden_destination");
       return { decision: "block", rule_hits };
     }
+    // The receiving agent itself must be authorized, even if the caller omits
+    // the optional recipients list or lists only other, permitted recipients.
+    if (!allowed.has(hop.agentId)) {
+      rule_hits.push(hop.breakGlass ? "break_glass_non_widening" : "recipient_widened");
+      return { decision: "block", rule_hits };
+    }
     if (hop.recipients) {
       for (const recipient of hop.recipients) {
         if (!allowed.has(recipient)) {

@@ -1,5 +1,9 @@
 # STATUS — AISTROYKA
 
+## Plan-exec follow-through — 2026-11-27
+
+Weekly delta `Cursor / Codex execution delta — 2026-11-27` reconciled vs main `ac64d2d` (#532). P0 Action Boundary transport-independent evaluator + evidence verdict combiner on branch `cursor/weekly-delta-exec-2026-11-27` (13 vitest PASS; Aikido clean). Nemotron 3.5 Parse → RESEARCH_DEFER; competitor price snapshots → DEFER. Gemini video still BLOCKED. OWNER: Gemini key, ZDR, Mode B, device. Draft monthly PRs #547/#552–#556 inventoried (green CI; not blind-merged). Evidence: `docs/reports/plan-exec-delta-2026-11-27/`.
+
 ## Plan-exec follow-through — 2026-11-25
 
 Staging/prod `101c824`: MATERIAL list GET live PASS; Graph read + completeness/recon GET PASS; iOS simulator UITest (W/M/C) PASS. Main tip may include later docs merges. Dependabot enabled (1 critical proxy-addr + highs inventoried, no blind bumps). Gemini video still BLOCKED (no Worker key). Remaining OWNER: Gemini key, ZDR, Mode B upload, physical device.
