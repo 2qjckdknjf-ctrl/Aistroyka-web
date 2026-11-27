@@ -23,3 +23,25 @@ export type {
   HandoffDestination,
   TransitiveAuthorizationResult,
 } from "./transitive-authorization";
+export {
+  ACTION_BOUNDARY_POLICY_VERSION,
+  denyProtectedAcrossTransports,
+  evaluateActionBoundary,
+} from "./action-boundary";
+export type {
+  ActionBoundaryDecision,
+  ActionBoundaryPrincipal,
+  ActionBoundaryRequest,
+  ActionBoundaryResult,
+  ActionOperation,
+  ActionTransport,
+  ProtectedResourceClass,
+} from "./action-boundary";
+export { combineEvidenceVerdict } from "./evidence-verdict";
+export type {
+  EvidenceAxes,
+  FunctionalVerdict,
+  IndependentEvidenceVerdict,
+  RepeatabilityVerdict,
+  SecurityVerdict,
+} from "./evidence-verdict";
