@@ -50,6 +50,76 @@ function normalizeOptionalDecimal(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+export type MaterialRequirementDraftListItem = {
+  id: string;
+  acceptance_decision_id: string;
+  work_quantity: string | null;
+  material_need: string | null;
+  pack_count: string | null;
+  purchase_quantity: string | null;
+  issues: string[];
+  created_at: string;
+};
+
+/**
+ * List contractor-internal material requirement drafts for a project.
+ * Draft read only — no quotes, orders, or payments.
+ */
+export async function listMaterialRequirementDrafts(
+  supabase: SupabaseClient,
+  tenantId: string,
+  projectId: string,
+  limit = 50
+): Promise<
+  | { ok: true; drafts: MaterialRequirementDraftListItem[] }
+  | { ok: false; error: string; code: string }
+> {
+  const tid = tenantId.trim();
+  const pid = projectId.trim();
+  if (!tid || !pid) {
+    return { ok: false, error: "required fields missing", code: "INVALID_INPUT" };
+  }
+  const capped =
+    Number.isFinite(limit) && limit > 0 ? Math.min(Math.trunc(limit), 100) : 50;
+
+  const { data, error } = await supabase
+    .from("material_requirement_drafts")
+    .select(
+      "id, acceptance_decision_id, work_quantity, material_need, pack_count, purchase_quantity, issues, created_at"
+    )
+    .eq("tenant_id", tid)
+    .eq("project_id", pid)
+    .order("created_at", { ascending: false })
+    .limit(capped);
+
+  if (error) {
+    return { ok: false, error: error.message, code: "LOOKUP_FAILED" };
+  }
+
+  const drafts: MaterialRequirementDraftListItem[] = [];
+  for (const row of data ?? []) {
+    if (!isRecord(row)) continue;
+    const id = asString(row.id);
+    const acceptanceId = asString(row.acceptance_decision_id);
+    const createdAt = asString(row.created_at);
+    if (!id || !acceptanceId || !createdAt) continue;
+    drafts.push({
+      id,
+      acceptance_decision_id: acceptanceId,
+      work_quantity: asString(row.work_quantity),
+      material_need: asString(row.material_need),
+      pack_count: asString(row.pack_count),
+      purchase_quantity: asString(row.purchase_quantity),
+      issues: Array.isArray(row.issues)
+        ? row.issues.filter((item): item is string => typeof item === "string")
+        : [],
+      created_at: createdAt,
+    });
+  }
+
+  return { ok: true, drafts };
+}
+
 /**
  * Create a material-need draft from an accepted quantity decision.
  * Does not place orders, pay, or message suppliers.

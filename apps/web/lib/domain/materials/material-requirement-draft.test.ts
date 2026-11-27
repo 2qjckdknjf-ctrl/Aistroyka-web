@@ -6,6 +6,7 @@ import { join } from "node:path";
 import {
   addMaterialSupplierQuoteDraft,
   createMaterialRequirementDraft,
+  listMaterialRequirementDrafts,
 } from "./material-requirement-draft.service";
 
 describe("AIS-MATERIAL-008 material requirement draft", () => {
@@ -33,6 +34,69 @@ describe("AIS-MATERIAL-008 material requirement draft", () => {
         "android_lite"
       )
     ).not.toBeNull();
+    expect(
+      checkLiteAllowList(
+        "/api/v1/projects/p1/materials/requirement-drafts",
+        "GET",
+        "ios_lite"
+      )
+    ).not.toBeNull();
+  });
+
+  it("listMaterialRequirementDrafts returns project drafts newest first", async () => {
+    const limit = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: "d2",
+          acceptance_decision_id: "a2",
+          work_quantity: "2.000000",
+          material_need: "2.200000",
+          pack_count: "2",
+          purchase_quantity: "2.880000",
+          issues: [],
+          created_at: "2026-11-26T12:00:00.000Z",
+        },
+        {
+          id: "d1",
+          acceptance_decision_id: "a1",
+          work_quantity: "8.820000",
+          material_need: "9.702000",
+          pack_count: "7",
+          purchase_quantity: "10.080000",
+          issues: ["note"],
+          created_at: "2026-11-25T12:00:00.000Z",
+        },
+      ],
+      error: null,
+    });
+    const order = vi.fn(() => ({ limit }));
+    const eqProject = vi.fn(() => ({ order }));
+    const eqTenant = vi.fn(() => ({ eq: eqProject }));
+    const select = vi.fn(() => ({ eq: eqTenant }));
+    const supabase = { from: vi.fn(() => ({ select })) };
+
+    const result = await listMaterialRequirementDrafts(supabase as never, "t1", "p1", 50);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.drafts).toHaveLength(2);
+    expect(result.drafts[0]?.id).toBe("d2");
+    expect(result.drafts[1]?.material_need).toBe("9.702000");
+    expect(supabase.from).toHaveBeenCalledWith("material_requirement_drafts");
+  });
+
+  it("listMaterialRequirementDrafts fails closed on lookup error", async () => {
+    const limit = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: "rls denied" },
+    });
+    const order = vi.fn(() => ({ limit }));
+    const eqProject = vi.fn(() => ({ order }));
+    const eqTenant = vi.fn(() => ({ eq: eqProject }));
+    const select = vi.fn(() => ({ eq: eqTenant }));
+    const supabase = { from: vi.fn(() => ({ select })) };
+
+    const result = await listMaterialRequirementDrafts(supabase as never, "t1", "p1");
+    expect(result).toMatchObject({ ok: false, code: "LOOKUP_FAILED" });
   });
 
   it("RLS migration is internal-writer only and draft-only", () => {

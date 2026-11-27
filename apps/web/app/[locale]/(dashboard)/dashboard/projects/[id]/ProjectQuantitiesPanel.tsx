@@ -69,6 +69,26 @@ async function fetchSnapshots(projectId: string): Promise<SnapshotRow[]> {
   return json.data?.snapshots ?? [];
 }
 
+type MaterialDraftRow = {
+  id: string;
+  acceptance_decision_id: string;
+  work_quantity: string | null;
+  material_need: string | null;
+  pack_count: string | null;
+  purchase_quantity: string | null;
+  issues: string[];
+  created_at: string;
+};
+
+async function fetchMaterialDrafts(projectId: string): Promise<MaterialDraftRow[]> {
+  const res = await fetch(`/api/v1/projects/${projectId}/materials/requirement-drafts?limit=50`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("FAILED_LOAD_MATERIAL_DRAFTS");
+  const json = (await res.json()) as { data?: { drafts?: MaterialDraftRow[] } };
+  return json.data?.drafts ?? [];
+}
+
 async function createRectangleSnapshot(input: {
   projectId: string;
   workCode: string;
@@ -309,6 +329,16 @@ export function ProjectQuantitiesPanel({
     enabled: !!projectId,
   });
 
+  const {
+    data: materialDrafts,
+    isPending: materialDraftsPending,
+    isError: materialDraftsError,
+  } = useQuery({
+    queryKey: ["project-material-drafts", projectId],
+    queryFn: () => fetchMaterialDrafts(projectId),
+    enabled: !!projectId,
+  });
+
   const createMutation = useMutation({
     mutationFn: () =>
       createRectangleSnapshot({
@@ -367,6 +397,7 @@ export function ProjectQuantitiesPanel({
     onSuccess: (result) => {
       setMaterialDraft(result);
       setQuoteId(null);
+      queryClient.invalidateQueries({ queryKey: ["project-material-drafts", projectId] });
     },
   });
 
@@ -682,6 +713,42 @@ export function ProjectQuantitiesPanel({
                   <p className="font-medium text-aistroyka-text-primary">{row.work_code}</p>
                   <p className="text-aistroyka-text-secondary">
                     {row.quantity_kind} · {row.request_kind} · {row.request_hash.slice(0, 12)}…
+                  </p>
+                </div>
+                <time className="text-xs text-aistroyka-text-secondary" dateTime={row.created_at}>
+                  {new Date(row.created_at).toLocaleString()}
+                </time>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-medium text-aistroyka-text-primary">
+          {t("quantitiesMaterialDrafts")}
+        </h3>
+        {materialDraftsPending ? <Skeleton className="h-20 w-full" /> : null}
+        {materialDraftsError ? (
+          <p className="text-sm text-red-400">{t("quantitiesMaterialDraftsLoadFailed")}</p>
+        ) : null}
+        {!materialDraftsPending && !materialDraftsError && (materialDrafts?.length ?? 0) === 0 ? (
+          <p className="text-sm text-aistroyka-text-secondary">{t("quantitiesMaterialDraftsEmpty")}</p>
+        ) : null}
+        {!materialDraftsPending && !materialDraftsError && (materialDrafts?.length ?? 0) > 0 ? (
+          <ul className="divide-y divide-aistroyka-border rounded-md border border-aistroyka-border">
+            {materialDrafts!.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                <div>
+                  <p className="font-medium text-aistroyka-text-primary">
+                    {t("quantitiesMaterialDraftRecorded", {
+                      need: row.material_need ?? "—",
+                      packs: row.pack_count ?? "—",
+                    })}
+                  </p>
+                  <p className="text-aistroyka-text-secondary">
+                    {row.work_quantity ?? "—"}
+                    {row.issues.length > 0 ? ` · ${row.issues.join(", ")}` : ""}
                   </p>
                 </div>
                 <time className="text-xs text-aistroyka-text-secondary" dateTime={row.created_at}>

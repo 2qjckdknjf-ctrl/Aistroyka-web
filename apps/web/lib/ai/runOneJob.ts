@@ -7,11 +7,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import {
+  analyzeImage,
   analyzeVideoDailyWork,
   AIPolicyBlockedError,
   AIVideoDailyFailedError,
+  AIVisionFailedError,
 } from "@/lib/platform/ai/ai.service";
-import { getServerConfig, isGeminiConfigured } from "@/lib/config/server";
+import {
+  getServerConfig,
+  isAnyVisionProviderConfigured,
+  isGeminiConfigured,
+} from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
 import { mapDailyVideoToAnalysisResult } from "./map-daily-video-to-analysis";
@@ -21,6 +27,28 @@ import {
 } from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
 const AI_RETRY_DELAY_MS = 2000;
+
+/**
+ * Cloudflare Workers cannot reliably HTTP-fetch their own public URL (often 403).
+ * When AI_ANALYSIS_URL points at this app's analyze-image route, run vision in-process.
+ */
+export function shouldUseInProcessVision(aiAnalysisUrl: string | undefined): boolean {
+  const trimmed = aiAnalysisUrl?.trim() ?? "";
+  if (!trimmed) return isAnyVisionProviderConfigured();
+  try {
+    const u = new URL(trimmed);
+    const path = u.pathname.replace(/\/$/, "");
+    if (path !== "/api/ai/analyze-image" && path !== "/api/v1/ai/analyze-image") {
+      return false;
+    }
+    const app = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim();
+    // Require known app origin so test/external hosts keep the HTTP path.
+    if (!app) return false;
+    return u.origin === new URL(app).origin;
+  } catch {
+    return false;
+  }
+}
 
 export type ProcessOneJobResult =
   | { ok: true; jobId: string; status: "completed" | "failed" }
@@ -231,7 +259,7 @@ export async function processOneJob(
   const type = (media.type as string) || "image";
   const isVideo = type === "video";
 
-  if (!isVideo && !aiAnalysisUrl?.trim()) {
+  if (!isVideo && !shouldUseInProcessVision(aiAnalysisUrl) && !aiAnalysisUrl?.trim()) {
     await markJobFailed(
       supabase,
       jobId,
@@ -273,6 +301,13 @@ export async function processOneJob(
         { videoUrl: source.imageUrl, projectId, mediaId }
       );
       result = mapDailyVideoToAnalysisResult(daily);
+    } else if (shouldUseInProcessVision(aiAnalysisUrl)) {
+      // Avoid Worker→public self-fetch (CF 403). Same path as analyze-image route.
+      result = await analyzeImage(
+        supabase,
+        { tenantId, userId: null, traceId },
+        { imageUrl: source.imageUrl, mediaId, projectId }
+      );
     } else {
       result = await callAiAnalysis(
         aiAnalysisUrl!,
@@ -311,9 +346,14 @@ export async function processOneJob(
         ? { errorType: err.errorType, retryable: err.retryable }
         : err instanceof AIPolicyBlockedError
           ? { errorType: "validation_error" as const, retryable: false }
-          : err instanceof AIVideoDailyFailedError
-            ? classifyVisionFailure(err.message)
-            : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
+          : err instanceof AIVisionFailedError
+            ? {
+                errorType: err.retryable ? ("provider_unavailable" as const) : ("invalid_request" as const),
+                retryable: err.retryable,
+              }
+            : err instanceof AIVideoDailyFailedError
+              ? classifyVisionFailure(err.message)
+              : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
     const message = err instanceof Error ? err.message : "Analysis failed";
     const attempts = await markJobFailed(supabase, jobId, tenantId, job.execution_token, message, classified.errorType);
     logJobLifecycle("job_failed", {

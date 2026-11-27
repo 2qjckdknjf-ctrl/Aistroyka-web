@@ -56,6 +56,30 @@ describe.each(["", "custom-plan"])("egress gates for degraded tier %j", (tier) =
     expect(result.rule_hits).toContain("secret_detected");
   });
 
+  it.each(["free", tier])("binds the mandate to the policy tenant for tier %j", async (subscriptionTier) => {
+    const result = await runPolicy(supabase, {
+      ...context,
+      subscription_tier: subscriptionTier,
+      handoff: {
+        mandate: {
+          tenantId: "tenant-b", principalId: "user-1", allowedRecipients: ["agent-a"],
+          classification: "restricted", purpose: "draft",
+        },
+        hops: [{
+          agentId: "agent-a", tenantId: "tenant-b", action: "summarize",
+          destination: "same_tenant_ops", recipients: ["agent-a"],
+        }],
+      },
+    });
+    expect(result.decision).toBe("block");
+    expect(result.rule_hits).toContain("mandate_tenant_mismatch");
+    expect(result.rule_hits).not.toContain("transitive_allow");
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
+      tenant_id: "tenant-a", decision: "block",
+      rule_hits: expect.arrayContaining(["mandate_tenant_mismatch"]),
+    }));
+  });
+
   it.each(["image_url", "video_url"] as const)("enforces strict PII host policy for %s", async (field) => {
     vi.mocked(getPrivacySettings).mockResolvedValue({
       pii_mode: "strict", redact_ai_prompts: false, allow_exports: true,

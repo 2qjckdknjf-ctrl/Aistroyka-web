@@ -19,5 +19,24 @@ Verdict enum: `PASS` | `FAIL` | `NOT_RUN` | `UNKNOWN`. Self-reported PASS withou
 | Deploy | Staging/prod reflect #507 | `GET /api/v1/health` → `buildStamp.sha7` | PASS | `030e089` staging+prod |
 | GRAPH-004 | Invalidate overlay on non-eligible review | `review.service.test.ts` + `construction-graph.invalidate.test.ts` | PASS | #527 + follow-up tests |
 | Smoke cold-start | Health retry after deploy | `scripts/smoke/pilot_launch.sh` | PASS | #528 |
+| PILOT-001 unit | Role/RLS/revoke/peer/finance/lite suites | `bunx vitest run` (12 files, see evidence) | PASS (159) | tip `80ff987` / runtime `91ff124` |
+| PILOT-001 staging | Completeness templates + recon findings + unknown report | curl staging with SMOKE_* | PASS (200/200/404) | evidence 2026-11-25 |
+| Completeness UI | Manager panels hard audit | inventory markdown | CODE_PRESENT | #534 |
+| EVID-002/VISION | Persist/review/vision job units | 7 vitest files (50) | PASS | inventory 2026-11-25 |
+| AI LIVE gate | `ai_live_provider.sh --require-live` | staging + SMOKE_* | **GO** | vision_router / gpt-4o-mini; no fallback |
+| RULE-015 evaluate | POST completeness/evaluate empty inventory | staging SMOKE_* | PASS | verdict INSUFFICIENT_EVIDENCE |
+| PILOT multi-persona | synthetic JWT → staging /api/v1 | browser UA curl | **PASS** (isolation) | CF 1010 was UA; owner/manager/worker 200/404; client 403 |
+| OWNER Dependabot | vulnerability alerts + security updates | GitHub API | **PASS** | enabled 2026-11-26 |
+| OWNER secret scanning | secret_scanning + push protection | GitHub API | **PASS** | enabled 2026-11-26 |
+| EVID media E2E | upload → analysis/process → ai_analysis | staging SMOKE_* | **PASS** completed | #542 `d84232f` |
+| EVID human review | POST /ai/analysis/:id/review (4 verdicts) | staging SMOKE_* | **PASS** | corrections + graph_eligible |
+| CLIENT-005A live | POST/GET preproject/extractions + obs review + review-pack | staging SMOKE_* | **PASS** | 201 extract + 200 obs/pack |
+| MATERIAL-008 | draft-comparison + requirement-draft units | vitest 14 | PASS | inventory 2026-11-25; staging list 404 |
+| MATERIAL-008 live | snapshot→acceptance→draft→fixture→compare→quote | staging SMOKE_* | **PASS** | qty 8.82→need 9.702; ranked offers; YYYY-MM-DD quote |
+| VISION video | POST /api/v1/ai/analyze-video-daily | staging SMOKE_* | **BLOCKED** | 503 Gemini key missing on Worker; code present |
+| MATERIAL-008 list GET | GET …/materials/requirement-drafts + panel list | staging SMOKE_* | **PASS** | 200 draft; client 403; sha7 `101c824` |
+| GRAPH-004 live read | GET …/projects/:id/graph | staging SMOKE_* | **PASS** | nodes:3 edges:2 |
+| Manager completeness/recon API | templates + findings GET | staging SMOKE_* | **PASS** | 1 template; findings [] |
+| iOS UITest smoke | Worker+Manager+Customer login | simulator local | **PASS** | `run-ios-uitest-smoke-local.sh` 2026-11-26 |
 
 Independent reviewer: non-author APPROVED on #507 (`6262265-cpu`). Production deploy observed via canonical workflow_run (not a local wrangler push).

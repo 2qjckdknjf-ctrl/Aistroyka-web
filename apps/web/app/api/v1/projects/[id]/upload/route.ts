@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { createClientFromRequest, getSessionUser } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { createAnalysisJob, MEDIA_BUCKET } from "@/lib/api/engine";
@@ -42,7 +42,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: projectId } = await params;
-  const supabase = await createClient();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) {
+    return NextResponse.json({ success: false, error: "Invalid project id" }, { status: 400 });
+  }
+  // Request-bound client so Authorization: Bearer (smoke/mobile) works, not only cookies.
+  const supabase = await createClientFromRequest(request);
   const user = await getSessionUser(supabase);
   if (!user) {
     return NextResponse.json(
@@ -90,8 +94,14 @@ export async function POST(
     );
   }
 
-  const ext = file.name.split(".").pop() || "bin";
-  const path = `${projectId}/${crypto.randomUUID()}.${ext}`;
+  // Object key is entirely server-generated (validated project UUID + random UUID + safe ext).
+  const rawExt = (file.name.split(".").pop() || "bin").toLowerCase();
+  const ext = /^[a-z0-9]{1,16}$/.test(rawExt) ? rawExt : "bin";
+  const objectKey = `${projectId}/${crypto.randomUUID()}.${ext}`;
+  if (objectKey.includes("..") || objectKey.includes("\\") || objectKey.startsWith("/")) {
+    return NextResponse.json({ success: false, error: "Invalid storage path" }, { status: 400 });
+  }
+  const path = objectKey;
 
   // Если задан SUPABASE_SERVICE_ROLE_KEY — создаём бакет при отсутствии
   const initialStorage = await ensureMediaBucket();

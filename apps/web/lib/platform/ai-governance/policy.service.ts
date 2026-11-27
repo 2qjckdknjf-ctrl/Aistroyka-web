@@ -41,6 +41,22 @@ function getTrustedImageHosts(): string[] {
   return raw.split(",").map((h) => h.trim().toLowerCase()).filter(Boolean);
 }
 
+/**
+ * Strip query/hash before secret scan. Supabase signed URLs embed JWTs in `?token=eyJ…`
+ * which must not fail-closed the media egress path (still scan prompts fully).
+ */
+export function mediaUrlForSecretScan(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 /** Run policy and persist decision. Returns result with decisionId; callers must check result.decision before running AI. */
 export async function runPolicy(
   supabase: SupabaseClient,
@@ -64,8 +80,8 @@ export async function runPolicy(
   if (result.decision !== "block") {
     if (
       containsSecrets(
-        ctx.image_url,
-        ctx.video_url,
+        mediaUrlForSecretScan(ctx.image_url),
+        mediaUrlForSecretScan(ctx.video_url),
         ctx.system_prompt,
         ctx.user_message,
         ctx.egress_text
@@ -93,7 +109,10 @@ export async function runPolicy(
     }
   }
   if (result.decision !== "block" && ctx.handoff) {
-    const handoff = evaluateTransitiveAuthorization(ctx.handoff.mandate, ctx.handoff.hops);
+    // A self-consistent chain for another tenant does not authorize this request.
+    const handoff = ctx.handoff.mandate?.tenantId !== ctx.tenant_id
+      ? { decision: "block" as const, rule_hits: ["mandate_tenant_mismatch"] }
+      : evaluateTransitiveAuthorization(ctx.handoff.mandate, ctx.handoff.hops);
     result = {
       decision: handoff.decision === "allow" ? result.decision : "block",
       rule_hits: [...result.rule_hits, ...handoff.rule_hits],
