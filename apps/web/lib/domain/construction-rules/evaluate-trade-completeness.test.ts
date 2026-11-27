@@ -68,4 +68,29 @@ describe("AIS-RULE-015 evaluateTradeCompleteness", () => {
     const result = evaluateTradeCompleteness(WATERPROOFING_COMPLETENESS_TEMPLATE_V1, inventory);
     expect(result.verdict).toBe("NEEDS_REVIEW");
   });
+
+  it("does not call a checklist ready when recommended evidence conflicts", () => {
+    const inventory = WATERPROOFING_COMPLETENESS_TEMPLATE_V1.requirements.map((r) =>
+      present(r.evidenceKind, r.id)
+    );
+    inventory.find((item) => item.evidenceKind === "signoff_document")!.status = "conflicting";
+    const result = evaluateTradeCompleteness(WATERPROOFING_COMPLETENESS_TEMPLATE_V1, inventory);
+    expect(result.verdict).toBe("NEEDS_REVIEW");
+    expect(result.questions).toHaveLength(1);
+  });
+
+  it.each(["conflicting", "unverified"] as const)(
+    "cannot hide a duplicate %s entry by placing present evidence first",
+    (status) => {
+      const inventory = WATERPROOFING_COMPLETENESS_TEMPLATE_V1.requirements.map((r) =>
+        present(r.evidenceKind, r.id)
+      );
+      inventory.push({ evidenceKind: "contract_scope", status, sourceRef: "unresolved-source" });
+      const forward = evaluateTradeCompleteness(WATERPROOFING_COMPLETENESS_TEMPLATE_V1, inventory);
+      const reversed = evaluateTradeCompleteness(WATERPROOFING_COMPLETENESS_TEMPLATE_V1, [...inventory].reverse());
+      expect(forward).toEqual(reversed);
+      expect(forward.verdict).toBe(status === "conflicting" ? "NEEDS_REVIEW" : "INSUFFICIENT_EVIDENCE");
+      expect(forward.items[0]).toMatchObject({ status, sourceRef: "unresolved-source" });
+    }
+  );
 });

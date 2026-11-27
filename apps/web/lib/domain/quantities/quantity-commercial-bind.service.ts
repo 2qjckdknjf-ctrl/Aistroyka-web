@@ -51,7 +51,7 @@ export async function bindAcceptedQuantityCommercial(
 
   const { data: acceptance, error: acceptanceError } = await supabase
     .from("quantity_acceptance_decisions")
-    .select("id, tenant_id, project_id, decision")
+    .select("id, tenant_id, project_id, decision, calculation_revision_id")
     .eq("id", acceptanceDecisionId)
     .eq("tenant_id", tenantId)
     .eq("project_id", projectId)
@@ -82,6 +82,36 @@ export async function bindAcceptedQuantityCommercial(
   }
 
   const hash = commercial.quantity_context.work_spec_hash;
+  const calculationId = asString(acceptance.calculation_revision_id);
+  if (!calculationId) {
+    return { ok: false, error: "accepted calculation identity is missing", code: "QUANTITY_MISMATCH" };
+  }
+  const { data: calculation, error: calculationError } = await supabase
+    .from("quantity_calculation_revisions")
+    .select("id, input_snapshot_id, quantity, unit, quantity_basis")
+    .eq("id", calculationId)
+    .eq("tenant_id", tenantId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (calculationError) return { ok: false, error: calculationError.message, code: "LOOKUP_FAILED" };
+  if (!isRecord(calculation) || !asString(calculation.input_snapshot_id)) {
+    return { ok: false, error: "accepted calculation was not found in this project", code: "QUANTITY_MISMATCH" };
+  }
+  const { data: snapshot, error: snapshotError } = await supabase
+    .from("quantity_input_snapshots")
+    .select("id, request_hash")
+    .eq("id", calculation.input_snapshot_id)
+    .eq("tenant_id", tenantId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (snapshotError) return { ok: false, error: snapshotError.message, code: "LOOKUP_FAILED" };
+  if (!isRecord(snapshot) || snapshot.request_hash !== hash ||
+      calculation.quantity !== commercial.physical_quantity ||
+      calculation.unit !== commercial.quantity_context.unit ||
+      calculation.quantity_basis !== commercial.quantity_context.quantity_basis ||
+      commercial.quantity_context.purpose !== "work" || commercial.quantity_context.component_id !== null) {
+    return { ok: false, error: "commercial quantity does not match the accepted calculation", code: "QUANTITY_MISMATCH" };
+  }
 
   const { data, error } = await supabase
     .from("quantity_commercial_bindings")

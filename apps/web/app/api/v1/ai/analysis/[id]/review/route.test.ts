@@ -65,6 +65,7 @@ describe("POST /api/v1/ai/analysis/:id/review", () => {
       graphEligible: true,
       reviewedAt: "2026-10-28T12:00:00.000Z",
       reviewedBy: "user-1",
+      correctionId: "correction-1",
     });
 
     const res = await POST(
@@ -107,6 +108,7 @@ describe("POST /api/v1/ai/analysis/:id/review", () => {
         graph_eligible: true,
         reviewed_at: "2026-10-28T12:00:00.000Z",
         reviewed_by: "user-1",
+        correction_id: "correction-1",
       },
     });
   });
@@ -136,5 +138,33 @@ describe("POST /api/v1/ai/analysis/:id/review", () => {
     );
     expect(res.status).toBe(400);
     expect(reviewAiAnalysis).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["FORBIDDEN", 403],
+    ["NOT_FOUND", 404],
+    ["INVALID_INPUT", 400],
+    ["UPDATE_FAILED", 500],
+  ])("returns %s as HTTP %i without auditing an unsuccessful review", async (code, httpStatus) => {
+    reviewAiAnalysis.mockResolvedValue({
+      ok: false,
+      code,
+      error: code === "FORBIDDEN" ? "Reviewer is not authorized" : "Review failed",
+    });
+    const res = await POST(
+      new Request("https://test/api/v1/ai/analysis/a1/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "accepted" }),
+      }),
+      { params: Promise.resolve({ id: "a1" }) }
+    );
+    expect(res.status).toBe(httpStatus);
+    await expect(res.json()).resolves.toEqual({
+      error: code === "FORBIDDEN" ? "Reviewer is not authorized" : "Review failed",
+      code,
+    });
+    expect(reviewAiAnalysis).toHaveBeenCalledTimes(1);
+    expect(emitAudit).not.toHaveBeenCalled();
   });
 });

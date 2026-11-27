@@ -148,7 +148,11 @@ describe("AIS-MATERIAL-008 material requirement draft", () => {
 
   it("createMaterialRequirementDraft inserts computed need when accepted", async () => {
     const maybeSingleAcceptance = vi.fn().mockResolvedValue({
-      data: { id: "acc-1", tenant_id: "t1", project_id: "p1", decision: "accepted" },
+      data: { id: "acc-1", tenant_id: "t1", project_id: "p1", decision: "accepted", calculation_revision_id: "calc-1" },
+      error: null,
+    });
+    const maybeSingleCalculation = vi.fn().mockResolvedValue({
+      data: { id: "calc-1", quantity: "8.820000" },
       error: null,
     });
     const maybeSingleInsert = vi.fn().mockResolvedValue({
@@ -165,12 +169,12 @@ describe("AIS-MATERIAL-008 material requirement draft", () => {
     });
     const supabase = {
       from: vi.fn((table: string) => {
-        if (table === "quantity_acceptance_decisions") {
+        if (table === "quantity_acceptance_decisions" || table === "quantity_calculation_revisions") {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
                 eq: vi.fn(() => ({
-                  eq: vi.fn(() => ({ maybeSingle: maybeSingleAcceptance })),
+                  eq: vi.fn(() => ({ maybeSingle: table === "quantity_acceptance_decisions" ? maybeSingleAcceptance : maybeSingleCalculation })),
                 })),
               })),
             })),

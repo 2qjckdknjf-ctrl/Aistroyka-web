@@ -42,13 +42,18 @@ export async function POST(
   try {
     body = (await request.json()) as Record<string, unknown>;
   } catch {
-    body = {};
+    return NextResponse.json({ error: "Invalid JSON", code: "INVALID_INPUT" }, { status: 400 });
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid JSON object", code: "INVALID_INPUT" }, { status: 400 });
   }
 
   const offerIdsRaw = body.offer_ids ?? body.offerIds;
-  const offerIds = Array.isArray(offerIdsRaw)
-    ? offerIdsRaw.filter((item): item is string => typeof item === "string" && item.length > 0)
-    : null;
+  if (offerIdsRaw != null && (!Array.isArray(offerIdsRaw) || offerIdsRaw.length === 0 ||
+      offerIdsRaw.some((item) => typeof item !== "string" || !item.trim()))) {
+    return NextResponse.json({ error: "invalid offer_ids", code: "INVALID_INPUT" }, { status: 400 });
+  }
+  const offerIds = Array.isArray(offerIdsRaw) ? offerIdsRaw as string[] : null;
 
   const supabase = await createClientFromRequest(request);
   const membership = await supabase.rpc("is_internal_tenant_writer_for_tenant", {

@@ -355,10 +355,14 @@ export function ProjectQuantitiesPanel({
           ? result.snapshot.request_hash
           : null
       );
-      setAcceptance(null);
-      setBindingId(null);
-      setMaterialDraft(null);
-      setQuoteId(null);
+      // Idempotent snapshot creation can return the same immutable calculation.
+      // Its already recorded acceptance/bind/draft remains valid for that identity.
+      if (!result.calculation || result.calculation.id !== lastResult?.id) {
+        setAcceptance(null);
+        setBindingId(null);
+        setMaterialDraft(null);
+        setQuoteId(null);
+      }
       queryClient.invalidateQueries({ queryKey: ["project-quantities", projectId] });
     },
   });
