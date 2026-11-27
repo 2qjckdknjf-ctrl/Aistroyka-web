@@ -46,3 +46,11 @@ Minimal workflow notifications layer using existing `manager_notifications` tabl
 ## Reminders
 
 Deferred. Scheduled/cron-based reminders would require separate job infrastructure. Document as future step.
+
+## Inbox open audit (2026-09-28)
+
+Separate from read state. Opening a target records `audit_logs.action = notification_opened`. Mark-read does not.
+
+`POST /api/v1/notifications/:id/opened` returns `{ "ok": true }` for an owned row and `404` otherwise. It does not update `read_at`. A failed or slow audit write still returns 200. One row per tenant, user, and notification id (`20260927230000_notification_opened_once.sql`). Details are categorical (`notification_type`, `target_type`, `source=inbox`); title and body are not stored.
+
+Web, iOS Manager, and iOS Worker call this only when the inbox item has a real target route. Android does not call it. Push taps are not this event. Contract and client gates: `docs/growth/PRODUCT_ANALYTICS_PLAN.md`.
