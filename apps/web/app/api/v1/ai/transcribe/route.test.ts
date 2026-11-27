@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "./route";
 import { getById as getMediaById } from "@/lib/domain/media/media.repository";
 import { indexTranscriptionResult } from "@/lib/domain/media-captions/index-transcription-result";
+import { getTenantContextFromRequest } from "@/lib/tenant";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClientFromRequest: vi.fn().mockResolvedValue({ from: vi.fn() }),
@@ -61,6 +62,11 @@ function minWebmPayload(): Uint8Array {
 describe("POST /api/v1/ai/transcribe", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getMediaById).mockReset();
+    vi.mocked(indexTranscriptionResult).mockReset();
+    vi.mocked(getTenantContextFromRequest).mockResolvedValue({
+      tenantId: "t1", userId: "u1", subscriptionTier: "free", role: "owner",
+    } as never);
     global.fetch = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ text: "hello site", duration: 2.5 }), {
         status: 200,
@@ -169,5 +175,56 @@ describe("POST /api/v1/ai/transcribe", () => {
     const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
     const res = await POST(req);
     expect(res.status).toBe(200);
+  });
+
+  const projectId = "aaaabbbb-2222-4222-8222-222222222222";
+  const mediaId = "aaaabbbb-1111-4111-8111-111111111111";
+  const media = { id: mediaId, project_id: projectId, tenant_id: "t1" };
+  function scopedRequest(uppercase = false) {
+    const fd = new FormData();
+    fd.append("file", new File([minWebmPayload()], "clip.webm", { type: "audio/webm" }));
+    fd.append("project_id", uppercase ? projectId.toUpperCase() : projectId);
+    fd.append("media_id", uppercase ? mediaId.toUpperCase() : mediaId);
+    return new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+  }
+
+  it.each(["lookup", "index"])("preserves the paid transcript when caption %s throws", async (stage) => {
+    vi.mocked(getMediaById).mockResolvedValueOnce(media as never);
+    if (stage === "lookup") {
+      vi.mocked(getMediaById).mockReset().mockRejectedValueOnce(new Error("private database failure"));
+    } else {
+      vi.mocked(indexTranscriptionResult).mockRejectedValueOnce(new Error("private database failure"));
+    }
+    const res = await POST(scopedRequest());
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.data.text).toBe("hello site");
+    expect(json.data.caption_index).toEqual({ indexed: false, inserted: 0, code: "INDEX_FAILED" });
+    expect(JSON.stringify(json)).not.toContain("private database failure");
+  });
+
+  it("normalizes iOS uppercase UUIDs before scoping and indexing", async () => {
+    vi.mocked(getMediaById).mockResolvedValueOnce(media as never);
+    vi.mocked(indexTranscriptionResult).mockResolvedValueOnce({ indexed: true, inserted: 1 });
+    const res = await POST(scopedRequest(true));
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.caption_index.indexed).toBe(true);
+    expect(getMediaById).toHaveBeenCalledWith(expect.anything(), mediaId, "t1");
+    expect(indexTranscriptionResult).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ projectId, mediaId }));
+  });
+
+  it.each(["member", "viewer", "stakeholder"])("lets %s transcribe without replacing an owner/admin caption index", async (role) => {
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: "t1", userId: "u1", subscriptionTier: "free", role,
+    } as never);
+    vi.mocked(getMediaById).mockResolvedValueOnce(media as never);
+    vi.mocked(indexTranscriptionResult).mockResolvedValueOnce({ indexed: true, inserted: 1 });
+    const res = await POST(scopedRequest());
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.data.text).toBe("hello site");
+    expect(json.data.caption_index).toEqual({ indexed: false, inserted: 0, code: "INSUFFICIENT_RIGHTS" });
+    expect(getMediaById).not.toHaveBeenCalled();
+    expect(indexTranscriptionResult).not.toHaveBeenCalled();
   });
 });
