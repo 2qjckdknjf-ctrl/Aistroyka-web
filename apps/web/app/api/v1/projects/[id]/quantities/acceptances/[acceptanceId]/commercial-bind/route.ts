@@ -70,7 +70,7 @@ export async function POST(
 
   if (!result.ok) {
     const http =
-      result.code === "INVALID_INPUT" || result.code === "COMMERCIAL_INVALID"
+      result.code === "INVALID_INPUT" || result.code === "COMMERCIAL_INVALID" || result.code === "QUANTITY_MISMATCH"
         ? 400
         : result.code === "NOT_FOUND"
           ? 404

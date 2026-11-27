@@ -10,7 +10,13 @@ function pickInventory(
   inventory: EvidenceInventoryItem[],
   evidenceKind: EvidenceInventoryItem["evidenceKind"]
 ): EvidenceInventoryItem | undefined {
-  return inventory.find((item) => item.evidenceKind === evidenceKind);
+  const priority = { conflicting: 3, unverified: 2, present: 1 };
+  // A duplicate must never hide a declared conflict or unverified source.
+  // Stable source ordering also makes the recorded result independent of input order.
+  return inventory
+    .filter((item) => item.evidenceKind === evidenceKind)
+    .sort((a, b) => priority[b.status] - priority[a.status] ||
+      (a.sourceRef?.trim() ?? "").localeCompare(b.sourceRef?.trim() ?? ""))[0];
 }
 
 /**
@@ -71,9 +77,7 @@ export function evaluateTradeCompleteness(
   const missingRequiredCount = items.filter(
     (i) => i.severity === "required" && (i.status === "missing" || i.status === "unverified")
   ).length;
-  const conflictingRequiredCount = items.filter(
-    (i) => i.severity === "required" && i.status === "conflicting"
-  ).length;
+  const conflictingCount = items.filter((i) => i.status === "conflicting").length;
   const missingRecommendedCount = items.filter(
     (i) => i.severity === "recommended" && (i.status === "missing" || i.status === "unverified")
   ).length;
@@ -85,7 +89,7 @@ export function evaluateTradeCompleteness(
   let verdict: CompletenessVerdict;
   if (missingRequiredCount > 0) {
     verdict = "INSUFFICIENT_EVIDENCE";
-  } else if (conflictingRequiredCount > 0) {
+  } else if (conflictingCount > 0) {
     verdict = "NEEDS_REVIEW";
   } else if (missingRecommendedCount > 0) {
     verdict = "ABSTAIN";

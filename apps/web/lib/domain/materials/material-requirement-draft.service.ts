@@ -150,10 +150,15 @@ export async function createMaterialRequirementDraft(
   if (!tenantId || !projectId || !acceptanceDecisionId || !actorUserId || !workQuantity) {
     return { ok: false, error: "required fields missing", code: "INVALID_INPUT" };
   }
+  if ([input.consumption, input.waste, input.packCoverage].some(
+    (value) => value !== null && value !== undefined && typeof value !== "string"
+  )) {
+    return { ok: false, error: "material parameters must be decimal strings or null", code: "INVALID_INPUT" };
+  }
 
   const { data: acceptance, error: acceptanceError } = await supabase
     .from("quantity_acceptance_decisions")
-    .select("id, tenant_id, project_id, decision")
+    .select("id, tenant_id, project_id, decision, calculation_revision_id")
     .eq("id", acceptanceDecisionId)
     .eq("tenant_id", tenantId)
     .eq("project_id", projectId)
@@ -181,6 +186,34 @@ export async function createMaterialRequirementDraft(
     normalizeOptionalDecimal(input.waste),
     normalizeOptionalDecimal(input.packCoverage)
   );
+  // Missing optional parameters are a legitimate incomplete draft. Invalid or
+  // lossy calculations must not occupy its immutable acceptance-decision slot.
+  if (calc.issues.some((issue) => issue !== "material_parameters_missing" && issue !== "pack_coverage_missing")) {
+    return { ok: false, error: "invalid material calculation", code: "INVALID_INPUT" };
+  }
+
+  // An acceptance belongs to one immutable calculation. A valid decimal from
+  // another calculation must not consume this acceptance's unique draft slot.
+  const calculationId = asString(acceptance.calculation_revision_id);
+  if (!calculationId) {
+    return { ok: false, error: "accepted calculation is unavailable", code: "QUANTITY_MISMATCH" };
+  }
+  const { data: acceptedCalculation, error: calculationError } = await supabase
+    .from("quantity_calculation_revisions")
+    .select("id, quantity")
+    .eq("id", calculationId)
+    .eq("tenant_id", tenantId)
+    .eq("project_id", projectId)
+    .maybeSingle();
+  if (calculationError) {
+    return { ok: false, error: calculationError.message, code: "LOOKUP_FAILED" };
+  }
+  const acceptedQuantity = isRecord(acceptedCalculation) && typeof acceptedCalculation.quantity === "string"
+    ? materialRequirement(acceptedCalculation.quantity, null, null, null).work_quantity
+    : null;
+  if (acceptedQuantity === null || acceptedQuantity !== calc.work_quantity) {
+    return { ok: false, error: "work quantity does not match the accepted calculation", code: "QUANTITY_MISMATCH" };
+  }
 
   const { data, error } = await supabase
     .from("material_requirement_drafts")
@@ -257,6 +290,10 @@ export async function addMaterialSupplierQuoteDraft(
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(quoteDatedAt)) {
     return { ok: false, error: "invalid quote_dated_at", code: "INVALID_INPUT" };
+  }
+  if (input.leadTimeDays !== null && input.leadTimeDays !== undefined &&
+      (!Number.isInteger(input.leadTimeDays) || input.leadTimeDays < 0 || input.leadTimeDays > 2147483647)) {
+    return { ok: false, error: "invalid lead_time_days", code: "INVALID_INPUT" };
   }
   const stockStatus = input.stockStatus || "unknown";
   if (
