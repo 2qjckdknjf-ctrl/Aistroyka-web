@@ -24,6 +24,15 @@ describe.each([["legacy", POST], ["canonical", canonicalPost]] as const)("%s wor
     mocks.tenant.mockRejectedValue(new TenantForbiddenError());
     expect((await handler(new Request("https://safe.test/api/analysis/process", { method: "POST" }))).status).toBe(403);
   });
+  it("passes authenticated user, tier and request IP to in-process analysis", async () => {
+    mocks.tenant.mockResolvedValue({ ...valid, subscriptionTier: "pro" });
+    await handler(new Request("https://safe.test/api/analysis/process", {
+      method: "POST", headers: { "x-forwarded-for": "192.0.2.10, 192.0.2.11" },
+    }));
+    expect(mocks.process.mock.calls[0][2]).toMatchObject({
+      tenantId: "tenant-a", userId: "user-a", subscriptionTier: "pro", requestIp: "192.0.2.10",
+    });
+  });
   it.each(["/api/ai/analyze-image", "/api/v1/ai/analyze-image"])("forwards auth to the same-origin %s callback", async (path) => {
     vi.stubEnv("AI_ANALYSIS_URL", "https://safe.test" + path);
     await handler(new Request("https://safe.test/api/analysis/process", { method: "POST", headers: { Authorization: "Bearer test-only", Cookie: "session=test-only" } }));
