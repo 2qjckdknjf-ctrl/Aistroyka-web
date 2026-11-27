@@ -1,271 +1,323 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const invalidateConstructionGraphForSource = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ invalidated: true, removedNodes: 1 })
-);
+const invalidateConstructionGraphForSource = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/domain/construction-graph/construction-graph.repository", () => ({
   invalidateConstructionGraphForSource,
 }));
 
-import { reviewAiAnalysis, validateReviewVerdict } from "./review.service";
+import {
+  reviewAiAnalysis,
+  validateReviewVerdict,
+  type CorrectedAnalysisPayload,
+  type ReviewAiAnalysisInput,
+} from "./review.service";
+
+const ANALYSIS = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const TENANT = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const REVIEWER = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+const MEDIA = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+const PROJECT = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+const CORRECTION = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+const REVIEWED_AT = "2026-11-27T12:00:00.000Z";
+
+function input(overrides: Partial<ReviewAiAnalysisInput> = {}): ReviewAiAnalysisInput {
+  return {
+    analysisId: ANALYSIS,
+    tenantId: TENANT,
+    reviewerUserId: REVIEWER,
+    status: "accepted",
+    ...overrides,
+  };
+}
+
+function receipt(overrides: Record<string, unknown> = {}) {
+  return {
+    id: ANALYSIS,
+    review_status: "accepted",
+    reviewed_at: REVIEWED_AT,
+    reviewed_by: REVIEWER,
+    correction_id: CORRECTION,
+    media_id: MEDIA,
+    ...overrides,
+  };
+}
 
 function mockReviewClient(opts: {
-  load: unknown;
-  update: unknown;
-  correctionInsert?: unknown;
-  mediaProjectId?: string | null;
-}) {
-  const loadMaybe = vi.fn().mockResolvedValue({ data: opts.load, error: null });
-  const updateMaybe = vi.fn().mockResolvedValue({ data: opts.update, error: null });
-  const correctionMaybe = vi
-    .fn()
-    .mockResolvedValue({ data: opts.correctionInsert ?? { id: "corr-1" }, error: null });
+  receipt?: unknown;
+  error?: { code?: string; message?: string } | null;
+  projectId?: string | null;
+} = {}) {
+  const rpc = vi.fn().mockResolvedValue({
+    data: opts.receipt === undefined ? receipt() : opts.receipt,
+    error: opts.error ?? null,
+  });
   const mediaMaybe = vi.fn().mockResolvedValue({
-    data: opts.mediaProjectId ? { project_id: opts.mediaProjectId } : null,
+    data: opts.projectId ? { project_id: opts.projectId } : null,
     error: null,
   });
-  const eq2 = vi.fn().mockReturnValue({
-    select: () => ({ maybeSingle: updateMaybe }),
+  const mediaQuery = { eq: vi.fn(), maybeSingle: mediaMaybe };
+  mediaQuery.eq.mockReturnValue(mediaQuery);
+  const mediaSelect = vi.fn().mockReturnValue(mediaQuery);
+  const from = vi.fn((table: string) => {
+    if (table !== "media") {
+      throw new Error("Review writes must use the atomic RPC, never direct table operations");
+    }
+    return { select: mediaSelect };
   });
-  const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
-
-  return {
-    from: vi.fn((table: string) => {
-      if (table === "ai_analysis_corrections") {
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({ maybeSingle: correctionMaybe })),
-          })),
-        };
-      }
-      if (table === "media") {
-        return {
-          select: () => ({
-            eq: () => ({
-              eq: () => ({ maybeSingle: mediaMaybe }),
-            }),
-          }),
-        };
-      }
-      return {
-        select: () => ({
-          eq: () => ({ maybeSingle: loadMaybe }),
-        }),
-        update: () => ({ eq: eq1 }),
-      };
-    }),
-  };
+  return { client: { rpc, from }, rpc, from, mediaSelect, mediaEq: mediaQuery.eq, mediaMaybe };
 }
 
 describe("validateReviewVerdict", () => {
   it("accepts terminal verdicts only", () => {
-    expect(validateReviewVerdict("accepted")).toBe("accepted");
-    expect(validateReviewVerdict("edited")).toBe("edited");
-    expect(validateReviewVerdict("rejected")).toBe("rejected");
-    expect(validateReviewVerdict("insufficient_evidence")).toBe("insufficient_evidence");
-    expect(validateReviewVerdict("pending")).toBeNull();
-    expect(validateReviewVerdict("")).toBeNull();
+    for (const verdict of ["accepted", "edited", "rejected", "insufficient_evidence"] as const) {
+      expect(validateReviewVerdict(verdict)).toBe(verdict);
+    }
+    for (const invalid of ["pending", "", "unknown", null, undefined, 42, {}]) {
+      expect(validateReviewVerdict(invalid)).toBeNull();
+    }
   });
 });
 
-describe("reviewAiAnalysis", () => {
+describe("reviewAiAnalysis atomic contract", () => {
   beforeEach(() => {
-    invalidateConstructionGraphForSource.mockClear();
+    invalidateConstructionGraphForSource.mockReset().mockResolvedValue({
+      invalidated: true,
+      removedNodes: 1,
+    });
   });
 
-  it("returns NOT_FOUND when row missing or tenant mismatches", async () => {
-    const supabase = mockReviewClient({ load: null, update: null });
-    const missing = await reviewAiAnalysis(supabase as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "accepted",
-    });
-    expect(missing).toEqual({ ok: false, error: "Analysis not found", code: "NOT_FOUND" });
+  it("records one atomic verdict and requires its correction receipt without direct writes", async () => {
+    const db = mockReviewClient();
+    const result = await reviewAiAnalysis(db.client as never, input({ note: "  checked  " }));
 
-    const mismatchClient = mockReviewClient({
-      load: { id: "a1", tenant_id: "other", review_status: "pending" },
-      update: null,
+    expect(db.rpc).toHaveBeenCalledExactlyOnceWith("review_ai_analysis_atomic", {
+      p_analysis_id: ANALYSIS,
+      p_tenant_id: TENANT,
+      p_reviewer_user_id: REVIEWER,
+      p_status: "accepted",
+      p_note: "checked",
+      p_corrected_payload: null,
     });
-    const mismatch = await reviewAiAnalysis(mismatchClient as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "accepted",
-    });
-    expect(mismatch.code).toBe("NOT_FOUND");
-  });
-
-  it("updates review fields, records correction, graphEligible for accepted", async () => {
-    const supabase = mockReviewClient({
-      load: {
-        id: "a1",
-        tenant_id: "t1",
-        media_id: "m1",
-        review_status: "pending",
-        stage: "rough",
-        completion_percent: 40,
-        risk_level: "medium",
-        detected_issues: ["gap"],
-        recommendations: ["fix"],
-        frame_count: 1,
-      },
-      update: {
-        id: "a1",
-        review_status: "accepted",
-        reviewed_at: "2026-10-28T12:00:00.000Z",
-        reviewed_by: "u1",
-      },
-    });
-
-    const out = await reviewAiAnalysis(supabase as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "accepted",
-      note: "ok",
-    });
-    expect(out).toMatchObject({
+    expect(result).toEqual({
       ok: true,
-      analysisId: "a1",
+      analysisId: ANALYSIS,
       reviewStatus: "accepted",
       graphEligible: true,
-      reviewedBy: "u1",
-      correctionId: "corr-1",
+      reviewedAt: REVIEWED_AT,
+      reviewedBy: REVIEWER,
+      correctionId: CORRECTION,
     });
+    expect(db.from).not.toHaveBeenCalled();
     expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
   });
 
-  it("requires correctedPayload for edited and marks graph-eligible", async () => {
-    const missingPayload = await reviewAiAnalysis(mockReviewClient({ load: null, update: null }) as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "edited",
-    });
-    expect(missingPayload).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+  it("normalizes identifier whitespace and UUID casing before calling or comparing the receipt", async () => {
+    const db = mockReviewClient();
+    const result = await reviewAiAnalysis(db.client as never, input({
+      analysisId: " " + ANALYSIS.toUpperCase() + " ",
+      tenantId: "\n" + TENANT.toUpperCase() + "\n",
+      reviewerUserId: REVIEWER.toUpperCase(),
+    }));
+    expect(result).toMatchObject({ ok: true, analysisId: ANALYSIS, reviewedBy: REVIEWER });
+    expect(db.rpc).toHaveBeenCalledWith("review_ai_analysis_atomic", expect.objectContaining({
+      p_analysis_id: ANALYSIS,
+      p_tenant_id: TENANT,
+      p_reviewer_user_id: REVIEWER,
+    }));
+  });
 
-    const supabase = mockReviewClient({
-      load: {
-        id: "a1",
-        tenant_id: "t1",
-        media_id: null,
-        review_status: "pending",
-        stage: "rough",
-        completion_percent: 40,
-        risk_level: "medium",
-        detected_issues: [],
-        recommendations: [],
-        frame_count: 1,
-      },
-      update: {
-        id: "a1",
-        review_status: "edited",
-        reviewed_at: "2026-10-28T12:00:00.000Z",
-        reviewed_by: "u1",
-      },
-    });
-    const out = await reviewAiAnalysis(supabase as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "edited",
-      note: "fixed stage",
-      correctedPayload: { stage: "finish", completion_percent: 90 },
-    });
-    expect(out).toMatchObject({
-      ok: true,
-      reviewStatus: "edited",
-      graphEligible: true,
-      correctionId: "corr-1",
-    });
+  it.each(["analysisId", "tenantId", "reviewerUserId"] as const)(
+    "rejects empty %s before any RPC or graph operation",
+    async (field) => {
+      const db = mockReviewClient();
+      const result = await reviewAiAnalysis(db.client as never, input({ [field]: " \n " }));
+      expect(result).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+      expect(db.rpc).not.toHaveBeenCalled();
+      expect(db.from).not.toHaveBeenCalled();
+      expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(["pending", "invalid", ""])("rejects unsupported verdict %s before the RPC", async (status) => {
+    const db = mockReviewClient();
+    const result = await reviewAiAnalysis(db.client as never, input({
+      status: status as ReviewAiAnalysisInput["status"],
+    }));
+    expect(result).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+    expect(db.rpc).not.toHaveBeenCalled();
     expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
   });
 
-  it("marks insufficient_evidence as not Graph-eligible and invalidates overlay", async () => {
-    const supabase = mockReviewClient({
-      load: {
-        id: "a1",
-        tenant_id: "t1",
-        media_id: "m1",
-        review_status: "pending",
-        stage: null,
-        completion_percent: null,
-        risk_level: null,
-        detected_issues: null,
-        recommendations: null,
-        frame_count: null,
+  it.each([undefined, null, [], "patch", 1])(
+    "rejects a non-object edited payload (%j) before the RPC",
+    async (correctedPayload) => {
+      const db = mockReviewClient();
+      const result = await reviewAiAnalysis(db.client as never, input({
+        status: "edited",
+        correctedPayload: correctedPayload as CorrectedAnalysisPayload | null | undefined,
+      }));
+      expect(result).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+      expect(db.rpc).not.toHaveBeenCalled();
+      expect(db.from).not.toHaveBeenCalled();
+      expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
+    }
+  );
+
+  it("sends only supported, bounded corrected fields and preserves the atomic edited receipt", async () => {
+    const db = mockReviewClient({ receipt: receipt({ review_status: "edited" }) });
+    const issues = Array.from({ length: 70 }, (_, i) => "issue-" + i);
+    const recommendations = Array.from({ length: 70 }, (_, i) => "recommendation-" + i);
+    const correctedPayload = {
+      stage: "s".repeat(250),
+      completion_percent: 150.9,
+      risk_level: "r".repeat(50),
+      detected_issues: [null, 7, ...issues],
+      recommendations: [false, {}, ...recommendations],
+      tenant_id: "another-tenant",
+      margin: 42,
+      original_prediction: { private: "must not be supplied by the caller" },
+    } as unknown as CorrectedAnalysisPayload;
+    const result = await reviewAiAnalysis(db.client as never, input({
+      status: "edited",
+      note: "  " + "n".repeat(2050) + "  ",
+      correctedPayload,
+    }));
+    expect(result).toMatchObject({ ok: true, reviewStatus: "edited", graphEligible: true, correctionId: CORRECTION });
+    expect(db.rpc).toHaveBeenCalledExactlyOnceWith("review_ai_analysis_atomic", {
+      p_analysis_id: ANALYSIS,
+      p_tenant_id: TENANT,
+      p_reviewer_user_id: REVIEWER,
+      p_status: "edited",
+      p_note: "n".repeat(2000),
+      p_corrected_payload: {
+        stage: "s".repeat(200),
+        completion_percent: 100,
+        risk_level: "r".repeat(40),
+        detected_issues: issues.slice(0, 64),
+        recommendations: recommendations.slice(0, 64),
       },
-      update: {
-        id: "a1",
-        review_status: "insufficient_evidence",
-        reviewed_at: "2026-10-28T12:00:00.000Z",
-        reviewed_by: "u1",
-      },
-      mediaProjectId: "p1",
     });
-    const out = await reviewAiAnalysis(supabase as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "insufficient_evidence",
-      note: "blurry",
+    expect(db.from).not.toHaveBeenCalled();
+    expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [12.9, 12],
+    [-5.8, 0],
+    [Number.NaN, undefined],
+    [Number.POSITIVE_INFINITY, undefined],
+  ])("normalizes corrected completion %s without forwarding non-finite values", async (value, expected) => {
+    const db = mockReviewClient({ receipt: receipt({ review_status: "edited" }) });
+    await reviewAiAnalysis(db.client as never, input({
+      status: "edited",
+      correctedPayload: { completion_percent: value },
+    }));
+    const patch = db.rpc.mock.calls[0][1].p_corrected_payload;
+    expect(patch).toEqual(expected === undefined ? {} : { completion_percent: expected });
+  });
+
+  it("ignores prediction edits on accepted verdicts and normalizes an empty note to null", async () => {
+    const db = mockReviewClient();
+    await reviewAiAnalysis(db.client as never, input({
+      note: " \n ",
+      correctedPayload: { stage: "should not change" },
+    }));
+    expect(db.rpc).toHaveBeenCalledWith("review_ai_analysis_atomic", expect.objectContaining({
+      p_note: null,
+      p_corrected_payload: null,
+    }));
+  });
+
+  it.each([
+    ["P0002", "NOT_FOUND", "Analysis not found"],
+    ["42501", "FORBIDDEN", "Reviewer is not authorized"],
+    ["22023", "INVALID_INPUT", "Invalid review payload"],
+    ["23514", "INVALID_INPUT", "Invalid review payload"],
+    ["22P02", "INVALID_INPUT", "Invalid review payload"],
+    ["XX000", "UPDATE_FAILED", "Review could not be recorded"],
+  ])("maps database %s to %s without leaking details or invalidating Graph", async (sqlCode, code, error) => {
+    const db = mockReviewClient({
+      receipt: receipt({ review_status: "rejected" }),
+      error: { code: sqlCode, message: "private prediction and tenant detail" },
+      projectId: PROJECT,
     });
-    expect(out).toMatchObject({
-      ok: true,
-      reviewStatus: "insufficient_evidence",
-      graphEligible: false,
-      correctionId: "corr-1",
-    });
-    expect(invalidateConstructionGraphForSource).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        tenantId: "t1",
-        projectId: "p1",
+    const result = await reviewAiAnalysis(db.client as never, input({ status: "rejected" }));
+    expect(result).toEqual({ ok: false, code, error });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.from).not.toHaveBeenCalled();
+    expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
+  });
+
+  const rejectedReceipt = receipt({ review_status: "rejected" });
+  it.each([
+    ["missing object", null],
+    ["array instead of object", [rejectedReceipt]],
+    ["wrong analysis", { ...rejectedReceipt, id: "other" }],
+    ["pending status", { ...rejectedReceipt, review_status: "pending" }],
+    ["different terminal verdict", { ...rejectedReceipt, review_status: "accepted" }],
+    ["missing timestamp", { ...rejectedReceipt, reviewed_at: null }],
+    ["empty timestamp", { ...rejectedReceipt, reviewed_at: "" }],
+    ["different reviewer", { ...rejectedReceipt, reviewed_by: "other" }],
+    ["missing correction", { ...rejectedReceipt, correction_id: null }],
+    ["empty correction", { ...rejectedReceipt, correction_id: "" }],
+  ])("rejects malformed receipt: %s before graph invalidation", async (_name, data) => {
+    const db = mockReviewClient({ receipt: data, projectId: PROJECT });
+    const result = await reviewAiAnalysis(db.client as never, input({ status: "rejected" }));
+    expect(result).toEqual({ ok: false, error: "Incomplete review receipt", code: "UPDATE_FAILED" });
+    expect(db.from).not.toHaveBeenCalled();
+    expect(invalidateConstructionGraphForSource).not.toHaveBeenCalled();
+  });
+
+  it.each(["rejected", "insufficient_evidence"] as const)(
+    "invalidates %s only after the durable receipt, scoped to its tenant and media project",
+    async (status) => {
+      const db = mockReviewClient({ receipt: receipt({ review_status: status }), projectId: PROJECT });
+      const result = await reviewAiAnalysis(db.client as never, input({ status }));
+      expect(result).toMatchObject({ ok: true, reviewStatus: status, graphEligible: false, correctionId: CORRECTION });
+      expect(db.rpc).toHaveBeenCalledTimes(1);
+      expect(db.from).toHaveBeenCalledExactlyOnceWith("media");
+      expect(db.mediaSelect).toHaveBeenCalledWith("project_id");
+      expect(db.mediaEq.mock.calls).toEqual([["id", MEDIA], ["tenant_id", TENANT]]);
+      expect(invalidateConstructionGraphForSource).toHaveBeenCalledExactlyOnceWith(db.client, {
+        tenantId: TENANT,
+        projectId: PROJECT,
         sourceTable: "ai_analysis",
-        sourceId: "a1",
-      })
-    );
+        sourceId: ANALYSIS,
+      });
+      expect(db.rpc.mock.invocationCallOrder[0]).toBeLessThan(
+        invalidateConstructionGraphForSource.mock.invocationCallOrder[0]
+      );
+    }
+  );
+
+  it("revokes by tenant/source even without a media association", async () => {
+    const db = mockReviewClient({ receipt: receipt({ review_status: "rejected", media_id: null }) });
+    const result = await reviewAiAnalysis(db.client as never, input({ status: "rejected" }));
+    expect(result).toMatchObject({ ok: true, graphEligible: false });
+    expect(db.from).not.toHaveBeenCalled();
+    expect(invalidateConstructionGraphForSource).toHaveBeenCalledWith(db.client, {
+      tenantId: TENANT,
+      projectId: null,
+      sourceTable: "ai_analysis",
+      sourceId: ANALYSIS,
+    });
   });
 
-  it("invalidates overlay on rejected without rolling back the verdict", async () => {
-    const supabase = mockReviewClient({
-      load: {
-        id: "a1",
-        tenant_id: "t1",
-        media_id: "m1",
-        review_status: "pending",
-        stage: "rough",
-        completion_percent: 10,
-        risk_level: "low",
-        detected_issues: [],
-        recommendations: [],
-        frame_count: 1,
-      },
-      update: {
-        id: "a1",
-        review_status: "rejected",
-        reviewed_at: "2026-10-28T12:00:00.000Z",
-        reviewed_by: "u1",
-      },
-      mediaProjectId: "p9",
-    });
-    invalidateConstructionGraphForSource.mockRejectedValueOnce(new Error("overlay down"));
+  it("keeps a durable verdict when Graph invalidation fails", async () => {
+    const db = mockReviewClient({ receipt: receipt({ review_status: "rejected" }), projectId: PROJECT });
+    invalidateConstructionGraphForSource.mockRejectedValueOnce(new Error("overlay unavailable"));
+    const result = await reviewAiAnalysis(db.client as never, input({ status: "rejected" }));
+    expect(result).toMatchObject({ ok: true, graphEligible: false, correctionId: CORRECTION });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(invalidateConstructionGraphForSource).toHaveBeenCalledTimes(1);
+  });
 
-    const out = await reviewAiAnalysis(supabase as never, {
-      analysisId: "a1",
-      tenantId: "t1",
-      reviewerUserId: "u1",
-      status: "rejected",
-      note: "wrong source",
-    });
-    expect(out).toMatchObject({
-      ok: true,
-      reviewStatus: "rejected",
-      graphEligible: false,
-      correctionId: "corr-1",
-    });
-    expect(invalidateConstructionGraphForSource).toHaveBeenCalled();
+  it("keeps a durable verdict if the optional media lookup throws", async () => {
+    const db = mockReviewClient({ receipt: receipt({ review_status: "insufficient_evidence" }) });
+    db.mediaMaybe.mockRejectedValueOnce(new Error("media lookup unavailable"));
+    const result = await reviewAiAnalysis(db.client as never, input({ status: "insufficient_evidence" }));
+    expect(result).toMatchObject({ ok: true, graphEligible: false, correctionId: CORRECTION });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
   });
 });
