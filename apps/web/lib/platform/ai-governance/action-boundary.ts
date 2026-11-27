@@ -6,6 +6,8 @@
  * external effect. Synthetic fixtures only — no real secrets.
  */
 
+import { containsSecrets } from "./secret-detection";
+
 export type ActionTransport =
   | "mcp"
   | "api"
@@ -125,11 +127,18 @@ export function evaluateActionBoundary(
     return deny(rule_hits, audit);
   }
 
+  // Delegating tenant admin authority is denied on every transport, including MCP/API.
+  if (request.resourceClass === "tenant_admin" && request.operation === "delegate") {
+    rule_hits.push("admin_delegate_denied");
+    return deny(rule_hits, audit);
+  }
+
   // Protected classes never leave via shell/filesystem/browser/delegate without explicit allow path.
   if (
     request.resourceClass === "secrets" ||
     request.resourceClass === "finance" ||
-    request.resourceClass === "customer_data"
+    request.resourceClass === "customer_data" ||
+    request.resourceClass === "tenant_admin"
   ) {
     if (
       request.operation === "exfiltrate" ||
@@ -142,9 +151,11 @@ export function evaluateActionBoundary(
       rule_hits.push(`transport_${request.transport}`);
       return deny(rule_hits, audit);
     }
-    // MCP/API write/execute on secrets/finance also fail closed unless future allow-list added.
+    // MCP/API write/execute on secrets/finance/tenant_admin fail closed unless a future allow-list is added.
     if (
-      (request.resourceClass === "secrets" || request.resourceClass === "finance") &&
+      (request.resourceClass === "secrets" ||
+        request.resourceClass === "finance" ||
+        request.resourceClass === "tenant_admin") &&
       (request.operation === "write" || request.operation === "execute" || request.operation === "delegate")
     ) {
       rule_hits.push("protected_mutation_denied");
@@ -153,13 +164,8 @@ export function evaluateActionBoundary(
     }
   }
 
-  if (request.resourceClass === "tenant_admin" && request.operation === "delegate") {
-    rule_hits.push("admin_delegate_denied");
-    return deny(rule_hits, audit);
-  }
-
-  // Payload may carry synthetic secret shapes — block before egress on any transport.
-  if (request.payloadText && containsSyntheticSecretShape(request.payloadText)) {
+  // Payload may carry secret shapes — block before egress on any transport.
+  if (request.payloadText && containsSecrets(request.payloadText)) {
     rule_hits.push("synthetic_secret_in_payload");
     rule_hits.push(`transport_${request.transport}`);
     return deny(rule_hits, audit);
@@ -185,15 +191,6 @@ function deny(
     policy_version: ACTION_BOUNDARY_POLICY_VERSION,
     audit,
   };
-}
-
-/** Synthetic-only shapes for fixtures (mirrors high-signal secret-detection kinds). */
-function containsSyntheticSecretShape(text: string): boolean {
-  return (
-    /\bsk-[A-Za-z0-9]{20,}\b/.test(text) ||
-    /\bghp_[A-Za-z0-9]{20,}\b/.test(text) ||
-    /\bAIza[0-9A-Za-z\-_]{35}\b/.test(text)
-  );
 }
 
 /**

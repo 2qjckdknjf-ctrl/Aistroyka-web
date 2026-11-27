@@ -108,6 +108,31 @@ describe("evaluateActionBoundary (2026-11-27 P0)", () => {
     }
   });
 
+  it("blocks the full secret-detection set, including PEM, JWT, and vendor tokens", () => {
+    const payloads = [
+      ["-----BEGIN RSA ", "PRIVATE KEY-----"].join("") + "\nMIIE",
+      [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+        "eyJzdWIiOiIxMjM0NTY3ODkwIn0",
+        "abcDEFghiJKLmnoPQRstuVWXyz0123456789",
+      ].join("."),
+      ["xoxb", "abcdefghijklmnopqrstuvwxyz"].join("-"),
+      ["whsec", "abcdefghijklmnopqrstuvwxyz"].join("_"),
+      ["github", "pat", "abcdefghijklmnopqrstuvwxyz"].join("_"),
+    ];
+    for (const payloadText of payloads) {
+      const result = evaluateActionBoundary({
+        principal: authorized,
+        resourceClass: "public",
+        operation: "read",
+        transport: "shell",
+        payloadText,
+      });
+      expect(result.decision).toBe("deny");
+      expect(result.rule_hits).toContain("synthetic_secret_in_payload");
+    }
+  });
+
   it("allows authorized public read on MCP/API without secrets in payload", () => {
     for (const transport of ["mcp", "api"] as const) {
       const result = evaluateActionBoundary({
@@ -133,5 +158,58 @@ describe("evaluateActionBoundary (2026-11-27 P0)", () => {
     });
     expect(result.decision).toBe("deny");
     expect(result.rule_hits).toContain("admin_delegate_denied");
+  });
+
+  it("denies tenant_admin exfiltrate on every transport", () => {
+    const byTransport = denyProtectedAcrossTransports({
+      principal: authorized,
+      resourceClass: "tenant_admin",
+      operation: "exfiltrate",
+    });
+    for (const transport of TRANSPORTS) {
+      expect(byTransport[transport].decision).toBe("deny");
+      expect(byTransport[transport].rule_hits).toContain("protected_resource_denied");
+    }
+  });
+
+  it("denies tenant_admin write and execute on every transport", () => {
+    for (const operation of ["write", "execute"] as const) {
+      for (const transport of TRANSPORTS) {
+        const result = evaluateActionBoundary({
+          principal: authorized,
+          resourceClass: "tenant_admin",
+          operation,
+          transport,
+        });
+        expect(result.decision).toBe("deny");
+        const hit =
+          transport === "mcp" || transport === "api"
+            ? "protected_mutation_denied"
+            : "protected_resource_denied";
+        expect(result.rule_hits).toContain(hit);
+      }
+    }
+  });
+
+  it("denies tenant_admin read on untrusted transports and allows it on MCP/API", () => {
+    for (const transport of ["shell", "filesystem", "browser", "delegated_agent"] as const) {
+      const denied = evaluateActionBoundary({
+        principal: authorized,
+        resourceClass: "tenant_admin",
+        operation: "read",
+        transport,
+      });
+      expect(denied.decision).toBe("deny");
+      expect(denied.rule_hits).toContain("protected_resource_denied");
+    }
+    for (const transport of ["mcp", "api"] as const) {
+      const allowed = evaluateActionBoundary({
+        principal: authorized,
+        resourceClass: "tenant_admin",
+        operation: "read",
+        transport,
+      });
+      expect(allowed.decision).toBe("allow");
+    }
   });
 });
