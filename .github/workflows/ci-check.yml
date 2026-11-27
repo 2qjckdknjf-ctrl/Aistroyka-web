@@ -60,6 +60,11 @@ jobs:
       - name: Private original SDK transport in Workerd
         run: node scripts/ops/verify_private_original_workerd.cjs
 
+      - name: Known dependency vulnerability regression guard
+        run: |
+          node --test scripts/ci/validate-known-vulnerabilities.test.cjs
+          node scripts/ci/validate-known-vulnerabilities.cjs
+
       - name: Isolated AI SQL access contracts
         run: |
           set -euo pipefail
@@ -117,6 +122,9 @@ jobs:
 
       - name: Test
         run: bun run test
+
+      - name: OpenAPI schema compatibility
+        run: bun scripts/check-openapi-contracts.mjs
 
       - name: Release readiness policy check
         env:
