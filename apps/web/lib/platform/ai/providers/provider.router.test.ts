@@ -40,6 +40,7 @@ function makeResult(provider: string, model: string) {
 
 describe("provider.router", () => {
   beforeEach(() => {
+    vi.stubEnv("AI_PROVIDER_ALLOWLIST", undefined);
     vi.mocked(getTenantAIPreferences).mockResolvedValue({ fallbackEnabled: true });
     vi.mocked(canInvoke).mockResolvedValue(true);
     vi.mocked(recordSuccess).mockResolvedValue(undefined);
@@ -51,6 +52,7 @@ describe("provider.router", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("uses default order (openai, anthropic, gemini) when no tenant preference", async () => {
@@ -170,22 +172,77 @@ describe("provider.router", () => {
   });
 
   it("never invokes providers outside AI_PROVIDER_ALLOWLIST", async () => {
-    const orig = process.env.AI_PROVIDER_ALLOWLIST;
-    process.env.AI_PROVIDER_ALLOWLIST = "anthropic";
-    try {
-      expect([...getProviderAllowlist()]).toEqual(["anthropic"]);
-      const ordered = orderProvidersForTest("openai", true);
-      expect(ordered.map((p) => p.name)).toEqual(["anthropic"]);
+    vi.stubEnv("AI_PROVIDER_ALLOWLIST", "anthropic");
+    expect([...getProviderAllowlist()]).toEqual(["anthropic"]);
+    const ordered = orderProvidersForTest("openai", true);
+    expect(ordered.map((p) => p.name)).toEqual(["anthropic"]);
 
+    mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      maxTokens: 1024,
+    });
+    expect(result?.providerUsed).toBe("anthropic");
+    expect(mockInvokeVision).not.toHaveBeenCalled();
+    expect(mockGeminiInvoke).not.toHaveBeenCalled();
+  });
+
+  it.each(["claude", "google,unknown", ", ,"])(
+    "invokes nobody when the non-empty operator allowlist is invalid: %s",
+    async (allowlist) => {
+      vi.stubEnv("AI_PROVIDER_ALLOWLIST", allowlist);
+      mockInvokeVision.mockResolvedValue(makeResult("openai", "gpt-4o"));
       mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
-      const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
-        maxTokens: 1024,
-      });
-      expect(result?.providerUsed).toBe("anthropic");
+      mockGeminiInvoke.mockResolvedValue(makeResult("gemini", "gemini-2.5-flash"));
+
+      const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {});
+
+      expect(result).toBeNull();
+      expect([...getProviderAllowlist()]).toEqual([]);
+      expect(canInvoke).not.toHaveBeenCalled();
       expect(mockInvokeVision).not.toHaveBeenCalled();
+      expect(mockAnthropicInvoke).not.toHaveBeenCalled();
       expect(mockGeminiInvoke).not.toHaveBeenCalled();
-    } finally {
-      process.env.AI_PROVIDER_ALLOWLIST = orig;
     }
+  );
+
+  it.each([undefined, "", "  "])("allows built-in providers for unset or blank allowlist", (allowlist) => {
+    vi.stubEnv("AI_PROVIDER_ALLOWLIST", allowlist);
+    expect([...getProviderAllowlist()]).toEqual(["openai", "anthropic", "gemini"]);
+  });
+
+  it.each(["failed", "circuit-open"])(
+    "does not try another default provider when fallback is disabled and the first is %s",
+    async (state) => {
+      vi.mocked(getTenantAIPreferences).mockResolvedValue({ fallbackEnabled: false });
+      vi.mocked(canInvoke).mockResolvedValue(state !== "circuit-open");
+      mockInvokeVision.mockResolvedValue(null);
+      mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
+      mockGeminiInvoke.mockResolvedValue(makeResult("gemini", "gemini-2.5-flash"));
+
+      const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {});
+
+      expect(result).toBeNull();
+      expect(canInvoke).toHaveBeenCalledTimes(1);
+      expect(canInvoke).toHaveBeenCalledWith(supabase, "openai");
+      expect(mockAnthropicInvoke).not.toHaveBeenCalled();
+      expect(mockGeminiInvoke).not.toHaveBeenCalled();
+    }
+  );
+
+  it("does not replace a forbidden tenant preference when fallback is disabled", async () => {
+    vi.stubEnv("AI_PROVIDER_ALLOWLIST", "anthropic,gemini");
+    vi.mocked(getTenantAIPreferences).mockResolvedValue({
+      providerPreference: "openai",
+      fallbackEnabled: false,
+    });
+    mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
+
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {});
+
+    expect(result).toBeNull();
+    expect(canInvoke).not.toHaveBeenCalled();
+    expect(mockInvokeVision).not.toHaveBeenCalled();
+    expect(mockAnthropicInvoke).not.toHaveBeenCalled();
+    expect(mockGeminiInvoke).not.toHaveBeenCalled();
   });
 });

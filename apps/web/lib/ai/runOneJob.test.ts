@@ -1,4 +1,12 @@
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
+vi.mock("@/lib/platform/rate-limit/rate-limit.service", () => ({
+  checkRateLimit: vi.fn(async () => ({ limited: false })),
+}));
+vi.mock("@/lib/platform/ai-usage/ai-usage.service", async (original) => ({
+  ...await original<typeof import("@/lib/platform/ai-usage/ai-usage.service")>(),
+  checkQuota: vi.fn(async () => null),
+  checkBudgetAlert: vi.fn(async () => {}),
+}));
 vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: vi.fn(async (_client: unknown, input: { projectIdClaim: string }) => ({ ok: true, imageUrl: "https://storage.test/private-signed?token=synthetic", objectPath: "private/source.png", trustedProjectId: input.projectIdClaim, source: "media" })) }));
 vi.mock("@/lib/config/server", async () => {
   const actual = await vi.importActual<typeof import("@/lib/config/server")>("@/lib/config/server");

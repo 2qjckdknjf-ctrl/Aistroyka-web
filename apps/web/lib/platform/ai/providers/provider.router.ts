@@ -35,10 +35,12 @@ export function getProviderAllowlist(): Set<string> {
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter((s) => ALL_PROVIDER_NAMES.includes(s));
-  return new Set(allowed.length > 0 ? allowed : ALL_PROVIDER_NAMES);
+  // Only an unset/blank configuration allows every provider. A non-empty typo
+  // must not widen the operator's explicit egress boundary.
+  return new Set(allowed);
 }
 
-/** Order providers: preferred first (if set), then rest; if fallback disabled, preferred only. */
+/** Preferred first, then rest; without fallback, use only the preferred/default provider. */
 function orderProviders(
   preference: "openai" | "anthropic" | "gemini" | undefined,
   fallbackEnabled: boolean,
@@ -46,8 +48,12 @@ function orderProviders(
 ): typeof PROVIDERS {
   const eligible = PROVIDERS.filter((p) => allowlist.has(p.name));
   if (eligible.length === 0) return [];
-  if (!preference || !PROVIDER_BY_NAME[preference] || !allowlist.has(preference)) {
-    return eligible;
+  if (!preference || !PROVIDER_BY_NAME[preference]) {
+    return fallbackEnabled ? eligible : eligible.slice(0, 1);
+  }
+  if (!allowlist.has(preference)) {
+    // Replacing a forbidden preference is itself a fallback.
+    return fallbackEnabled ? eligible : [];
   }
   const preferred = PROVIDER_BY_NAME[preference];
   const rest = eligible.filter((p) => p.name !== preference);
