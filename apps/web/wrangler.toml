@@ -5,6 +5,8 @@
 name = "aistroyka-web-dev"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+# Keep the pre-4.150 policy: this app's generated maps exceed the upload limit.
+upload_source_maps = false
 # Bootstrap runs first to stub globalThis.require for middleware-manifest (Workers-incompatible dynamic require)
 main = "worker-bootstrap.js"
 

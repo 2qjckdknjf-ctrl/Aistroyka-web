@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { build } = require('esbuild');
-const { Miniflare } = require('miniflare');
+const { Miniflare, convertV4MiniflareOptions } = require('miniflare');
 const root = path.resolve(__dirname, '../..');
 (async () => {
   const source = `import { createClient } from '@supabase/supabase-js';
@@ -16,7 +16,8 @@ const root = path.resolve(__dirname, '../..');
   const bundle = await build({ stdin:{contents:source, resolveDir:root}, absWorkingDir:root,
     tsconfig:path.join(root,'apps/web/tsconfig.json'), bundle:true, format:'esm', platform:'browser', write:false });
   let mode = 'ok', infoCalls = 0, downloadCalls = 0, externalCalls = 0;
-  const mf = new Miniflare({ modules:true, script:bundle.outputFiles[0].text,
+  // Preserve the fixture's worker options and outbound confinement with Miniflare 5.
+  const mf = new Miniflare(convertV4MiniflareOptions({ modules:true, script:bundle.outputFiles[0].text,
     compatibilityDate:'2024-12-30', compatibilityFlags:['nodejs_compat','global_fetch_strictly_public'],
     outboundService: async request => {
       const url = new URL(request.url);
@@ -31,7 +32,7 @@ const root = path.resolve(__dirname, '../..');
       if (mode === 'redirect') return new Response(null,{status:302,headers:{Location:'https://outside-fixture.invalid/secret'}});
       return new Response(new Uint8Array(mode==='actual_oversized'?[1,2,3,4]:[1,2,3]));
     }
-  });
+  }));
   try {
     for (const next of ['ok','redirect','known_oversized','actual_oversized','changed']) {
       mode=next; infoCalls=0; downloadCalls=0;

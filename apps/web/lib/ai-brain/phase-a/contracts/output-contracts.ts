@@ -25,7 +25,7 @@ export const DataSufficiencyFlagsSchema = z.object({
 export const ExecutiveProjectBriefSchema = BaseOutputSchema.extend({
   type: z.literal("ExecutiveProjectBrief"),
   headline: z.string(),
-  facts: z.record(z.unknown()),
+  facts: z.record(z.string(), z.unknown()),
   inferredStatements: z.array(z.string()).default([]),
   unavailableData: z.array(z.string()).default([]),
   confidenceNote: z.string().nullable().optional(),
@@ -36,7 +36,7 @@ export type ExecutiveProjectBrief = z.infer<typeof ExecutiveProjectBriefSchema>;
 
 export const ManagerProjectInsightSchema = BaseOutputSchema.extend({
   type: z.literal("ManagerProjectInsight"),
-  facts: z.record(z.unknown()),
+  facts: z.record(z.string(), z.unknown()),
   inferredStatements: z.array(z.string()).default([]),
   unavailableData: z.array(z.string()).default([]),
   confidenceNote: z.string().nullable().optional(),
@@ -47,7 +47,7 @@ export type ManagerProjectInsight = z.infer<typeof ManagerProjectInsightSchema>;
 
 export const WorkerNextFocusSummarySchema = BaseOutputSchema.extend({
   type: z.literal("WorkerNextFocusSummary"),
-  facts: z.record(z.unknown()),
+  facts: z.record(z.string(), z.unknown()),
   inferredStatements: z.array(z.string()).default([]),
   unavailableData: z.array(z.string()).default([]),
   recommendedNextAttention: z.string().nullable().optional(),
@@ -58,7 +58,7 @@ export type WorkerNextFocusSummary = z.infer<typeof WorkerNextFocusSummarySchema
 export const ClientSafeProjectSummarySchema = BaseOutputSchema.extend({
   type: z.literal("ClientSafeProjectSummary"),
   headline: z.string(),
-  facts: z.record(z.unknown()),
+  facts: z.record(z.string(), z.unknown()),
   inferredStatements: z.array(z.string()).default([]),
   unavailableData: z.array(z.string()).default([]),
   confidenceNote: z.string().nullable().optional(),
@@ -94,6 +94,6 @@ export function validateOutput(
   }
   return {
     success: false,
-    error: result.error.errors.map((e) => e.message).join("; "),
+    error: result.error.issues.map((e) => e.message).join("; "),
   };
 }

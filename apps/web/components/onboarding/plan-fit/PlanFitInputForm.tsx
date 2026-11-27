@@ -60,7 +60,7 @@ export function PlanFitInputForm({
     };
     const parsed = PlanFitRecommendRequestSchema.safeParse(input);
     if (!parsed.success) {
-      setValidationError(parsed.error.errors[0]?.message ?? t("validationInvalidInput"));
+      setValidationError(parsed.error.issues[0]?.message ?? t("validationInvalidInput"));
       return;
     }
     setIsSubmitting(true);
