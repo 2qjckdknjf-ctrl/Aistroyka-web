@@ -41,9 +41,18 @@ export async function POST(
 
   let body: Record<string, unknown> = {};
   try {
-    body = (await request.json()) as Record<string, unknown>;
+    const parsed: unknown = await request.json();
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+    body = parsed as Record<string, unknown>;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  if ([body.consumption, body.waste, body.pack_coverage, body.packCoverage].some(
+    (value) => value !== null && value !== undefined && typeof value !== "string"
+  )) {
+    return NextResponse.json({ error: "Material parameters must be decimal strings or null" }, { status: 400 });
   }
 
   const workQuantity =
@@ -95,7 +104,7 @@ export async function POST(
 
   if (!result.ok) {
     const http =
-      result.code === "INVALID_INPUT"
+      result.code === "INVALID_INPUT" || result.code === "QUANTITY_MISMATCH"
         ? 400
         : result.code === "NOT_FOUND"
           ? 404

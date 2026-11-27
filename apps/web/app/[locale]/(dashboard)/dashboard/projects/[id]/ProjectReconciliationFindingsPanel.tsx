@@ -25,6 +25,9 @@ type Finding = {
   created_at: string;
 };
 
+const FINDING_KINDS = new Set(["quantity_mismatch", "scope_mismatch", "missing_scale_or_unit", "contradictory_revision", "duplicate_evidence", "unavailable_source"]);
+const FINDING_STATUSES = new Set(["open", "needs_review", "accepted", "rejected", "superseded"]);
+
 async function fetchFindings(projectId: string): Promise<Finding[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/reconciliation/findings`, {
     credentials: "include",
@@ -119,7 +122,7 @@ export function ProjectReconciliationFindingsPanel({
   const reviewMutation = useMutation({
     mutationFn: (args: { id: string; status: "accepted" | "rejected" }) =>
       reviewFinding(args.id, args.status),
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["reconciliation-findings", projectId] });
     },
   });
@@ -128,6 +131,8 @@ export function ProjectReconciliationFindingsPanel({
     title.trim().length > 0 &&
     summary.trim().length > 0 &&
     unit.trim().length > 0 &&
+    expected.trim().length > 0 &&
+    observed.trim().length > 0 &&
     Number.isFinite(Number(expected)) &&
     Number.isFinite(Number(observed));
 
@@ -209,6 +214,9 @@ export function ProjectReconciliationFindingsPanel({
         </h3>
         {isPending ? <Skeleton className="h-24 w-full" /> : null}
         {isError ? <p className="text-sm text-red-400">{t("reconLoadFailed")}</p> : null}
+        {reviewMutation.isError ? (
+          <p className="text-sm text-red-400" role="alert">{t("reconReviewFailed")}</p>
+        ) : null}
         {!isPending && !isError && (data?.length ?? 0) === 0 ? (
           <EmptyState
             icon={<span aria-hidden>◇</span>}
@@ -222,7 +230,9 @@ export function ProjectReconciliationFindingsPanel({
               <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium text-aistroyka-text-primary">{finding.title}</span>
                 <span className="text-xs text-aistroyka-text-secondary">
-                  {finding.kind} · {finding.status}
+                  {t(`reconKind_${FINDING_KINDS.has(finding.kind) ? finding.kind : "unknown"}`)}
+                  {" · "}
+                  {t(`reconStatus_${FINDING_STATUSES.has(finding.status) ? finding.status : "unknown"}`)}
                 </span>
               </div>
               <p className="text-aistroyka-text-secondary">{finding.summary}</p>

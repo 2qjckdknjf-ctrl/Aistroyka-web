@@ -55,6 +55,12 @@ export async function createMaterialSupplyDraftComparison(
   if (!tenantId || !projectId || !draftId || !actorUserId) {
     return { ok: false, error: "required ids missing", code: "INVALID_INPUT" };
   }
+  const selection = input.offerIds;
+  if (selection != null && (!Array.isArray(selection) || selection.length === 0 ||
+      selection.some((id) => typeof id !== "string" || !id.trim()))) {
+    return { ok: false, error: "invalid offer_ids", code: "INVALID_INPUT" };
+  }
+  const requestedIds = selection == null ? null : [...new Set(selection.map((id) => id.trim().toLowerCase()))];
 
   const { data: requirement, error: reqError } = await supabase
     .from("material_requirement_drafts")
@@ -88,8 +94,8 @@ export async function createMaterialSupplyDraftComparison(
     .eq("project_id", projectId)
     .eq("material_requirement_draft_id", draftId);
 
-  if (input.offerIds && input.offerIds.length > 0) {
-    quoteQuery = quoteQuery.in("id", input.offerIds);
+  if (requestedIds) {
+    quoteQuery = quoteQuery.in("id", requestedIds);
   }
 
   const { data: quotes, error: quoteError } = await quoteQuery;
@@ -108,6 +114,11 @@ export async function createMaterialSupplyDraftComparison(
       provenance_note: asString(row.provenance_note),
     }))
     .filter((offer) => offer.id && offer.supplier_name);
+
+  if (requestedIds && (offers.length !== requestedIds.length ||
+      requestedIds.some((id) => !offers.some((offer) => offer.id === id)))) {
+    return { ok: false, error: "one or more requested supplier quote drafts were not found", code: "NOT_FOUND" };
+  }
 
   if (offers.length < 2) {
     return {
