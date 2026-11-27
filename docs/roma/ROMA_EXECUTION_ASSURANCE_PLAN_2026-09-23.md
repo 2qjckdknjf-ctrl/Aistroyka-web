@@ -478,3 +478,15 @@ Map existing assurance evidence to proposed L0 docs/code, L1 smoke/rollback, L2 
 
 ### Cursor delivery contract
 Work in a separate implementation branch; report gap matrix, changed files, reproducible commands, test receipts, exact commit SHA, independent verdict, rollback and remaining blockers. Never mark DONE from documentation/build alone. Stop on missing authorization, hardware access or provider compatibility; report NOT_RUN rather than fabricate evidence.
+
+
+## Cursor / Codex execution delta — 2026-11-27
+
+Planning-only extension to November 26 specification. Reconcile current main, active PRs and actual code before execution; map to existing IDs, implement only confirmed gaps. P0 blockers first. Vendor claims from daily digest require primary-source verification before adoption. Numerical corpus sizes are proposed test defaults, not measured results. Owner/reviewer TBD.
+
+- P0 existing Action Boundary/Credential Broker: enforce resource-and-operation policy independently of transport. Test denied MCP operation via alternate API, shell, filesystem, browser and delegated agent using synthetic fixtures; deny before external effect, audit principal/resource/action and policy version; no real secrets. Fail closed when identity or authorization unknown.
+- P0 existing independent verdict: separate functional correctness, security and repeatability; critical tasks run three times with reset state, immutable evidence and exact SHA. A functional PASS with security FAIL is rejected; NOT_RUN/UNKNOWN remain distinct.
+- P1 existing financial assurance: evaluate OnchainBench-style isolated state-based verification of transaction intent, chain, recipient, amount, limits, approval binding, replay and reconciliation; zero real funds or credentials. Independent deterministic verifier, no model authorization.
+- P1 existing memory assurance: verify consolidation proposals against original evidence and ACL; prohibit self-modification of security policy, preserve audit/supersession and rollback.
+
+Delivery: separate implementation branch, baseline and gap matrix, reproducible tests, exact SHA, independent verdict, rollback and blockers. No automatic merge, production deployment, purchases or live trading. Sources for verification: https://huggingface.co/nvidia/Nemotron-3.5-Parse ; https://onchainbench.ai/methodology ; https://www.perplexity.ai/en-GB/hub/blog/freeze-the-web-with-perplexity-time-machine ; https://openclaw.ai/blog/shellbench ; https://sakana.ai/marlin-update-2/ .
