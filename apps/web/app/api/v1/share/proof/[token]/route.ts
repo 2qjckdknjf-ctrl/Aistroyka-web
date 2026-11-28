@@ -30,15 +30,11 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
   }
   const { data, error } = await getProofPackByToken(admin, token);
   if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404, headers });
-  const tenantId =
-    data && typeof data === "object" && typeof (data as { tenant_id?: unknown }).tenant_id === "string"
-      ? (data as { tenant_id: string }).tenant_id
-      : typeof (data as { project?: { tenant_id?: unknown } }).project?.tenant_id === "string"
-        ? (data as { project: { tenant_id: string } }).project.tenant_id
-        : "public_share";
+  // Token resolution already authenticates the share; projection uses a synthetic
+  // principal (no authenticated user). Tenant id is not part of the public pack DTO.
   const safety = assertCustomerProjectionAllowed(data, {
     principalId: `share:${token.slice(0, 12)}`,
-    tenantId,
+    tenantId: "public_share",
     authorized: true,
   });
   if (!safety.ok) {
