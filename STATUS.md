@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-28
 
-Weekly delta `Cursor / Codex execution delta — 2026-11-28` in progress on `cursor/weekly-delta-exec-2026-11-28` (base `80ffa442`). P0: differential replay + Action Boundary wired into portal/customer projection; portal defects from #533 included. P1 GigaAM/d1.3 → RESEARCH_DEFER. 34 targeted vitest PASS. Hosted migration apply / Gemini / ZDR / Mode B / device remain OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-28/`.
+Weekly delta `Cursor / Codex execution delta — 2026-11-28` executed. **#560** → `b2929ef5` (differential replay + portal Action Boundary + #533 portal fixes). **#530** → `7ffcd0c2` (Dependabot Bun). Main tip `b2929ef5`. P1 GigaAM/d1.3 RESEARCH_DEFER. Hosted migration apply / Gemini / ZDR / Mode B / device remain OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-28/`.
 
 ## Plan-exec follow-through — 2026-11-27
 
