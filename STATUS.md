@@ -1,8 +1,16 @@
 # STATUS — AISTROYKA
 
+## Plan-exec follow-through — 2026-11-28
+
+## Plan-exec follow-through — 2026-11-28 (continue)
+
+Portal/share Action Boundary wiring extended to all remaining portal GETs + proof share. Hosted integrity migrations applied via MCP (remote `20261128204817`–`029`; see `MIGRATION_APPLY_RECEIPT_2026-11-28.md`). Dependabot majors left open (CI fail / major bumps). Gemini/ZDR/Mode B/device still OWNER_GATE.
+
+Weekly delta `Cursor / Codex execution delta — 2026-11-28` executed. **#560** → `b2929ef5` (differential replay + portal Action Boundary + #533 portal fixes). **#530** → `7ffcd0c2` (Dependabot Bun). Main tip `b2929ef5`. P1 GigaAM/d1.3 RESEARCH_DEFER. Hosted migration apply / Gemini / ZDR / Mode B / device remain OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-28/`.
+
 ## Plan-exec follow-through — 2026-11-27
 
-Weekly delta `Cursor / Codex execution delta — 2026-11-27` executed. P0 Action Boundary + evidence verdict merged **#557** → `82119b95`. Monthly integrity/deps protected merges: **#547** `2e6abaa0`, **#553** `9db67515`, **#554** `ceb5dde2`, **#555** `1dbd927b`, **#556** `9a64a4c5`, **#552** `5debb153` (main tip). Staging/prod health observed at `9a64a4c` before #552 deploy lag. Nemotron → RESEARCH_DEFER; competitor snapshots → DEFER. Hosted DB apply for new migrations still needs receipts preflight (not applied this session). Gemini/ZDR/Mode B/device remain OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-27/`.
+Weekly delta `Cursor / Codex execution delta — 2026-11-27` executed. P0 Action Boundary + evidence verdict merged **#557** → `82119b95`. Monthly integrity/deps protected merges: **#547** `2e6abaa0`, **#553** `9db67515`, **#554** `ceb5dde2`, **#555** `1dbd927b`, **#556** `9a64a4c5`, **#552** `5debb153`. Docs receipts **#558** → `80ffa442` (main tip at branch start). Nemotron → RESEARCH_DEFER. Hosted DB apply still needs receipts. Gemini/ZDR/Mode B/device OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-27/`.
 
 ## Plan-exec follow-through — 2026-11-25
 

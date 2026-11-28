@@ -11,7 +11,7 @@ import {
   TenantForbiddenError,
 } from "@/lib/tenant";
 import { getPortalProjectDocuments } from "@/lib/domain/portal/portal.service";
-import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
+import { assertCustomerProjectionAllowed } from "@/lib/security/customer-finance-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +43,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const supabase = await createClientFromRequest(request);
   const { data, error } = await getPortalProjectDocuments(supabase, ctx, projectId);
   if (!data) return NextResponse.json({ error: error || "Not available" }, { status: mapErrorToStatus(error) });
-  const safety = assertCustomerFinanceSafePayload(data);
+  const safety = assertCustomerProjectionAllowed(data, {
+    principalId: ctx.userId,
+    tenantId: ctx.tenantId,
+    authorized: true,
+  });
   if (!safety.ok) {
     console.error(
       `Blocked customer-finance leak in /api/v1/portal/projects/${projectId}/documents: ${safety.path ?? safety.key}`
