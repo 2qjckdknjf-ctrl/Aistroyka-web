@@ -6,7 +6,7 @@ import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import { downloadPrivateOriginal } from "@/lib/platform/media/private-original-download";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { boundedProductWrite } from "@/lib/growth/product-events";
-import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
+import { assertCustomerProjectionAllowed } from "@/lib/security/customer-finance-guard";
 
 export class PublishedEvidenceError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -130,7 +130,15 @@ export async function listPublishedEvidence(client: SupabaseClient, ctx: TenantC
     original_url: `/api/v1/portal/projects/${encodeURIComponent(projectId)}/evidence/${encodeURIComponent(row.id)}/original`,
   }));
   const result = { project: { id: projectId }, items };
-  if (!assertCustomerFinanceSafePayload(result).ok) throw new PublishedEvidenceError(500, "Unsafe evidence projection");
+  if (
+    !assertCustomerProjectionAllowed(result, {
+      principalId: ctx.userId,
+      tenantId: ctx.tenantId,
+      authorized: true,
+    }).ok
+  ) {
+    throw new PublishedEvidenceError(500, "Unsafe evidence projection");
+  }
   // Catch grant/account revocation during the read, before returning a projection.
   await authorize(client, ctx, projectId);
   return result;

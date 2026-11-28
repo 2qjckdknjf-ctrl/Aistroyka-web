@@ -1,3 +1,8 @@
+import {
+  evaluateActionBoundary,
+  type ActionBoundaryResult,
+} from "@/lib/platform/ai-governance/action-boundary";
+
 const FORBIDDEN_KEYS = [
   "project_cost_items",
   "internal_cost_item_id",
@@ -15,6 +20,8 @@ type GuardResult = {
   ok: boolean;
   path?: string;
   key?: string;
+  /** Present when Action Boundary was evaluated for this projection. */
+  boundary?: ActionBoundaryResult;
 };
 
 function walk(value: unknown, path: string[]): GuardResult {
@@ -49,4 +56,58 @@ function walk(value: unknown, path: string[]): GuardResult {
 
 export function assertCustomerFinanceSafePayload(value: unknown): GuardResult {
   return walk(value, []);
+}
+
+export type CustomerProjectionPrincipal = {
+  principalId: string;
+  tenantId: string;
+  /** Known authorization for customer_data read; unknown/false ⇒ fail closed. */
+  authorized?: boolean | null;
+};
+
+/**
+ * Portal/customer projection gate: key-walk finance isolation plus Action Boundary
+ * (2026-11-28). Forbidden finance keys ⇒ deny. Boundary must deny finance
+ * exfiltration on API; authorized customer_data read may allow.
+ */
+export function assertCustomerProjectionAllowed(
+  value: unknown,
+  principal: CustomerProjectionPrincipal
+): GuardResult {
+  const finance = assertCustomerFinanceSafePayload(value);
+  if (!finance.ok) {
+    const boundary = evaluateActionBoundary({
+      principal: {
+        principalId: principal.principalId,
+        tenantId: principal.tenantId,
+        authorized: principal.authorized === true,
+      },
+      resourceClass: "finance",
+      operation: "exfiltrate",
+      transport: "api",
+    });
+    return { ...finance, boundary };
+  }
+
+  const boundary = evaluateActionBoundary({
+    principal: {
+      principalId: principal.principalId,
+      tenantId: principal.tenantId,
+      authorized: principal.authorized === true,
+    },
+    resourceClass: "customer_data",
+    operation: "read",
+    transport: "api",
+  });
+
+  if (boundary.decision !== "allow") {
+    return {
+      ok: false,
+      path: "action_boundary",
+      key: "customer_data",
+      boundary,
+    };
+  }
+
+  return { ok: true, boundary };
 }
