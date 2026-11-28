@@ -28,15 +28,23 @@ cd apps/web && bunx vitest run \
 
 See `MERGE_RECEIPTS_2026-11-28.md`. #560 squash `b2929ef5`; #530 squash `7ffcd0c2`.
 
+## Finish-up (same day, Mode B)
+
+- Hosted integrity migrations **applied** (MCP remotes `20261128204817`–`029`) — see `MIGRATION_APPLY_RECEIPT_2026-11-28.md`.
+- Portal/share Action Boundary extended — **#570** → `e53c82a6` (staging/prod Deploy Cloudflare SUCCESS).
+- Mode B executed: iOS TestFlight upload SUCCEEDED (build `2026112801`); Android Play internal **draft** committed (`versionCode=2026112801`). Evidence: `MODE_B_UPLOAD_2026-11-28.md`.
+
 ## Not done / blocked
 
 | Item | Status | Owner action |
 |---|---|---|
-| Hosted DB migrations from #553/#554/#556 | OWNER_GATE | Fresh migration-history export + `migration_receipts_preflight.py --candidate` then apply |
-| Gemini video key / ZDR / Mode B / device | OWNER_GATE | Provide keys/certs/device |
+| Hosted DB migrations from #553/#554/#556 | **APPLIED** | Receipts on disk |
+| Mode B iOS upload | **DONE** (ASC processing async) | Confirm VALID in ASC UI when ready |
+| Mode B Android | **DRAFT on internal** | Promote draft→completed in Play Console (completed API rejected) |
+| Gemini video key / ZDR / device smoke | OWNER_GATE | Provide keys / ZDR / connect device |
 | GigaAM / d1.3 install | RESEARCH_DEFER | License + Silicon + Arena budget |
-| Independent VERIFIED beyond GitHub APPROVED | REVIEW_PENDING | Separate domain/security reviewer if required by ROMA for release claims |
+| Dependabot majors | SKIP | Explicit per-PR review; do not blind-merge |
 
 ## Continuation
 
-`docs/execution/AUTONOMOUS_PROGRESS.md` — next: owner migration receipts; no further unblocked 2026-11-28 code P0.
+Promote Play drafts; ASC processing check; Gemini/ZDR/device when owner assets arrive. No further unblocked 2026-11-28 code P0.
