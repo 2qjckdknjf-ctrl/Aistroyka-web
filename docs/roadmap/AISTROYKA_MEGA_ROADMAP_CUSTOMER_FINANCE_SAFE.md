@@ -2092,3 +2092,28 @@ Reconciled against main tip `#532` / `ac64d2d` and open drafts #547/#552–#556.
 | Nemotron 3.5 Parse bake-off | P1 | RESEARCH_DEFER | OpenMDW 1.1; CUDA quickstart; Apple Silicon not verified; no install |
 | Competitor price snapshots | P1 | DEFER | Same as D11 — no Monitor/API connector |
 | Gemini video / ZDR / Mode B / device | — | BLOCKED / OWNER_GATE | Unchanged |
+
+
+## Cursor / Codex execution delta — 2026-11-28
+
+PLANNING ONLY. Owner requested incorporation of daily AI review. Reconcile current main, exact HEAD, active PRs and existing task IDs before execution; implement only verified gaps, existing P0 release blockers first. Numerical corpus sizes are proposed, not measured. Verify upstream release/license/runtime/privacy before adoption. Owner/reviewer TBD. No automatic merge, deployment, production mutation, purchases, external publication or live trading.
+
+- P0 existing assurance: differential replay of budget, permissions, reports and project state; compare old/new on reset synthetic fixtures, no real side effects. Preserve #557 Action Boundary/evidence verdict; extend only gaps, no rebuild. Hosted migration receipts and owner gates remain.
+- P1 existing RU/ES voice intake: benchmark GigaAM Multilingual-v2 against current STT on 100 deidentified recordings shared with ObraPrecio (noise, sizes, material names, units, prices); WER, exact numeric/unit match, latency, memory, abstention. Verify MIT/ONNX/Apple Silicon before install; use current adapters, professional confirmation before persistence.
+- P1 Document Intelligence: evaluate Liquid d1.3-ultra in shared Growth Model Arena for document classification, invoice discrepancy and supplier ranking, alongside current OCR and deferred Nemotron; measure exact fields, citations, cost, calibration and privacy; no autonomous orders, no duplicate OCR.
+
+Delivery: separate implementation branch; gap matrix IMPLEMENTED/PARTIAL/MISSING/BLOCKED, unchanged tests plus negative/regression tests, exact SHA, reproducible commands/results, independent verdict, rollback and blockers. Never mark DONE from docs/build alone. Stop on missing authority or unsafe effects.
+
+### Execution status — Cursor 2026-11-28 (branch `cursor/weekly-delta-exec-2026-11-28`)
+
+Base `80ffa442`. Evidence: `docs/reports/plan-exec-delta-2026-11-28/`.
+
+| Item | Priority | Status | Note |
+|---|---|---|---|
+| Differential replay (budget/permissions/reports/project) | P0 | IMPLEMENTED | `replayProjectStateDifferential` + vitest |
+| Action Boundary on customer projection | P0 | IMPLEMENTED | `assertCustomerProjectionAllowed` on portal project + published evidence |
+| Portal nav / returnTo / bell (#533 defects) | P0 | IMPLEMENTED | Files from #533 on this branch |
+| GigaAM Multilingual-v2 | P1 | RESEARCH_DEFER | CUDA quickstart; license/Silicon not closed |
+| Liquid d1.3-ultra | P1 | RESEARCH_DEFER | Decision-model API; no second OCR |
+| Hosted migration apply | P0 ops | OWNER_GATE | Receipts preflight required |
+| Gemini / ZDR / Mode B / device | — | OWNER_GATE | Unchanged |

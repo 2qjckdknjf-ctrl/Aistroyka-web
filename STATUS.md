@@ -1,8 +1,12 @@
 # STATUS — AISTROYKA
 
+## Plan-exec follow-through — 2026-11-28
+
+Weekly delta `Cursor / Codex execution delta — 2026-11-28` in progress on `cursor/weekly-delta-exec-2026-11-28` (base `80ffa442`). P0: differential replay + Action Boundary wired into portal/customer projection; portal defects from #533 included. P1 GigaAM/d1.3 → RESEARCH_DEFER. 34 targeted vitest PASS. Hosted migration apply / Gemini / ZDR / Mode B / device remain OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-28/`.
+
 ## Plan-exec follow-through — 2026-11-27
 
-Weekly delta `Cursor / Codex execution delta — 2026-11-27` executed. P0 Action Boundary + evidence verdict merged **#557** → `82119b95`. Monthly integrity/deps protected merges: **#547** `2e6abaa0`, **#553** `9db67515`, **#554** `ceb5dde2`, **#555** `1dbd927b`, **#556** `9a64a4c5`, **#552** `5debb153` (main tip). Staging/prod health observed at `9a64a4c` before #552 deploy lag. Nemotron → RESEARCH_DEFER; competitor snapshots → DEFER. Hosted DB apply for new migrations still needs receipts preflight (not applied this session). Gemini/ZDR/Mode B/device remain OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-27/`.
+Weekly delta `Cursor / Codex execution delta — 2026-11-27` executed. P0 Action Boundary + evidence verdict merged **#557** → `82119b95`. Monthly integrity/deps protected merges: **#547** `2e6abaa0`, **#553** `9db67515`, **#554** `ceb5dde2`, **#555** `1dbd927b`, **#556** `9a64a4c5`, **#552** `5debb153`. Docs receipts **#558** → `80ffa442` (main tip at branch start). Nemotron → RESEARCH_DEFER. Hosted DB apply still needs receipts. Gemini/ZDR/Mode B/device OWNER_GATE. Evidence: `docs/reports/plan-exec-delta-2026-11-27/`.
 
 ## Plan-exec follow-through — 2026-11-25
 

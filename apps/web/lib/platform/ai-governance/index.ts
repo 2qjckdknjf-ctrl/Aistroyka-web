@@ -45,3 +45,11 @@ export type {
   RepeatabilityVerdict,
   SecurityVerdict,
 } from "./evidence-verdict";
+export { replayProjectStateDifferential } from "./differential-replay";
+export type {
+  BudgetSnapshot,
+  DifferentialReplayRequest,
+  DifferentialReplayResult,
+  PermissionSnapshot,
+  ProjectStateSnapshot,
+} from "./differential-replay";

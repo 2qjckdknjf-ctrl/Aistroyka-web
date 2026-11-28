@@ -47,6 +47,7 @@ export function ClientPortalNotificationsSection({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stakeholder-notifications", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["portal-notifications-unread-count", projectId] });
     },
   });
 
