@@ -13,7 +13,7 @@ Build numbers: iOS `AISTROYKA_IOS_BUILD_NUMBER=2026112801`, Android `AISTROYKA_A
 | Worker (`ai.aistroyka.worker`) | SUCCEEDED (`CFBundleVersion=2026112801`) | SUCCEEDED | Apple Distribution | **UPLOAD SUCCEEDED** Delivery UUID `2f4101cb-099e-4e9c-b4cb-6f8da03cfc92` |
 | Manager (`ai.aistroyka.manager`) | SUCCEEDED (`CFBundleVersion=2026112801`) | SUCCEEDED | Apple Distribution | **UPLOAD SUCCEEDED** Delivery UUID `f2149b58-3b40-44ec-a6ac-21b1d39bff2f` |
 
-ASC processing continues asynchronously (no store-live / TestFlight-available claim until ASC shows VALID + tester access).
+ASC API readback (same day): both builds `2026112801` → **processingState=VALID** (Worker + Manager). Tester assignment / device install still owner/console.
 
 Local artifacts (gitignored): `build/mode-b-20261128/{worker,manager}-ipa/*.ipa`, `*.xcarchive`, upload logs.
 

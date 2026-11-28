@@ -2,7 +2,7 @@
 
 ## Plan-exec follow-through — 2026-11-28 (Mode B + finish)
 
-Mode B executed same session after gate verify: iOS Worker+Manager build `2026112801` → TestFlight upload SUCCEEDED (Delivery UUID Worker `2f4101cb-…`, Manager `f2149b58-…`). Android AABs `versionCode=2026112801` → Play internal **draft committed** (completed blocked by residual Play Console targetSdk error). Evidence: `docs/reports/plan-exec-delta-2026-11-28/MODE_B_UPLOAD_2026-11-28.md`. Portal/share Action Boundary + hosted integrity migrations already applied. Dependabot majors still open. Gemini/ZDR/device + Play draft→completed remain OWNER_GATE. Deploy SHA `e53c82a6` (#570) on staging/prod via Actions.
+Mode B executed same session after gate verify: iOS Worker+Manager build `2026112801` → TestFlight upload SUCCEEDED + ASC **VALID**. Android AABs `versionCode=2026112801` → Play internal **draft committed** (completed blocked by residual Play Console targetSdk error). Evidence PR **#571** → `9553c585`; Dependabot security-crypto **#568** → `5f520b15`. Portal/share Action Boundary + hosted integrity migrations already applied. Dependabot majors still open. Gemini/ZDR/device + Play draft→completed remain OWNER_GATE. Deploy tip at Mode B start: `e53c82a6` (#570).
 
 ## Plan-exec follow-through — 2026-11-28 (continue)
 

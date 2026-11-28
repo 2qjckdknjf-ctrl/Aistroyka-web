@@ -10,7 +10,8 @@
 |---|---|
 | Portal/share Action Boundary wiring | MERGED #570 → `e53c82a6` |
 | Hosted migrations #553/#554/#556 family | APPLIED (MCP receipts) |
-| Mode B iOS TestFlight (build `2026112801`) | UPLOAD SUCCEEDED (Worker+Manager) |
+| Mode B iOS TestFlight (build `2026112801`) | UPLOAD SUCCEEDED + ASC **VALID** (Worker+Manager) |
+| Evidence PR #571 / Dependabot #568 | MERGED → main `9553c585` / `5f520b15` |
 | Mode B Android Play internal | DRAFT_COMMITTED (`versionCode=2026112801`) |
 | Staging/prod deploy for `e53c82a6` | SUCCESS (Actions) |
 | Dependabot majors #561–#567 | SKIP (majors) |
