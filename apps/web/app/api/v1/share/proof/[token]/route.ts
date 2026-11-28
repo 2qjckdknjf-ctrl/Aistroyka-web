@@ -10,7 +10,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProofPackByToken } from "@/lib/domain/proof-pack/proof-pack.service";
-import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
+import { assertCustomerProjectionAllowed } from "@/lib/security/customer-finance-guard";
 
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "CDN-Cache-Control": "no-store", "Cloudflare-CDN-Cache-Control": "no-store", "Referrer-Policy": "no-referrer" };
@@ -30,7 +30,13 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
   }
   const { data, error } = await getProofPackByToken(admin, token);
   if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404, headers });
-  const safety = assertCustomerFinanceSafePayload(data);
+  // Token resolution already authenticates the share; projection uses a synthetic
+  // principal (no authenticated user). Tenant id is not part of the public pack DTO.
+  const safety = assertCustomerProjectionAllowed(data, {
+    principalId: `share:${token.slice(0, 12)}`,
+    tenantId: "public_share",
+    authorized: true,
+  });
   if (!safety.ok) {
     console.error(`Blocked customer-finance leak in /api/v1/share/proof/:token: ${safety.path ?? safety.key}`);
     return NextResponse.json({ error: "Proof pack payload failed finance safety guard" }, { status: 500, headers });
