@@ -123,6 +123,7 @@ export function ProjectPreprojectExtractionPanel({
     mutationFn: () => createRun(projectId, text, selectedDraftId || null),
     onSuccess: () => {
       setText("");
+      setSelectedDraftId("");
       queryClient.invalidateQueries({ queryKey: ["preproject-extractions", projectId] });
     },
   });

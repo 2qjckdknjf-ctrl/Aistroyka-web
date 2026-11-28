@@ -17,12 +17,10 @@ import {
 import {
   getInputSnapshot,
   insertCalculationRevision,
-  insertInputSnapshot,
-  insertWorkSpecification,
+  insertSnapshotWithSpecification,
   latestCalculationForSnapshot,
   listInputSnapshots,
   nextCalculationRevision,
-  nextWorkSpecificationRevision,
 } from "./quantity-storage.repository";
 
 export type CreateQuantitySnapshotInput = {
@@ -134,9 +132,9 @@ export async function persistQuantitySnapshot(
   supabase: SupabaseClient,
   input: CreateQuantitySnapshotInput
 ): Promise<CreateQuantitySnapshotResult> {
-  const tenantId = input.tenantId.trim();
-  const projectId = input.projectId.trim();
-  const actorUserId = input.actorUserId.trim();
+  const tenantId = input.tenantId.trim().toLowerCase();
+  const projectId = input.projectId.trim().toLowerCase();
+  const actorUserId = input.actorUserId.trim().toLowerCase();
   if (!tenantId || !projectId || !actorUserId) {
     return {
       ok: false,
@@ -203,28 +201,11 @@ export async function persistQuantitySnapshot(
     };
   }
 
-  const nextSpec = await nextWorkSpecificationRevision(
-    supabase,
-    tenantId,
-    projectId,
-    spec.work_code
-  );
-  if (!nextSpec.ok) return nextSpec;
-
-  const specInsert = await insertWorkSpecification(supabase, {
+  const snap = await insertSnapshotWithSpecification(supabase, {
     tenantId,
     projectId,
     actorUserId,
-    revision: nextSpec.revision,
     spec,
-  });
-  if (!specInsert.ok) return specInsert;
-
-  const snap = await insertInputSnapshot(supabase, {
-    tenantId,
-    projectId,
-    actorUserId,
-    workSpecificationId: specInsert.id,
     request,
     evidenceRefs,
   });
@@ -248,7 +229,7 @@ export async function persistQuantitySnapshot(
     ok: true,
     snapshot: snap.snapshot,
     created: snap.created,
-    work_specification_id: snap.snapshot.work_specification_id ?? specInsert.id,
+    work_specification_id: snap.snapshot.work_specification_id,
     calculation,
   };
 }

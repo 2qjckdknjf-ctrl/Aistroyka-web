@@ -91,7 +91,7 @@ export async function POST(
 
   if (!result.ok) {
     const http =
-      result.code === "NOT_FOUND" ? 404 : result.code === "INVALID_INPUT" ? 400 : 500;
+      result.code === "NOT_FOUND" ? 404 : result.code === "INVALID_INPUT" ? 400 : result.code === "FORBIDDEN" ? 403 : 500;
     return NextResponse.json({ error: result.error, code: result.code }, { status: http });
   }
 

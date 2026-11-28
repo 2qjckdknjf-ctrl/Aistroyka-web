@@ -1,0 +1,30 @@
+name: Quantity and intake integrity
+
+on:
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  atomic-create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Install isolated test runtimes
+        run: |
+          contract_runtime="$RUNNER_TEMP/quantity-preproject-contracts"
+          mkdir -p "$contract_runtime"
+          npm install --prefix "$contract_runtime" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.8 pg@8.23.1
+          cp scripts/ops/verify_quantity_preproject_atomic_postgres.mjs "$contract_runtime/contracts.mjs"
+          node "$contract_runtime/contracts.mjs" "$GITHUB_WORKSPACE"
+      - name: Native PostgreSQL transaction and concurrency contracts
+        run: |
+          sudo systemctl start postgresql
+          contract_user="$(id -un)"
+          sudo -u postgres createuser --superuser "$contract_user"
+          sudo -u postgres createdb --owner="$contract_user" aistroyka_quantity_preproject_ci
+          QUANTITY_PREPROJECT_DATABASE_URL="postgresql://$contract_user@localhost/aistroyka_quantity_preproject_ci?host=/var/run/postgresql" \
+            node "$RUNNER_TEMP/quantity-preproject-contracts/contracts.mjs" "$GITHUB_WORKSPACE"

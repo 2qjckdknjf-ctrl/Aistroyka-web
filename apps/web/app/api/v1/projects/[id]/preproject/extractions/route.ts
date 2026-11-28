@@ -135,7 +135,11 @@ export async function POST(
             result.code === "INVALID_INPUT" ||
             result.code === "COMMERCIAL_FORBIDDEN"
           ? 400
-          : 500;
+          : result.code === "RUN_INCOMPLETE" || result.code === "DRAFT_INPUT_MISMATCH"
+            ? 409
+            : result.code === "FORBIDDEN"
+              ? 403
+              : result.code === "PERSISTENCE_UNAVAILABLE" ? 503 : 500;
     return NextResponse.json({ error: result.error, code: result.code }, { status: http });
   }
 

@@ -44,8 +44,8 @@ export const AiActionDraftSchema = z.object({
   factsUsed: z.array(z.string()),
   inferredReasoningSummary: z.string(),
   targetEntityRefs: z.array(TargetEntityRefSchema),
-  payload: z.record(z.unknown()),
-  availabilityFlags: z.record(z.boolean()),
+  payload: z.record(z.string(), z.unknown()),
+  availabilityFlags: z.record(z.string(), z.boolean()),
   warnings: z.array(z.string()),
   createdAt: z.string(),
   provenance: AiActionProvenanceSchema.optional(),
@@ -58,6 +58,6 @@ export function validateAiActionDraft(data: unknown): { success: true; data: AiA
   if (result.success) return { success: true, data: result.data };
   return {
     success: false,
-    error: result.error.errors.map((e) => e.message).join("; "),
+    error: result.error.issues.map((e) => e.message).join("; "),
   };
 }

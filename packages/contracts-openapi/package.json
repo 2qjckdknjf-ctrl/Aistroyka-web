@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@aistroyka/contracts": "file:../contracts",
-    "zod-to-json-schema": "^3.23.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

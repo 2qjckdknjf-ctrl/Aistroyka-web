@@ -65,6 +65,11 @@ jobs:
       - name: Private original SDK transport in Workerd
         run: node scripts/ops/verify_private_original_workerd.cjs
 
+      - name: Known dependency vulnerability regression guard
+        run: |
+          node --test scripts/ci/validate-known-vulnerabilities.test.cjs
+          node scripts/ci/validate-known-vulnerabilities.cjs
+
       - name: Isolated AI SQL access contracts
         run: |
           set -euo pipefail
@@ -78,6 +83,7 @@ jobs:
           cp scripts/ops/verify_published_source_uniqueness_postgres.mjs "$sql_test_dir/published-unique.mjs"
           cp scripts/ops/verify_platform_job_slots_postgres.mjs "$sql_test_dir/job-slots.mjs"
           cp scripts/ops/verify_private_helper_grants_postgres.mjs "$sql_test_dir/helper-grants.mjs"
+          cp scripts/ops/verify_review_integrity_postgres.mjs "$sql_test_dir/review-integrity.mjs"
           node "$sql_test_dir/session.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/media.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/evidence.mjs" "$GITHUB_WORKSPACE"
@@ -85,6 +91,7 @@ jobs:
           node "$sql_test_dir/published-unique.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/job-slots.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/helper-grants.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/review-integrity.mjs" "$GITHUB_WORKSPACE"
 
       - name: Native evidence approval race contracts
         run: |
@@ -109,6 +116,9 @@ jobs:
           sudo -u postgres createdb --owner="$race_user" aistroyka_helper_grants_ci
           HELPER_GRANTS_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_helper_grants_ci?host=/var/run/postgresql" \
             node "$sql_test_dir/helper-grants.mjs" "$GITHUB_WORKSPACE"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_review_integrity_ci
+          REVIEW_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_review_integrity_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/review-integrity.mjs" "$GITHUB_WORKSPACE"
 
       - name: i18n messages (dashboard + activation)
         run: bun run i18n:check
@@ -122,6 +132,9 @@ jobs:
 
       - name: Test
         run: bun run test
+
+      - name: OpenAPI schema compatibility
+        run: bun scripts/check-openapi-contracts.mjs
 
       - name: Release readiness policy check
         env:
@@ -137,3 +150,6 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           NEXT_PUBLIC_APP_URL: https://staging.aistroyka.ai
         run: bun run cf:build
+
+      - name: Worker upload packaging (dry run)
+        run: node scripts/ci/verify-worker-upload-bundle.cjs

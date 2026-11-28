@@ -19,18 +19,22 @@ export async function indexTranscriptionResult(
   supabase: SupabaseClient,
   input: IndexTranscriptionResultInput
 ): Promise<{ indexed: boolean; inserted: number; code?: string }> {
-  const indexed = await replaceMediaCaptionSegments(supabase, {
-    tenantId: input.tenantId,
-    projectId: input.projectId,
-    mediaId: input.mediaId,
-    actorUserId: input.actorUserId,
-    sourceKind: "transcription",
-    language: input.language ?? null,
-    segments: input.result.segments ?? [],
-    fullText: input.result.text,
-  });
-  if (!indexed.ok) {
-    return { indexed: false, inserted: 0, code: indexed.code };
+  try {
+    const indexed = await replaceMediaCaptionSegments(supabase, {
+      tenantId: input.tenantId,
+      projectId: input.projectId,
+      mediaId: input.mediaId,
+      actorUserId: input.actorUserId,
+      sourceKind: "transcription",
+      language: input.language ?? null,
+      segments: input.result.segments ?? [],
+      fullText: input.result.text,
+    });
+    if (!indexed.ok) {
+      return { indexed: false, inserted: 0, code: indexed.code };
+    }
+    return { indexed: true, inserted: indexed.inserted };
+  } catch {
+    return { indexed: false, inserted: 0, code: "INDEX_FAILED" };
   }
-  return { indexed: true, inserted: indexed.inserted };
 }

@@ -3,7 +3,7 @@
  * Run: npm run build (or npx tsx build-openapi.ts)
  */
 import { writeFileSync } from "fs";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import {
   HealthResponseSchema,
   AnalyzeImageRequestSchema,
@@ -29,12 +29,11 @@ const basePath = "/api/v1";
 
 const components: Record<string, unknown> = {};
 
-// Accept Zod 3 or Zod 4 schemas (contracts may use either depending on resolution).
-// zod-to-json-schema supports both at runtime; its typings expect Zod 3, so we assert when calling.
-function addSchema(name: string, schema: unknown): void {
-  components[name] = zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0], {
-    name,
-    target: "openApi3",
+// Emit Zod 4 schemas directly as OpenAPI components. The legacy converter
+// accepts only Zod 3 schemas and can silently lose the contract during an upgrade.
+function addSchema(name: string, schema: z.ZodType): void {
+  components[name] = z.toJSONSchema(schema, {
+    target: "openapi-3.0",
   });
 }
 

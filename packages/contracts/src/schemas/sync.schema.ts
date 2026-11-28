@@ -35,7 +35,7 @@ export const SyncChangeEntrySchema = z.object({
   change_type: z.enum(["created", "updated", "deleted"]),
   changed_by: z.string().nullable(),
   ts: z.string(),
-  payload: z.record(z.unknown()),
+  payload: z.record(z.string(), z.unknown()),
 });
 
 /** API response shape (snake_case). Matches GET /api/v1/sync/changes output. */

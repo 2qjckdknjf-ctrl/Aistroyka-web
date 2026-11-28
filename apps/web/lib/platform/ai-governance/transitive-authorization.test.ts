@@ -55,6 +55,25 @@ describe("evaluateTransitiveAuthorization (D4)", () => {
     expect(result.rule_hits).toContain("recipient_widened");
   });
 
+  it.each([
+    { label: "omitted", recipients: undefined },
+    { label: "empty", recipients: [] },
+    { label: "allowed agents only", recipients: ["agent-a"] },
+  ])(
+    "blocks an unlisted hop agent when recipients are $label",
+    ({ recipients }) => {
+      for (const breakGlass of [false, true]) {
+        const result = evaluateTransitiveAuthorization(mandate, [
+          hop({ agentId: "outsider", recipients, breakGlass }),
+        ]);
+        expect(result.decision).toBe("block");
+        expect(result.rule_hits).toContain(
+          breakGlass ? "break_glass_non_widening" : "recipient_widened"
+        );
+      }
+    }
+  );
+
   it("blocks finance and external destinations", () => {
     expect(
       evaluateTransitiveAuthorization(mandate, [

@@ -143,6 +143,42 @@ export type InsertWorkSpecificationInput = {
   spec: ResolvedWorkSpecification;
 };
 
+/** Allocate a work-spec revision and its snapshot in one database transaction. */
+export async function insertSnapshotWithSpecification(
+  supabase: DbClient,
+  input: {
+    tenantId: string; projectId: string; actorUserId: string;
+    spec: ResolvedWorkSpecification; request: QuantityRequest; evidenceRefs: EvidenceRef[];
+  }
+): Promise<
+  | { ok: true; snapshot: QuantityInputSnapshotDto; created: boolean }
+  | { ok: false; error: string; code: string }
+> {
+  const { data, error } = await supabase.rpc("create_quantity_snapshot_atomic", {
+    p_tenant_id: input.tenantId,
+    p_project_id: input.projectId,
+    p_actor_user_id: input.actorUserId,
+    p_spec: input.spec,
+    p_request: input.request,
+    p_request_hash: hashQuantityRequest(input.request),
+    p_evidence_refs: input.evidenceRefs,
+  });
+  if (error) {
+    const code = error.code === "22023" ? "INVALID_INPUT" : error.code === "42501" ? "FORBIDDEN" :
+      error.code === "PGRST202" || error.code === "42883" ? "PERSISTENCE_UNAVAILABLE" : "INSERT_FAILED";
+    return { ok: false, error: code === "PERSISTENCE_UNAVAILABLE" ? "Atomic quantity persistence is not available" : error.message, code };
+  }
+  if (!isRecord(data) || !isRecord(data.snapshot) || typeof data.created !== "boolean") {
+    return { ok: false, error: "malformed atomic snapshot response", code: "INSERT_FAILED" };
+  }
+  const snapshot = parseSnapshotRow(data.snapshot);
+  if (!snapshot || snapshot.tenant_id !== input.tenantId.trim().toLowerCase() || snapshot.project_id !== input.projectId.trim().toLowerCase() ||
+      snapshot.request_hash !== hashQuantityRequest(input.request)) {
+    return { ok: false, error: "atomic snapshot identity mismatch", code: "INSERT_FAILED" };
+  }
+  return { ok: true, snapshot, created: data.created };
+}
+
 export async function insertWorkSpecification(
   supabase: DbClient,
   input: InsertWorkSpecificationInput

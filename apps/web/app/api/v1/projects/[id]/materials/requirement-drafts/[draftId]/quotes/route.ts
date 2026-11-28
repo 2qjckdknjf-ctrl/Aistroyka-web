@@ -51,6 +51,16 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid JSON object", code: "INVALID_INPUT" }, { status: 400 });
+  }
+
+  const leadRaw = body.lead_time_days ?? body.leadTimeDays;
+  if (leadRaw != null && (typeof leadRaw !== "number" || !Number.isInteger(leadRaw) ||
+      leadRaw < 0 || leadRaw > 2147483647)) {
+    return NextResponse.json({ error: "invalid lead_time_days", code: "INVALID_INPUT" }, { status: 400 });
+  }
+  const leadTimeDays = typeof leadRaw === "number" ? leadRaw : null;
 
   const supabase = await createClientFromRequest(request);
   const membership = await supabase.rpc("is_internal_tenant_writer_for_tenant", {
@@ -70,10 +80,6 @@ export async function POST(
     stockRaw === "in_stock" || stockRaw === "out_of_stock" || stockRaw === "lead_time"
       ? stockRaw
       : "unknown";
-
-  const leadRaw = body.lead_time_days ?? body.leadTimeDays;
-  const leadTimeDays =
-    typeof leadRaw === "number" && Number.isFinite(leadRaw) ? Math.trunc(leadRaw) : null;
 
   const result = await addMaterialSupplierQuoteDraft(supabase, {
     tenantId: ctx.tenantId!,

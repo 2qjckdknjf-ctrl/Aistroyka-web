@@ -8,6 +8,14 @@ vi.mock("./media-caption-index.service", () => ({
 import { replaceMediaCaptionSegments } from "./media-caption-index.service";
 
 describe("indexTranscriptionResult", () => {
+  it("returns a safe failure code when the index write throws", async () => {
+    vi.mocked(replaceMediaCaptionSegments).mockRejectedValueOnce(new Error("connection lost"));
+    const out = await indexTranscriptionResult({} as never, {
+      tenantId: "t1", projectId: "p1", mediaId: "m1", actorUserId: "u1",
+      result: { text: "paid transcript", segments: [] },
+    });
+    expect(out).toEqual({ indexed: false, inserted: 0, code: "INDEX_FAILED" });
+  });
   it("maps successful replace into indexed summary", async () => {
     vi.mocked(replaceMediaCaptionSegments).mockResolvedValueOnce({
       ok: true,
