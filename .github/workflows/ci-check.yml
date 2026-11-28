@@ -57,6 +57,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate Dependabot workspace ecosystem
+        run: |
+          node --test scripts/ci/validate-dependabot.test.cjs
+          node scripts/ci/validate-dependabot.cjs
+
       - name: Private original SDK transport in Workerd
         run: node scripts/ops/verify_private_original_workerd.cjs
 
