@@ -1,0 +1,24 @@
+[
+  {
+    "package": "ai.aistroyka.worker",
+    "aab": "AiStroykaWorker-release.aab",
+    "size": 9463512,
+    "versionCode": 2026112801,
+    "status": "DRAFT_COMMITTED",
+    "editId": "15944070430972498576",
+    "track": "internal",
+    "targetSdkVersion": 35,
+    "note": "completed status rejected with cryptic Target SDK error; draft committed"
+  },
+  {
+    "package": "ai.aistroyka.manager",
+    "aab": "AiStroykaManager-release.aab",
+    "size": 9148672,
+    "versionCode": 2026112801,
+    "status": "DRAFT_COMMITTED",
+    "editId": "00867891647348898131",
+    "track": "internal",
+    "targetSdkVersion": 35,
+    "note": "completed status rejected with cryptic Target SDK error; draft committed"
+  }
+]
