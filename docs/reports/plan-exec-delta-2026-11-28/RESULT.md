@@ -24,6 +24,10 @@ cd apps/web && bunx vitest run \
   'app/[locale]/(dashboard)/dashboard/tasks/tasks-workspace.utils.test.ts'
 ```
 
+## Merged
+
+See `MERGE_RECEIPTS_2026-11-28.md`. #560 squash `b2929ef5`; #530 squash `7ffcd0c2`.
+
 ## Not done / blocked
 
 | Item | Status | Owner action |
@@ -31,9 +35,8 @@ cd apps/web && bunx vitest run \
 | Hosted DB migrations from #553/#554/#556 | OWNER_GATE | Fresh migration-history export + `migration_receipts_preflight.py --candidate` then apply |
 | Gemini video key / ZDR / Mode B / device | OWNER_GATE | Provide keys/certs/device |
 | GigaAM / d1.3 install | RESEARCH_DEFER | License + Silicon + Arena budget |
-| Formal GitHub APPROVED | REVIEW_PENDING | Non-author review on PR |
-| Independent VERIFIED | REVIEW_PENDING | Separate reviewer identity |
+| Independent VERIFIED beyond GitHub APPROVED | REVIEW_PENDING | Separate domain/security reviewer if required by ROMA for release claims |
 
 ## Continuation
 
-`docs/reports/plan-exec-delta-2026-11-28/` + this RESULT; next after merge: ready/merge #530 Dependabot Bun; migration receipts when owner authorizes.
+`docs/execution/AUTONOMOUS_PROGRESS.md` — next: owner migration receipts; no further unblocked 2026-11-28 code P0.
